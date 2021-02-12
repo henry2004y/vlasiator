@@ -1,0 +1,222 @@
+# Vlasiator Makefile
+
+.SUFFIXES:            # Delete the default suffixes
+
+# General compiler specifications
+
+CXX := @COMPILER_COMMAND@
+CPPFLAGS := @PREPROCESSOR_FLAGS@
+CXXFLAGS := @COMPILER_FLAGS@
+
+include MAKE/Makefile.@machine@
+
+# Collect all the include paths
+ifneq ($(INC_DCCRG), -I)
+	INC_PATH += $(INC_DCCRG)
+endif
+ifneq ($(INC_FSGRID), -I)
+	INC_PATH += $(INC_FSGRID)
+endif
+ifneq ($(INC_ZOLTAN), -I)
+	INC_PATH += $(INC_ZOLTAN)
+endif
+ifneq ($(INC_VLSV), -I)
+	INC_PATH += $(INC_VLSV)
+endif
+ifneq ($(INC_JEMALLOC), -I)
+	INC_PATH += $(INC_JEMALLOC)
+endif
+ifneq ($(INC_PROFILE), -I)
+	INC_PATH += $(INC_PROFILE)
+endif
+ifneq ($(INC_EIGEN), -I)
+	INC_PATH += $(INC_EIGEN)
+endif
+ifneq ($(INC_BOOST), -I)
+	INC_PATH += $(INC_BOOST)
+endif
+ifneq ($(INC_VECTORCLASS), -I)
+	INC_PATH += $(INC_VECTORCLASS)
+endif
+ifneq ($(INC_SILO), -I)
+	INC_PATH += $(INC_BOOST)
+endif
+ifneq ($(INC_PAPI), -I)
+	INC_PATH += $(INC_PAPI)
+endif
+
+# Collect all the link paths
+LDFLAGS += $(LIB_ZOLTAN)
+LDFLAGS += $(LIB_VLSV)
+LDFLAGS += $(LIB_PROFILE)
+LDFLAGS += $(LIB_BOOST)
+ifneq ($(LIB_JEMALLOC), -L)
+	LDFLAGS += $(LIB_JEMALLOC)
+endif
+ifneq ($(LIB_SILO), -L)
+	LDFLAGS += $(LIB_SILO)
+endif
+ifneq ($(LIB_PAPI), -L)
+	LDFLAGS += $(LIB_PAPI)
+endif
+
+
+# Preliminary definitions
+
+EXECUTABLE := vlasiator
+SRC_FILES := \
+		 src/version.cpp \
+		 $(filter-out src/version.cpp, $(wildcard src/*.cpp)) \
+	    $(wildcard src/backgroundfield/*.cpp) \
+	    $(wildcard src/fieldsolver/*.cpp) \
+		 $(wildcard src/vlasovsolver/*.cpp) \
+		 $(wildcard src/sysboundary/*.cpp) \
+		 $(wildcard src/datareduction/*.cpp) \
+		 $(wildcard src/projects/*.cpp) \
+		 $(wildcard src/projects/Alfven/*.cpp) \
+		 $(wildcard src/projects/Diffusion/*.cpp) \
+		 $(wildcard src/projects/Dispersion/*.cpp) \
+		 $(wildcard src/projects/Distributions/*.cpp) \
+		 $(filter-out src/projects/Firehose/Firehose_save.cpp, $(wildcard src/projects/Firehose/*.cpp)) \
+		 $(wildcard src/projects/Flowthrough/*.cpp) \
+		 $(wildcard src/projects/Fluctuations/*.cpp) \
+		 $(wildcard src/projects/Harris/*.cpp) \
+		 $(wildcard src/projects/IPShock/*.cpp) \
+		 $(wildcard src/projects/KHB/*.cpp) \
+		 $(wildcard src/projects/Larmor/*.cpp) \
+		 $(wildcard src/projects/Magnetosphere/*.cpp) \
+		 $(wildcard src/projects/MultiPeak/*.cpp) \
+		 $(wildcard src/projects/Riemann1/*.cpp) \
+		 $(wildcard src/projects/Shock/*.cpp) \
+		 $(wildcard src/projects/Shocktest/*.cpp) \
+		 $(wildcard src/projects/Template/*.cpp) \
+		 $(wildcard src/projects/test_fp/*.cpp) \
+		 $(wildcard src/projects/test_trans/*.cpp) \
+		 $(wildcard src/projects/testAmr/*.cpp) \
+		 $(wildcard src/projects/testHall/*.cpp) \
+		 $(wildcard src/projects/VelocityBox/*.cpp) \
+		 $(wildcard src/projects/verificationLarmor/*.cpp)
+
+OBJ_DIR := obj/
+OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FILES:.cpp=.o)))
+SRC_DIRS := $(dir $(SRC_FILES))
+VPATH := $(SRC_DIRS):src/particles:src/tools
+
+# Tools section
+
+PTCL_PUSHER := particle_post_pusher
+VLSVEXTRACT := @VLSVEXTRACT@
+VLSV2SILO   := @VLSV2SILO@
+VLSVDIFF    := @VLSVDIFF@
+FLUXFUNC    := fluxfunction
+
+
+SRC_PTCL := \
+		src/version.cpp \
+		src/readparameters.cpp \
+		$(wildcard src/particles/*.cpp)
+
+SRC_VLSVEXTRACT := \
+		src/tools/vlsvextract.cpp
+
+SRC_VLSV2SILO := \
+		src/tools/vlsv2silo.cpp
+
+SRC_VLSVDIFF := \
+		src/tools/vlsvdiff.cpp \
+		src/tools/vlsvreaderinterface.cpp
+
+SRC_FLUXFUNC := \
+		src/version.cpp \
+		src/readparameters.cpp \
+		src/tools/fluxfunction.cpp \
+		particles/readfields.cpp \
+		particles/particleparameters.cpp \
+		particles/physconst.cpp \
+		particles/distribution.cpp
+
+OBJ_PTCL := $(addprefix $(OBJ_DIR),$(notdir $(SRC_PTCL:.cpp=.o)))
+
+OBJ_VLSVEXTRACT := $(addprefix $(OBJ_DIR),$(notdir $(SRC_VLSVEXTRACT:.cpp=.o)))
+
+OBJ_VLSV2SILO := $(addprefix $(OBJ_DIR),$(notdir $(SRC_VLSV2SILO:.cpp=.o)))
+
+OBJ_VLSVDIFF := $(addprefix $(OBJ_DIR),$(notdir $(SRC_VLSVDIFF:.cpp=.o)))
+
+OBJ_FLUXFUNC := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FLUXFUNC:.cpp=.o)))
+
+
+# Generally useful targets
+
+.PHONY : all clean
+
+all : $(EXECUTABLE)
+	@echo "Vlasiator has been successfully built."
+
+objs : $(OBJ_FILES)
+
+src/version.cpp:
+	./generate_version.sh "$(CXX)" "${CXXFLAGS}" "${FLAGS}" "${INC_MPI}" "${INC_DCCRG}" "${INC_FSGRID}" "${INC_ZOLTAN}" "${INC_BOOST}"
+
+testpackage : all
+
+vlsvdiff : $(VLSVDIFF)
+
+vlsvextract : $(VLSVEXTRACT)
+
+vlsv2silo : $(VLSV2SILO)
+
+# For debugging variables in Makefile, e.g. by "make print-GCOV_FILES"
+
+print-%  : ; @echo $* = $($*)
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+# Create objects from source files
+
+$(OBJ_DIR)%.o : %.cpp | $(OBJ_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -c $< -o $@
+
+$(OBJ_DIR)vlsvdiff.o : vlsvdiff.cpp | $(OBJ_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -Isrc -c $< -o $@
+
+# Link objects into executable
+
+$(EXECUTABLE) : $(OBJ_FILES)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -o $@ $(OBJ_FILES) $(LDFLAGS)
+
+$(PTCL_PUSHER) : $(OBJ_PTCL)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -o $@ $(OBJ_PTCL) $(LDFLAGS)
+	@echo "Particle pusher has been successfully built."
+
+$(VLSVEXTRACT) : $(OBJ_VLSVEXTRACT)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -o $@ $(OBJ_VLSVEXTRACT) $(LDFLAGS)
+	@echo "vlsvextract has been successfully built."
+
+$(VLSV2SILO) : $(OBJ_VLSV2SILO)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -o $@ $(OBJ_VLSV2SILO) $(LDFLAGS)
+	@echo "vlsv2silo has been successfully built."
+
+$(VLSVDIFF) : $(OBJ_VLSVDIFF)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -o $@ $(OBJ_VLSVDIFF) $(LDFLAGS)
+	@echo "vlsvdiff has been successfully built."
+
+$(FLUXFUNC) : $(OBJ_FLUXFUNC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC_PATH) -o $@ $(OBJ_FLUXFUNC) $(LDFLAGS)
+	@echo "fluxfunction has been successfully built."
+
+# Cleanup
+
+clean : data
+	rm -rf $(OBJ_DIR)
+	rm -f $(EXECUTABLE)
+	rm -rf *~ */*~ */*/*~ ${EXECUTABLE} particle_post_pusher check_projects_compil_logs check_projects_cfg_logs
+
+allclean: clean cleantools
+d: data
+data:
+	rm -rf phiprof*txt restart*vlsv grid*vlsv diagnostic.txt logfile.txt src/version.cpp
+c: clean
+cleantools:
+	rm -rf vlsv2silo* vlsvextract* vlsvdiff* 
