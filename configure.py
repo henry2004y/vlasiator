@@ -2,9 +2,8 @@
 # ------------------------------------------------------------------------------
 # configure.py: Vlasiator configuration script in python.
 #
-# When configure.py is run, it uses the command line options and default 
-# settings to create custom versions of Makefile from the template file 
-# Makefile.in.
+# It uses the command line options and default settings to create customized
+# versions of Makefile from the template file Makefile.in.
 # Original version by CJW. Modified by Hongyang Zhou.
 # ------------------------------------------------------------------------------
 
@@ -18,29 +17,6 @@ import pkg_resources
 import sys
 import warnings
 import fileinput
-
-def display():
-    print('Vlasiator has now been configured with the following options:')
-    print('  Machine:                    ' + (args['machine'] if args['machine'] else 'new'))
-    print('  Coordinate system:          ' + args['coord'])
-    print('  Floating-point precision:   ' + ('single' if args['float'] else 'double'))
-    print('  Distribution precision:     ' + ('single' if args['distfloat'] else 'double'))
-    print('  Block size:                 ' + str(args['nx']) + ' ' \
-                                           + str(args['ny']) + ' ' \
-                                           + str(args['nz']))
-    print('  MPI parallelism:            ' + ('ON' if args['mpi'] else 'OFF'))
-    print('  OpenMP parallelism:         ' + ('ON' if args['omp'] else 'OFF'))
-    print('  Order of field solver:      ' + str(args['fieldorder']))
-    print('  Order of semilag velocity:  ' + str(args['velocityorder']))
-    print('  Order of semilag spatial:   ' + str(args['spatialorder']))
-    print('  AMR:                        ' + ('ON' if args['amr'] else 'OFF'))
-    print('  Profiler:                   ' + ('ON' if args['profile'] else 'OFF'))
-    print('  Memory tracker:             ' + ('ON' if args['papi'] else 'OFF'))
-    print('  Debug flags:                ' + ('ON' if args['debug'] else 'OFF'))
-    print('  Compiler:                   ' + args['cxx'])
-    print('  Compilation command:        ' + makefile_options['COMPILER_COMMAND'] + ' '
-          + makefile_options['COMPILER_FLAGS'])
-
 
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
@@ -268,8 +244,6 @@ if len(sys.argv) == 1:
     # Check existing Makefile if no argument is passed
     if not os.path.isfile("Makefile"):
         print("Vlasiator is not installed.")
-    else:
-        print('I should display all the key settings here!')
 
 # --cxx=[name] argument
 if args['cxx'] == 'g++':
@@ -544,4 +518,23 @@ with open('Makefile', 'w') as f:
     f.write(makefile_template)
 
 # Finish with diagnostic output
-display()
+print('Vlasiator has now been configured with the following options:')
+print('  Machine:                    ' + (args['machine'] if args['machine'] else 'new'))
+print('  Coordinate system:          ' + args['coord'])
+print('  Floating-point precision:   ' + ('single' if args['float'] else 'double'))
+print('  Distribution precision:     ' + ('single' if args['distfloat'] else 'double'))
+print('  Block size:                 ' + str(args['nx']) + ' ' \
+                                       + str(args['ny']) + ' ' \
+                                       + str(args['nz']))
+print('  MPI parallelism:            ' + ('ON' if args['mpi'] else 'OFF'))
+print('  OpenMP parallelism:         ' + ('ON' if args['omp'] else 'OFF'))
+print('  Order of field solver:      ' + str(args['fieldorder']))
+print('  Order of semilag velocity:  ' + str(args['velocityorder']))
+print('  Order of semilag spatial:   ' + str(args['spatialorder']))
+print('  AMR:                        ' + ('ON' if args['amr'] else 'OFF'))
+print('  Profiler:                   ' + ('ON' if args['profile'] else 'OFF'))
+print('  Memory tracker:             ' + ('ON' if args['papi'] else 'OFF'))
+print('  Debug flags:                ' + ('ON' if args['debug'] else 'OFF'))
+print('  Compiler:                   ' + args['cxx'])
+print('  Compilation command:        ' + makefile_options['COMPILER_COMMAND'] + ' '
+      + makefile_options['COMPILER_FLAGS'])
