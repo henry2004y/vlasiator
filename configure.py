@@ -187,6 +187,9 @@ args = vars(parser.parse_args())
 if args['install'] and args['machine'] != 'default':
     raise SystemExit('### CONFIGURE ERROR: does not support fresh installation with a preset machine makefile')
 
+if not os.path.isfile(os.path.join("MAKE/Makefile."+args['machine'])):
+    raise SystemExit('Target machine does not exist!')
+
 # --------- Step 3. Set Makefile options based on above argument ---------------
 
 # Prepare dictionaries of substitutions to be made
