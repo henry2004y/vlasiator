@@ -1,4 +1,4 @@
-LDFLAGS = -lrt -lgfortran -std=c++17 -Wl,-rpath=/proj/group/spacephysics/libraries/phiprof/lib:/proj/group/spacephysics/libraries/boost/lib:/proj/group/spacephysics/libraries/vlsv/lib:/proj/group/spacephysics/libraries/jemalloc/lib:/proj/group/spacephysics/libraries/zoltan/lib:/proj/group/spacephysics/libraries/papi/lib  
+LDFLAGS = -lrt -lgfortran -std=c++17 -Wl,-rpath=/proj/group/spacephysics/libraries/gcc/8.3.0/phiprof/lib:/proj/group/spacephysics/libraries/gcc/8.3.0/boost/lib:/proj/group/spacephysics/libraries/gcc/8.3.0/vlsv/lib:/proj/group/spacephysics/libraries/gcc/8.3.0/jemalloc/lib:/proj/group/spacephysics/libraries/gcc/8.3.0/zoltan/lib:/proj/group/spacephysics/libraries/gcc/8.3.0/papi/lib  
 
 INC_DCCRG := -I/proj/group/spacephysics/libraries/dccrg
 
