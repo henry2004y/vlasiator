@@ -31,122 +31,91 @@ vlasiator_epilog = (
 )
 parser = argparse.ArgumentParser(description=vlasiator_description, epilog=vlasiator_epilog)
 
-# -install
 parser.add_argument('-install',
                     action='store_true',
                     default=False,
                     help='install all the dependencies into lib')
 
-# --coord=[name]
-parser.add_argument(
-    '--coord',
-    default='cartesian',
-    choices=[
-        'cartesian',
-        'user'],
-    help='select coordinate system')
-
-# --nx=[value]
 parser.add_argument('--nx',
                     type=int,
                     default=4,
                     help='set number of cells in the block x dimension')
 
-# --ny=[value]
 parser.add_argument('--ny',
                     type=int,
                     default=4,
                     help='set number of cells in the block y dimension')
 
-# --nz=[value]
 parser.add_argument('--nz',
                     type=int,
                     default=4,
                     help='set number of cells in the block z dimension')
 
-# --velocityorder=[value]
-parser.add_argument('--velocityorder',
+parser.add_argument('--vorder',
                     type=int,
                     default=5,
                     help='set order of velocity space acceleration')
 
-# --spatialorder=[value]
-parser.add_argument('--spatialorder',
+parser.add_argument('--sorder',
                     type=int,
                     default=3,
                     help='set order of spatial translation')
 
-# --field=[name]
-parser.add_argument('--field',
+parser.add_argument('--fieldsolver',
                     default='londrillo_delzanna',
                     help='select field solver')
 
-# --fieldorder=[value]
 parser.add_argument('--fieldorder',
                     type=int,
                     default=2,
                     help='select field solver order')
 
-# -amr
 parser.add_argument('-amr',
                     action='store_true',
                     default=False,
                     help='enable AMR in velocity space')
 
-# -debug
 parser.add_argument('-debug',
                     action='store_true',
                     default=False,
                     help='enable debug flags; override other compiler options')
 
-# -debugsolver
 parser.add_argument('-debugsolver',
                     action='store_true',
                     default=False,
-                    help='enable debug flags for field solver')
+                    help='enable debug preprocessor for field solver')
 
-# -debugionosphere
 parser.add_argument('-debugionosphere',
                     action='store_true',
                     default=False,
-                    help='enable debug flags for ionosphere module')
+                    help='enable debug preprocessor for ionosphere module')
 
-# -debugfloat
 parser.add_argument('-debugfloat',
                     action='store_true',
                     default=False,
-                    help='enable catching floating point exceptions')
+                    help='enable preprocessor for floating point exceptions')
 
-# -float
 parser.add_argument('-float',
                     action='store_true',
                     default=False,
                     help='enable single precision')
 
-# -distfloat
 parser.add_argument('-distfloat',
                     action='store_true',
                     default=True,
                     help='enable single precision for distribution function')
 
-# -profile
 parser.add_argument('-profile', 
                     dest='profile', 
                     action='store_true',
+                    default=True,
                     help='enable profiler')
-parser.add_argument('-noprofile',
-                    dest='profile',
-                    action='store_false',
-                    help='disable profiler')
-parser.set_defaults(profile=True)
 
-# -mpi
 parser.add_argument('-mpi',
                     action='store_true',
                     default=True,
                     help='enable parallelization with MPI')
 
-# -omp
 parser.add_argument('-omp',
                     action='store_true',
                     default=False,
@@ -158,45 +127,31 @@ parser.add_argument('-nocheck',
                     help='disable linking library checking')
 
 
-# --machine=[name]
 parser.add_argument('--machine',
                     default='default',
                     help='choose machine name for specific setup')
 
-# -papi
 parser.add_argument('-papi',
                     action='store_true',
                     default=False,
                     help='enable Papi memory profiler')
 
-# -jemalloc
 parser.add_argument('-jemalloc',
                     action='store_true',
                     default=False,
                     help='enable JEMALLOC allocator')
 
-# -silo
 parser.add_argument('-silo',
                     action='store_true',
                     default=False,
                     help='enable silo format converter')
 
-# The main choices for --cxx flag, using "ctype[-suffix]" formatting, where 
-# "ctype" is the major family/suite/group of compilers and "suffix" may 
-# represent variants of the compiler version and/or predefined sets of compiler
-# options. The C++ compiler front ends are the main supported/documented options
-# and are invoked on the command line, but the C front ends are also acceptable 
-# selections and are mapped to the matching C++ front end:
-# gcc -> g++, clang -> clang++, icc-> icpc
 cxx_choices = [
     'g++',
-    'g++-simd',
     'icpc',
     'icpc-debug',
-    'icpc-phi',
     'cray',
     'clang++',
-    'clang++-simd',
     'clang++-apple',
 ]
 
@@ -212,7 +167,6 @@ def c_to_cpp(arg):
     return arg
 
 
-# --cxx=[name]
 parser.add_argument(
     '--cxx',
     default='g++',
@@ -220,7 +174,6 @@ parser.add_argument(
     choices=cxx_choices,
     help='select C++ compiler and default set of flags')
 
-# --cflag=[string]
 parser.add_argument(
     '--cflag',
     default=None,
@@ -229,12 +182,12 @@ parser.add_argument(
 # Parse command-line inputs
 args = vars(parser.parse_args())
 
-# --- Step 2. Test for incompatible arguments ----------------------------
+# --------- Step 2. Test for incompatible arguments ----------------------------
 
-if args['install'] and args['machine'] is not 'default':
+if args['install'] and args['machine'] != 'default':
     raise SystemExit('### CONFIGURE ERROR: does not support fresh installation with a preset machine makefile')
 
-# --- Step 3. Set Makefile options based on above argument
+# --------- Step 3. Set Makefile options based on above argument ---------------
 
 # Prepare dictionaries of substitutions to be made
 makefile_options = {}
@@ -245,60 +198,39 @@ if len(sys.argv) == 1:
     if not os.path.isfile("Makefile"):
         print("Vlasiator is not installed.")
 
-# --cxx=[name] argument
 if args['cxx'] == 'g++':
     makefile_options['COMPILER_COMMAND'] = 'g++'
-    makefile_options['COMPILER_FLAGS'] = '-O3 -fopenmp -funroll-loops -ffast-math -std=c++17 -W -Wall -Wno-unused -mavx'
-if args['cxx'] == 'g++-simd':
-    # GCC version >= 4.9, for OpenMP 4.0; version >= 6.1 for OpenMP 4.5 support
-    makefile_options['COMPILER_COMMAND'] = 'g++'
     makefile_options['COMPILER_FLAGS'] = (
-        '-O3 -std=c++11 -fopenmp-simd -fwhole-program -flto -ffast-math '
-        '-march=native -fprefetch-loop-arrays'
-        # -march=skylake-avx512, skylake, core-avx2
-        # -mprefer-vector-width=128  # available in gcc-8, but not gcc-7
-        # -mtune=native, generic, broadwell
-        # -mprefer-avx128
-        # -m64 (default)
-    )
+        '-O3 -fopenmp -funroll-loops '
+        '-ffast-math -std=c++17 -W -Wall -Wno-unused -mavx' )
 if args['cxx'] == 'icpc':
     makefile_options['COMPILER_COMMAND'] = 'icpc'
     makefile_options['COMPILER_FLAGS'] = (
-      '-O3 -std=c++11 -ipo -xhost -inline-forceinline -qopenmp-simd -qopt-prefetch=4 '
-      '-qoverride-limits'  # -qopt-report-phase=ipo (does nothing without -ipo)
-    )
-    # -qopt-zmm-usage=high'  # typically harms multi-core performance on Skylake Xeon
+      '-O3 -std=c++17 -ipo -xhost -inline-forceinline -qopenmp-simd '
+      '-qopt-prefetch=4 '
+      '-qoverride-limits' )
 if args['cxx'] == 'icpc-debug':
-    # Disable IPO, forced inlining, and fast math. Enable vectorization reporting.
-    # Useful for testing symmetry, SIMD-enabled functions and loops with OpenMP 4.5
     makefile_options['COMPILER_COMMAND'] = 'icpc'
     makefile_options['COMPILER_FLAGS'] = (
-      '-O3 -std=c++11 -xhost -qopenmp-simd -fp-model precise -qopt-prefetch=4 '
+      '-O3 -std=c++11 -xhost -qopenmp-simd -fp-model precise '
+      '-qopt-prefetch=4 '
       '-qopt-report=5 -qopt-report-phase=openmp,vec -g -qoverride-limits'
-    )
-if args['cxx'] == 'icpc-phi':
-    # Cross-compile for Intel Xeon Phi x200 KNL series (unique AVX-512ER and AVX-512FP)
-    # -xMIC-AVX512: generate AVX-512F, AVX-512CD, AVX-512ER and AVX-512FP
-    makefile_options['COMPILER_COMMAND'] = 'icpc'
-    makefile_options['COMPILER_FLAGS'] = (
-      '-O3 -std=c++11 -ipo -xMIC-AVX512 -inline-forceinline -qopenmp-simd '
-      '-qopt-prefetch=4 -qoverride-limits'
     )
 if args['cxx'] == 'cray':
     makefile_options['COMPILER_COMMAND'] = 'CC'
-    makefile_options['COMPILER_FLAGS'] = '-O3 -h std=c++14 -h aggress -h vector3 -hfp3'
+    makefile_options['COMPILER_FLAGS'] = (
+        '-O3 -h std=c++17 -h aggress -h vector3 -hfp3' )
     makefile_options['LINKER_FLAGS'] = '-hwp -hpl=obj/lib'
 if args['cxx'] == 'clang++':
     makefile_options['COMPILER_COMMAND'] = 'clang++'
-    makefile_options['COMPILER_FLAGS'] = '-O3 -std=c++14'
+    makefile_options['COMPILER_FLAGS'] = '-O3 -std=c++17'
 if args['cxx'] == 'clang++-simd':
     makefile_options['COMPILER_COMMAND'] = 'clang++'
-    makefile_options['COMPILER_FLAGS'] = '-O3 -std=c++14 -fopenmp-simd'
+    makefile_options['COMPILER_FLAGS'] = '-O3 -std=c++17 -fopenmp-simd'
 if args['cxx'] == 'clang++-apple':
     makefile_options['COMPILER_COMMAND'] = 'clang++'
-    makefile_options['COMPILER_FLAGS'] = '-O3 -std=c++14'
+    makefile_options['COMPILER_FLAGS'] = '-O3 -std=c++17'
 
-# -float argument
 if args['float']:
     precision = 'SP'
 else:
@@ -320,44 +252,40 @@ else:
 if args['profile']:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DPROFILE'
  
-if args['velocityorder'] == 2:
+if args['vorder'] == 2:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DACC_SEMILAG_PLM'       
-elif args['velocityorder'] == 3:
+elif args['vorder'] == 3:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DACC_SEMILAG_PPM'
-elif args['velocityorder'] == 5:
+elif args['vorder'] == 5:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DACC_SEMILAG_PQM' 
 else:
     raise SystemExit('### CONFIGURE ERROR: unknown semilag solver order for velocity space acceleration')
 
-if args['spatialorder'] == 2:
+if args['sorder'] == 2:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DTRANS_SEMILAG_PLM'       
-elif args['spatialorder'] == 3:
+elif args['sorder'] == 3:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DTRANS_SEMILAG_PPM'
-elif args['spatialorder'] == 5:
+elif args['sorder'] == 5:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DTRANS_SEMILAG_PQM' 
 else:
     raise SystemExit('### CONFIGURE ERROR: unknown semilag solver order for spatial translation')
 
-# Make the field solver first-order in space and time
+
 if args['fieldorder'] == 1:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DFS_1ST_ORDER_SPACE'
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DFS_1ST_ORDER_TIME'
 
-# Turn on AMR
 if args['amr']:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DAMR'
 
-# Add -DNDEBUG to turn debugging off.
 if args['debug']:
     pass
 else:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DNDEBUG'
 
-# Debug for field solver
 if args['debugsolver']:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DDEBUG_SOLVERS'
 
-# Debug for ionosphere module
 if args['debugionosphere']:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DDEBUG_IONOSPHERE'
 
@@ -371,60 +299,41 @@ if args['papi']:
 if args['jemalloc']:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DUSE_JEMALLOC -DJEMALLOC_NO_DEMANGLE'
 
-# -debug argument
 if args['debug']:
-    # Completely replace the --cxx= sets of default compiler flags, disable optimization,
-    # and emit debug symbols in the compiled binaries
-    if (args['cxx'] == 'g++' or args['cxx'] == 'g++-simd'
-            or args['cxx'] == 'icpc' or args['cxx'] == 'icpc-debug'
-            or args['cxx'] == 'clang++' or args['cxx'] == 'clang++-simd'
-            or args['cxx'] == 'clang++-apple'):
+    if (args['cxx'] == 'g++' or args['cxx'] == 'icpc' 
+        or args['cxx'] == 'icpc-debug' or args['cxx'] == 'clang++'
+        or args['cxx'] == 'clang++-apple'):
         makefile_options['COMPILER_FLAGS'] = '-O0 --std=c++11 -g'  # -Og
     if args['cxx'] == 'cray':
         makefile_options['COMPILER_FLAGS'] = '-O0 -h std=c++11'
-    if args['cxx'] == 'bgxlc++':
-        makefile_options['COMPILER_FLAGS'] = '-O0 -g -qlanglvl=extended0x'
-    if args['cxx'] == 'icpc-phi':
-        makefile_options['COMPILER_FLAGS'] = '-O0 --std=c++11 -g -xMIC-AVX512'
 
-# -mpi argument
 if args['mpi']:
-    if (args['cxx'] == 'g++' or args['cxx'] == 'icpc' or args['cxx'] == 'icpc-debug'
-            or args['cxx'] == 'icpc-phi' or args['cxx'] == 'g++-simd'
-            or args['cxx'] == 'clang++' or args['cxx'] == 'clang++-simd'
-            or args['cxx'] == 'clang++-apple'):
+    if (args['cxx'] == 'g++' or args['cxx'] == 'icpc' 
+        or args['cxx'] == 'icpc-debug' or args['cxx'] == 'clang++'
+        or args['cxx'] == 'clang++-apple'):
         makefile_options['COMPILER_COMMAND'] = 'mpicxx'
     if args['cxx'] == 'cray':
         makefile_options['COMPILER_FLAGS'] += ' -h mpi1'
 else:
     raise SystemExit('### CONFIGURE ERROR: -mpi is required for compilation!')
 
-# -omp argument
 if args['omp']:
-    if (args['cxx'] == 'g++' or args['cxx'] == 'g++-simd' or args['cxx'] == 'clang++'
-            or args['cxx'] == 'clang++-simd'):
+    if args['cxx'] == 'g++' or args['cxx'] == 'clang++':
         makefile_options['COMPILER_FLAGS'] += ' -fopenmp'
-    if (args['cxx'] == 'clang++-apple'):
-        # Apple Clang disables the front end OpenMP driver interface; enable it via the
-        # preprocessor. Must install LLVM's OpenMP runtime library libomp beforehand
+    if args['cxx'] == 'clang++-apple':
+        # Apple Clang disables the front end OpenMP driver interface; enable it
+        # via the preprocessor. 
+        # Must install LLVM's OpenMP runtime library libomp beforehand
         makefile_options['COMPILER_FLAGS'] += ' -Xpreprocessor -fopenmp'
-    if args['cxx'] == 'icpc' or args['cxx'] == 'icpc-debug' or args['cxx'] == 'icpc-phi':
+    if args['cxx'] == 'icpc' or args['cxx'] == 'icpc-debug':
         makefile_options['COMPILER_FLAGS'] += ' -qopenmp'
     if args['cxx'] == 'cray':
         makefile_options['COMPILER_FLAGS'] += ' -homp'
-else:
-    if args['cxx'] == 'cray':
-        makefile_options['COMPILER_FLAGS'] += ' -hnoomp'
-    if args['cxx'] == 'icpc' or args['cxx'] == 'icpc-debug' or args['cxx'] == 'icpc-phi':
-        # suppressed messages:
-        #   3180: pragma omp not recognized
-        makefile_options['COMPILER_FLAGS'] += ' -diag-disable 3180'
 
-# --cflag=[string]
 if args['cflag'] is not None:
     makefile_options['COMPILER_FLAGS'] += ' '+args['cflag']
 
-# Install dependencies
+# Install dependencies if required
 if args['install']:
     if not os.path.isdir("lib"):
         subprocess.check_call(["mkdir", "lib"]) 
@@ -490,15 +399,10 @@ if args['install']:
 
     # Boost is skipped as it is too large to install here
     if not os.path.isfile(os.path.join("/usr/lib/x86_64-linux-gnu/libboost_program_options.a")):
-        errmsghead = """Boost not found: try to set the correct path, or """
-        if 'Ubuntu' in os.uname()[3]:
-            raise SystemExit(errmsghead+"install it manually as follows:"
+        raise SystemExit('Boost not found: try to set the correct path, or install it manually as follows:'
             '\n sudo apt update\n sudo apt install libboost-all-dev')
-        else:
-            raise SystemExit(errmsghead+
-            'search for how to install Boost!')
 
-# --- Step 4. Create new files, finish up --------------------------------
+# --------- Step 4. Create new files, finish up --------------------------------
 
 # Read templates
 with open('Makefile.in', 'r') as f:
@@ -520,7 +424,6 @@ with open('Makefile', 'w') as f:
 # Finish with diagnostic output
 print('Vlasiator has now been configured with the following options:')
 print('  Machine:                    ' + (args['machine'] if args['machine'] else 'new'))
-print('  Coordinate system:          ' + args['coord'])
 print('  Floating-point precision:   ' + ('single' if args['float'] else 'double'))
 print('  Distribution precision:     ' + ('single' if args['distfloat'] else 'double'))
 print('  Block size:                 ' + str(args['nx']) + ' ' \
@@ -529,12 +432,12 @@ print('  Block size:                 ' + str(args['nx']) + ' ' \
 print('  MPI parallelism:            ' + ('ON' if args['mpi'] else 'OFF'))
 print('  OpenMP parallelism:         ' + ('ON' if args['omp'] else 'OFF'))
 print('  Order of field solver:      ' + str(args['fieldorder']))
-print('  Order of semilag velocity:  ' + str(args['velocityorder']))
-print('  Order of semilag spatial:   ' + str(args['spatialorder']))
+print('  Order of semilag velocity:  ' + str(args['vorder']))
+print('  Order of semilag spatial:   ' + str(args['sorder']))
 print('  AMR:                        ' + ('ON' if args['amr'] else 'OFF'))
 print('  Profiler:                   ' + ('ON' if args['profile'] else 'OFF'))
 print('  Memory tracker:             ' + ('ON' if args['papi'] else 'OFF'))
 print('  Debug flags:                ' + ('ON' if args['debug'] else 'OFF'))
 print('  Compiler:                   ' + args['cxx'])
-print('  Compilation command:        ' + makefile_options['COMPILER_COMMAND'] + ' '
-      + makefile_options['COMPILER_FLAGS'])
+print('  Compilation command:        ' + makefile_options['COMPILER_COMMAND'] + ' ' \
+                                       + makefile_options['COMPILER_FLAGS'])
