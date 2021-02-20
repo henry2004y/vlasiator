@@ -38,9 +38,9 @@
  */
 
 
-
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <stdint.h>
 #include <cmath>
@@ -48,7 +48,6 @@
 #include <list>
 #include <set>
 #include <sstream>
-#include <dirent.h>
 #include <string>
 #include <typeinfo>
 #include <algorithm>
@@ -61,6 +60,7 @@
 
 using namespace std;
 using namespace vlsv;
+namespace fs = std::filesystem;
 
 // Command line option,value pairs are parsed and stored to map attributes.
 // The key is the option name, and the value is the value. For example, 
@@ -1569,27 +1569,19 @@ bool process2Files(const string fileName1,
 }
 
 /*! Creates the list of grid*.vlsv files present in the folder passed
- * \param dir DIR type pointer to the directory entry to process
+ * \param dir String of the directory name to process
  * \param fileList Pointer to a set of strings, return argument for the produced file list
  */
-bool processDirectory(DIR* dir, set<string>* fileList) {
+bool processDirectory(const string dir, set<string>* fileList) {
    int filesFound = 0, entryCounter = 0;
    
    const string mask = attributes["--filemask"];
    const string suffix = ".vlsv";
 
-   struct dirent* entry = readdir(dir);
-   while (entry != NULL) {
-      const string entryName = entry->d_name;
-      if (entryName.find(mask) == string::npos || entryName.find(suffix) == string::npos) {
-         entry = readdir(dir);
-         continue;
-      }
-      fileList->insert(entryName);
-      filesFound++;
-      entry = readdir(dir);
+   for (auto& file : filesystem::directory_iterator{ dir }) {
+      fileList->insert(file.path());
    }
-   if (filesFound == 0) cout << "INFO no matches found" << endl;
+   if (fileList->empty()) cout << "INFO no matches found" << endl;
    
    return 0;
 }
@@ -1780,61 +1772,51 @@ int main(int argn,char* args[]) {
       std::cerr<<"Wrong grid type"<<std::endl;
       abort();
    }
-
-
-
-
-   DIR* dir1 = opendir(fileName1.c_str());
-   DIR* dir2 = opendir(fileName2.c_str());
-
-   if (dir1 == NULL && dir2 == NULL) {
-      cout << "INFO Reading in two files." << endl;
-      
+   
+   error_code ec;
+   
+   if (fs::is_regular_file(fileName1, ec) && fs::is_regular_file(fileName2, ec))
+   {
+      cout << "Reading in two files." << endl;
       // Process two files with verbose output (last argument true)
       process2Files(fileName1, fileName2, varToExtract, compToExtract, true, compToExtract2);
-      //CONTINUE
-      
-      closedir(dir1);
-      closedir(dir2);
    }
-   else if (dir1 == NULL || dir2 == NULL)
+   else if (fs::is_directory(fileName1, ec) || fs::is_directory(fileName2, ec))
    {
       // Mixed file and directory
-      cout << "#INFO Reading in one file and one directory." << endl;
+      cout << "Reading in one file and one directory." << endl;
       set<string> fileList;
       set<string>::iterator it;
 
-      if(dir1 == NULL){
-         //file in 1, directory in 2
-         processDirectory(dir2, &fileList);
+      if(fs::is_directory(fileName1, ec)){
+         // file in 1, directory in 2
+         processDirectory(fileName1, &fileList);
          for(it = fileList.begin(); it != fileList.end();++it){
             // Process two files with non-verbose output (last argument false), give full path to the file processor
             process2Files(fileName1,fileName2 + "/" + *it, varToExtract, compToExtract, false, compToExtract2);
          }
       }
 
-      if(dir2 == NULL){
-         //directory in 1, file in 2
-         processDirectory(dir1, &fileList);
+      if(fs::is_directory(fileName2, ec)){
+         // directory in 1, file in 2
+         processDirectory(fileName2, &fileList);
          for(it = fileList.begin(); it != fileList.end();++it){
             // Process two files with non-verbose output (last argument false), give full path to the file processor
             process2Files(fileName1+"/"+*it,fileName2, varToExtract, compToExtract, false, compToExtract2);
          }
       }
 
-      closedir(dir1);
-      closedir(dir2);
       return 1;
    }
-   else if (dir1 != NULL && dir2 != NULL)
+   else
    {
       // Process two folders, files of the same rank compared, first folder is reference in relative distances
       cout << "#INFO Reading in two directories." << endl;
       set<string> fileList1, fileList2;
       
       // Produce a sorted file list
-      processDirectory(dir1, &fileList1);
-      processDirectory(dir2, &fileList2);
+      processDirectory(fileName1, &fileList1);
+      processDirectory(fileName2, &fileList2);
       
       // Basic consistency check
       if(fileList1.size() != fileList2.size())
@@ -1852,9 +1834,6 @@ int main(int argn,char* args[]) {
       process2Files(fileName1 + "/" + *it1,
                     fileName2 + "/" + *it2, varToExtract, compToExtract, false, compToExtract2);
       }
-      
-      closedir(dir1);
-      closedir(dir2);
    }
 
    MPI_Finalize();
