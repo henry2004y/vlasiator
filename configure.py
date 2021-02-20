@@ -3,7 +3,7 @@
 # configure.py: Vlasiator configuration script in python.
 #
 # It uses the command line options and default settings to create customized
-# versions of Makefile from the template file Makefile.in.
+# versions of Makefile from the template.
 # Original version by CJW. Modified by Hongyang Zhou.
 # ------------------------------------------------------------------------------
 
@@ -408,7 +408,7 @@ if args['install']:
 # --------- Step 4. Create new files, finish up --------------------------------
 
 # Read templates
-with open('Makefile.in', 'r') as f:
+with open('MAKE/Makefile.in', 'r') as f:
     makefile_template = f.read()
     # Substitute machine name
     makefile_template = makefile_template.replace('@machine@', args['machine'])
