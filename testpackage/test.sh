@@ -109,18 +109,18 @@ else
     echo "------------------------------------------------------------"
     echo " ref-time     |   new-time       |  speedup                |"
     echo "------------------------------------------------------------"
-	 if [ -e  ${result_dir}/${comparison_phiprof} ] 
-	 then
+	if [ -e  ${result_dir}/${comparison_phiprof} ] 
+	then
         refPerf=$(grep "Propagate   " ${result_dir}/${comparison_phiprof} | gawk  '(NR==1){print $11}')
-	 else
-	     refPerf="NA"
-	 fi
-	 if [ -e ${vlsv_dir}/${comparison_phiprof} ] 
-	 then
+	else
+	    refPerf="NA"
+	fi
+	if [ -e ${vlsv_dir}/${comparison_phiprof} ] 
+	then
         newPerf=$(grep "Propagate   " ${vlsv_dir}/${comparison_phiprof} | gawk  '(NR==1){print $11}')
-	 else
-	     newPerf="NA"
-	 fi
+	else
+	    newPerf="NA"
+	fi
 	 # Print speedup if both refPerf and newPerf are numerical values
     speedup=$( echo $refPerf $newPerf |gawk '{if($2 == $2 + 0 && $1 == $1 + 0 ) print $1/$2; else print "NA"}')
     echo  "$refPerf        $newPerf         $speedup"
@@ -128,10 +128,8 @@ else
     echo "  variable     |     absolute diff     |     relative diff | "
     echo "------------------------------------------------------------"
 
-	 variables=(${variable_names// / })
-    #variables=($variable_names[$i])
-    #read -a variables <<< variable_names[$i]
-	 indices=(${variable_components// / })
+	variables=(${variable_names// / })
+	indices=(${variable_components// / })
 
     for i in ${!variables[*]}
     do
