@@ -1,0 +1,35 @@
+name: Vlasiator CI
+
+on:
+  push:
+    branches: [ testsuite ]
+  pull_request:
+    branches: [ testsuite ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        gcc_v: [9] # Version of GCC
+    env:
+      GCC_V: ${{ matrix.gcc_v }}
+
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: MPI and Boost
+      run: |
+        sudo apt-get install -y gcc-${GCC_V}
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100
+        sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
+    - name: configure
+      run: python3 configure.py -install
+    - name: make
+      run: make -j
+    - name: test
+      run: |
+        export LD_LIBRARY_PATH=$PWD/lib/phiprof/lib:$PWD/lib/jemalloc/lib
+        cd testpackage && make
