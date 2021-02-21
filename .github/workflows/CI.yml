@@ -28,7 +28,7 @@ jobs:
     - name: configure
       run: python3 configure.py -install
     - name: make
-      run: make -j
+      run: make -j 2
     - name: test
       run: |
         export LD_LIBRARY_PATH=$PWD/lib/phiprof/lib:$PWD/lib/jemalloc/lib
