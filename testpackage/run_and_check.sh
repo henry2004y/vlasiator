@@ -6,7 +6,7 @@ echo "Start testing."
 cd "$1"
 configfile=$(ls | grep *.cfg)
 
-../../../vlasiator --run_config $configfile
+mpiexec -n 1 ../../../vlasiator --run_config $configfile
 
 SHA_run=$(cat "$filecheck" | sha256sum | head -c 64)
 
