@@ -7,6 +7,6 @@ cd $(dirname "$0")
 filecheck="bulk.0000001.vlsv"
 
 # Serial execution
-SHA_ref="fe41604c502f12f2406af1984cc103bfec36b564f83ea26ea40a3b789fb21095"
+SHA_ref="4984d41e6772d452276ad095cb5437d23842f5fe0ca6617f9ba46ddeff186437"
 
 source ../../run_and_check.sh $PWD
