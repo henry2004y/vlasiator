@@ -29,8 +29,7 @@ jobs:
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
     - name: Reference data
       run: |
-        ssh -L 1234:remote2:22 -p 22 hongyang@login.physics.helsinki.fi
-        scp -P 1234 hongyang@turso.cs.helsinki.fi:proj/CI .
+        ssh hongyang@login.physics.helsinki.fi 'ssh hongyang@turso.cs.helsinki.fi "cat proj/CI"' > CI
         cat CI
     - name: configure
       run: python3 configure.py -install
