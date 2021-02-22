@@ -23,6 +23,8 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.CI_PRIVATE_KEY }}
     - uses: julia-actions/setup-julia@v1
+    - name: julia
+      run: julia -e 'using Pkg; Pkg.add("Vlasiator")'
     - name: MPI and Boost
       run: |
         sudo apt-get install -y gcc-${GCC_V}
@@ -32,8 +34,9 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no hongyang@login.physics.helsinki.fi
         ssh -o StrictHostKeyChecking=no -J hongyang@login.physics.helsinki.fi hongyang@turso.cs.helsinki.fi
-        scp -o 'ProxyCommand ssh hongyang@login.physics.helsinki.fi -W %h:%p' hongyang@turso.cs.helsinki.fi:proj/CI .
-        cat CI
+        scp -r -o 'ProxyCommand ssh hongyang@login.physics.helsinki.fi -W %h:%p' \
+        hongyang@turso.cs.helsinki.fi:proj/reference.tar.gz testpackage/tests/
+        tar -xzf testpackage/tests/reference.tar.gz -C testpackage/tests/
     - name: configure
       run: python3 configure.py -install
     - name: make
