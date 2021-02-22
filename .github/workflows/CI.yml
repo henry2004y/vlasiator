@@ -29,7 +29,8 @@ jobs:
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
     - name: Reference data
       run: |
-        ssh-keygen -R login.physics.helsinki.fi
+        ssh -o StrictHostKeyChecking=no hongyang@login.physics.helsinki.fi
+        echo "where am I?"
         ssh-keyscan login.physics.helsinki.fi >> log
         cat log
         scp hongyang@login.physics.helsinki.fi:/home/hongyang/Documents/CI .
