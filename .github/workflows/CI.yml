@@ -45,5 +45,3 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=$PWD/lib/phiprof/lib:$PWD/lib/jemalloc/lib
         cd testpackage && make
-    - name: julia
-      run: julia -e 'println("Hello, World!")'
