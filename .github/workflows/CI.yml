@@ -30,10 +30,9 @@ jobs:
     - name: Reference data
       run: |
         ssh -o StrictHostKeyChecking=no hongyang@login.physics.helsinki.fi
-        echo "where am I?"
-        ssh-keyscan login.physics.helsinki.fi >> log
-        cat log
+        echo $PWD
         scp hongyang@login.physics.helsinki.fi:/home/hongyang/Documents/CI .
+        echo $PWD
         cat CI
     - name: configure
       run: python3 configure.py -install
