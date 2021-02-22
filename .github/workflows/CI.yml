@@ -29,9 +29,10 @@ jobs:
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
     - name: Reference data
       run: |
-        mkdir -p .ssh
-        ssh-keygen -f "~/.ssh/known_hosts" -R 128.214.9.101
-        ssh-keygen -f "~/.ssh/known_hosts" -R 128.214.166.75
+        #mkdir -p .ssh
+        #ssh-keygen -f "~/.ssh/known_hosts" -R 128.214.9.101
+        #ssh-keygen -f "~/.ssh/known_hosts" -R 128.214.166.75
+        ssh-keyscan turso.cs.helsinki.fi >> ~/.ssh/known_hosts
         scp -o 'ProxyCommand ssh hongyang@login.physics.helsinki.fi -W %h:%p' hongyang@turso.cs.helsinki.fi:proj/CI .
         cat CI
     - name: configure
