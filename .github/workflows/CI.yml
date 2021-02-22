@@ -29,8 +29,8 @@ jobs:
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
     - name: Reference data
       run: |
-        ssh -T -oStrictHostKeyChecking=accept-new hongyang@turso.cs.helsinki.fi || true
-        scp -o 'ProxyCommand ssh hongyang@login.physics.helsinki.fi -W %h:%p' hongyang@turso.cs.helsinki.fi:proj/CI .
+        ssh -L 1234:remote2:22 -p 22 hongyang@login.physics.helsinki.fi
+        scp -P 1234 hongyang@turso.cs.helsinki.fi:proj/CI .
         cat CI
     - name: configure
       run: python3 configure.py -install
