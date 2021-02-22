@@ -54,11 +54,13 @@ parser.add_argument('--nz',
 parser.add_argument('--vorder',
                     type=int,
                     default=5,
+                    choices=[2,3,5],
                     help='set order of velocity space acceleration')
 
 parser.add_argument('--sorder',
                     type=int,
                     default=3,
+                    choices=[2,3,5],
                     help='set order of spatial translation')
 
 parser.add_argument('--fieldsolver',
@@ -68,6 +70,7 @@ parser.add_argument('--fieldsolver',
 parser.add_argument('--fieldorder',
                     type=int,
                     default=2,
+                    choices=[1,2],
                     help='select field solver order')
 
 parser.add_argument('-amr',
@@ -75,35 +78,49 @@ parser.add_argument('-amr',
                     default=False,
                     help='enable AMR in velocity space')
 
+parser.add_argument('-noamr', dest='amr', action='store_false')
+
 parser.add_argument('-debug',
                     action='store_true',
                     default=False,
                     help='enable debug flags; override other compiler options')
+
+parser.add_argument('-nodebug', dest='debug', action='store_false')
 
 parser.add_argument('-debugsolver',
                     action='store_true',
                     default=False,
                     help='enable debug preprocessor for field solver')
 
+parser.add_argument('-nodebugsovler', dest='debugsolver', action='store_false')
+
 parser.add_argument('-debugionosphere',
                     action='store_true',
                     default=False,
                     help='enable debug preprocessor for ionosphere module')
+
+parser.add_argument('-nodebugionosphere', dest='debugionosphere', action='store_false')
 
 parser.add_argument('-debugfloat',
                     action='store_true',
                     default=False,
                     help='enable preprocessor for floating point exceptions')
 
+parser.add_argument('-nodebugfloat', dest='debugfloat', action='store_false')
+
 parser.add_argument('-float',
                     action='store_true',
                     default=False,
                     help='enable single precision')
 
-parser.add_argument('-distfloat',
+parser.add_argument('-double', dest='float', action='store_false')
+
+parser.add_argument('-distdouble',
                     action='store_true',
-                    default=True,
-                    help='enable single precision for distribution function')
+                    default=False,
+                    help='enable double precision for distribution function')
+
+parser.add_argument('-distsingle', dest='distdouble', action='store_false')
 
 parser.add_argument('-profile', 
                     dest='profile', 
@@ -111,21 +128,21 @@ parser.add_argument('-profile',
                     default=True,
                     help='enable profiler')
 
+parser.add_argument('-noprofile', dest='profile', action='store_false')
+
 parser.add_argument('-mpi',
                     action='store_true',
                     default=True,
                     help='enable parallelization with MPI')
+
+parser.add_argument('-nompi', dest='mpi', action='store_false')
 
 parser.add_argument('-omp',
                     action='store_true',
                     default=False,
                     help='enable parallelization with OpenMP')
 
-parser.add_argument('-nocheck',
-                    action='store_true',
-                    default=False,
-                    help='disable linking library checking')
-
+parser.add_argument('-noomp', dest='omp', action='store_false')
 
 parser.add_argument('--machine',
                     default='default',
@@ -156,21 +173,9 @@ cxx_choices = [
 ]
 
 
-def c_to_cpp(arg):
-    arg = arg.replace('gcc', 'g++', 1)
-    arg = arg.replace('icc', 'icpc', 1)
-
-    if arg == 'clang':
-        arg = 'clang++'
-    else:
-        arg = arg.replace('clang-', 'clang++-', 1)
-    return arg
-
-
 parser.add_argument(
     '--cxx',
     default='g++',
-    type=c_to_cpp,
     choices=cxx_choices,
     help='select C++ compiler and default set of flags')
 
@@ -192,14 +197,71 @@ if not os.path.isfile(os.path.join("MAKE/Makefile."+args['machine'])):
 
 # --------- Step 3. Set Makefile options based on above argument ---------------
 
-# Prepare dictionaries of substitutions to be made
-makefile_options = {}
-makefile_options['PREPROCESSOR_FLAGS'] = ''
+def display_settings():
+    print('Vlasiator has now been configured with the following options:')
+    print('  Machine:                    ' + (args['machine'] if args['machine'] else 'new'))
+    print('  Floating-point precision:   ' + ('single' if args['float'] else 'double'))
+    print('  Distribution precision:     ' + ('double' if args['distdouble'] else 'single'))
+    print('  Block size:                 ' + str(args['nx']) + ' ' \
+                                           + str(args['ny']) + ' ' \
+                                           + str(args['nz']))
+    print('  MPI parallelism:            ' + ('ON' if args['mpi'] else 'OFF'))
+    print('  OpenMP parallelism:         ' + ('ON' if args['omp'] else 'OFF'))
+    print('  Order of field solver:      ' + str(args['fieldorder']))
+    print('  Order of semilag velocity:  ' + str(args['vorder']))
+    print('  Order of semilag spatial:   ' + str(args['sorder']))
+    print('  AMR:                        ' + ('ON' if args['amr'] else 'OFF'))
+    print('  Profiler:                   ' + ('ON' if args['profile'] else 'OFF'))
+    print('  Memory tracker:             ' + ('ON' if args['papi'] else 'OFF'))
+    print('  Debug flags:                ' + ('ON' if args['debug'] else 'OFF'))
+    print('  Compiler:                   ' + args['cxx'])
+
 
 if len(sys.argv) == 1:
     # Check existing Makefile if no argument is passed
     if not os.path.isfile("Makefile"):
         print("Vlasiator is not installed.")
+    else:
+        with open('Makefile') as f:
+            fstr = f.read()[110:400]
+            args['machine'] = fstr.split("Makefile.",1)[1].split("\n",1)[0]
+            if 'mpicxx' in fstr:
+                args['cxx'] = 'mpicxx'
+            
+            args['omp'] = True if 'openmp' in fstr or 'omp' in fstr else False 
+            precision = 'DP' if '-DDP ' in fstr else 'SP'
+            args['distdouble'] = True if '-DSPF' in fstr else '-DDPF'
+            args['profile'] = True if '-DPROFILE' in fstr else False
+            if 'ACC_SEMILAG_PQM' in fstr:
+                args['vorder'] = 5
+            elif 'ACC_SEMILAG_PPM' in fstr:
+                args['vorder'] = 3
+            elif 'ACC_SEMILAG_PLM' in fstr:
+                args['vorder'] = 2
+            
+            if 'TRANS_SEMILAG_PQM' in fstr:
+                args['sorder'] = 5
+            elif 'TRANS_SEMILAG_PPM' in fstr:
+                args['sorder'] = 3
+            elif 'TRANS_SEMILAG_PLM' in fstr:
+                args['sorder'] = 2
+
+            args['fieldorder'] = 1 if '1ST_ORDER_SPACE' in fstr else 2
+
+            args['debug'] = True if 'NDEBUG' in fstr else False
+
+            args['amr'] = True if '-DAMR' in fstr else False
+            args['jemalloc'] = True if '-DUSE_JEMALLOC' in fstr else False
+            args['papi'] = True if '-DPAPI_MEM' in fstr else False
+
+            display_settings()
+            sys.exit()
+
+
+
+# Prepare dictionaries of substitutions to be made
+makefile_options = {}
+makefile_options['PREPROCESSOR_FLAGS'] = ''
 
 if args['cxx'] == 'g++':
     makefile_options['COMPILER_COMMAND'] = 'g++'
@@ -245,12 +307,12 @@ for key in ('vlsvdiff','vlsvextract','vlsv2silo'):
     makefile_options[key.upper()] = key+'_'+precision
 
 # Distribution function precision
-if args['distfloat']:
-    makefile_options['PREPROCESSOR_FLAGS'] += ' -DSPF'
-    makefile_options['PREPROCESSOR_FLAGS'] += ' -DVEC4F_FALLBACK' # vector backend type
-else:
+if args['distdouble']:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DDPF'
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DVEC4D_FALLBACK' # vector backend type
+else:
+    makefile_options['PREPROCESSOR_FLAGS'] += ' -DSPF'
+    makefile_options['PREPROCESSOR_FLAGS'] += ' -DVEC4F_FALLBACK' # vector backend type
 
 if args['profile']:
     makefile_options['PREPROCESSOR_FLAGS'] += ' -DPROFILE'
@@ -425,22 +487,4 @@ with open('Makefile', 'w') as f:
     f.write(makefile_template)
 
 # Finish with diagnostic output
-print('Vlasiator has now been configured with the following options:')
-print('  Machine:                    ' + (args['machine'] if args['machine'] else 'new'))
-print('  Floating-point precision:   ' + ('single' if args['float'] else 'double'))
-print('  Distribution precision:     ' + ('single' if args['distfloat'] else 'double'))
-print('  Block size:                 ' + str(args['nx']) + ' ' \
-                                       + str(args['ny']) + ' ' \
-                                       + str(args['nz']))
-print('  MPI parallelism:            ' + ('ON' if args['mpi'] else 'OFF'))
-print('  OpenMP parallelism:         ' + ('ON' if args['omp'] else 'OFF'))
-print('  Order of field solver:      ' + str(args['fieldorder']))
-print('  Order of semilag velocity:  ' + str(args['vorder']))
-print('  Order of semilag spatial:   ' + str(args['sorder']))
-print('  AMR:                        ' + ('ON' if args['amr'] else 'OFF'))
-print('  Profiler:                   ' + ('ON' if args['profile'] else 'OFF'))
-print('  Memory tracker:             ' + ('ON' if args['papi'] else 'OFF'))
-print('  Debug flags:                ' + ('ON' if args['debug'] else 'OFF'))
-print('  Compiler:                   ' + args['cxx'])
-print('  Compilation command:        ' + makefile_options['COMPILER_COMMAND'] + ' ' \
-                                       + makefile_options['COMPILER_FLAGS'])
+display_settings()
