@@ -29,7 +29,7 @@ jobs:
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
     - name: Reference data
       run: |
-        scp hongyang@turso.cs.helsinki.fi:/home/hongyang/proj/CI .
+        scp -o 'ProxyCommand ssh hongyang@login.physics.helsinki.fi -W %h:%p' hongyang@turso.cs.helsinki.fi:proj/CI .
         cat CI
     - name: configure
       run: python3 configure.py -install
