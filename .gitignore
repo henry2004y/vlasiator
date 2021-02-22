@@ -5,10 +5,12 @@
 vscode/
 .vscode/
 version.cpp
+Makefile
 \#*\#
 *~
 nbproject
 vlasiator
 vlasiator+pat
+vlsvdiff_DP
 nbproject
 lib/
