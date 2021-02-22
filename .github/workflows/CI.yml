@@ -19,11 +19,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: webfactory/ssh-agent@v0.5.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: MPI and Boost
       run: |
         sudo apt-get install -y gcc-${GCC_V}
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
+    - name: Reference data
+      run: |
+        scp hongyang@turso.cs.helsinki.fi:/home/hongyang/proj/CI .
+        cat CI
     - name: configure
       run: python3 configure.py -install
     - name: make
