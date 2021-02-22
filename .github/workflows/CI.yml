@@ -19,11 +19,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: webfactory/ssh-agent@v0.5.0
+      with:
+        ssh-private-key: ${{ secrets.CI_PRIVATE_KEY }}
+    - uses: julia-actions/setup-julia@v1
+    - name: julia
+      run: julia -e 'using Pkg; Pkg.add("Vlasiator")'
     - name: MPI and Boost
       run: |
         sudo apt-get install -y gcc-${GCC_V}
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
+    - name: Reference data
+      run: |
+        ssh -o StrictHostKeyChecking=no hongyang@login.physics.helsinki.fi
+        ssh -o StrictHostKeyChecking=no -J hongyang@login.physics.helsinki.fi hongyang@turso.cs.helsinki.fi
+        scp -r -o 'ProxyCommand ssh hongyang@login.physics.helsinki.fi -W %h:%p' \
+        hongyang@turso.cs.helsinki.fi:proj/reference.tar.gz testpackage/tests/
+        tar -xzf testpackage/tests/reference.tar.gz -C testpackage/tests/
     - name: configure
       run: python3 configure.py -install
     - name: make
