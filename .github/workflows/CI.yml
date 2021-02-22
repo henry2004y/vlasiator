@@ -19,11 +19,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: webfactory/ssh-agent@v0.5.0
+      with:
+        ssh-private-key: ${{ secrets.CI_PRIVATE_KEY }}
+    - uses: julia-actions/setup-julia@v1
     - name: MPI and Boost
       run: |
         sudo apt-get install -y gcc-${GCC_V}
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
+    - name: Reference data
+      run: |
+        ssh -o StrictHostKeyChecking=no hongyang@login.physics.helsinki.fi
+        ssh -o StrictHostKeyChecking=no -J hongyang@login.physics.helsinki.fi hongyang@turso.cs.helsinki.fi
+        scp -o 'ProxyCommand ssh hongyang@login.physics.helsinki.fi -W %h:%p' hongyang@turso.cs.helsinki.fi:proj/CI .
+        cat CI
     - name: configure
       run: python3 configure.py -install
     - name: make
@@ -32,3 +42,5 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=$PWD/lib/phiprof/lib:$PWD/lib/jemalloc/lib
         cd testpackage && make
+    - name: julia
+      run: julia -e 'println("Hello, World!")'
