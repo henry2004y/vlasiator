@@ -38,7 +38,7 @@ jobs:
         hongyang@turso.cs.helsinki.fi:proj/reference.tar.gz testpackage/tests/
         tar -xzf testpackage/tests/reference.tar.gz -C testpackage/tests/
     - name: configure
-      run: python3 configure.py -install
+      run: python3 configure.py -install -distdouble
     - name: make
       run: make -j 2
     - name: test

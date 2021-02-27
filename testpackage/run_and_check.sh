@@ -26,7 +26,7 @@ if [ "$isIdentical" = "true" ]
 then
    rm *vlsv *txt
 else
-   echo $isIdentical; exit 1   
+   exit 1   
 fi
 
 #SHA_run=$(cat "$filecheck" | sha256sum | head -c 64)
