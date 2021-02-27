@@ -13,21 +13,22 @@ then
    tar -xzf ../reference.tar.gz -C ../
 fi
 
-export OMP_NUM_THREADS=1
-mpiexec -n 2 ../../../vlasiator --run_config $configfile
+export OMP_NUM_THREADS=$nthreads
+mpiexec -n $nprocs ../../../vlasiator --run_config $configfile
 
-isIdentical=$(julia -e '
+isIdentical=$(julia -e ' using Pkg;
+   Pkg.add(PackageSpec(url="https://github.com/henry2004y/Vlasiator.jl", rev="master"))
    using Vlasiator
-   filenames = ARGS
-   isIdentical = compare(filenames[1], filenames[2])
+   filenames, tol = ARGS[1:2], parse(Float64, ARGS[3])
+   isIdentical = compare(filenames[1], filenames[2], tol)
    println(isIdentical)
-   ' ../reference/$(basename $1)/$filecheck $filecheck)
+   ' ../reference/$(basename $1)/$filecheck $filecheck $tol)
 
 if [ "$isIdentical" = "true" ]
 then
    rm *vlsv *txt
 else
-   echo "There are differences in the output!"; exit 1   
+   echo $isIdentical; exit 1   
 fi
 
 #SHA_run=$(cat "$filecheck" | sha256sum | head -c 64)

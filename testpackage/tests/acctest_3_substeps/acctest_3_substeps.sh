@@ -4,7 +4,7 @@
 cd $(dirname "$0")
 
 # Compared filename
-filecheck="bulk.0000001.vlsv"
+filecheck="fullf.0000001.vlsv"
 
 # Number of MPI processes
 nprocs=1

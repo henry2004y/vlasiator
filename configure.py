@@ -267,7 +267,7 @@ if args['cxx'] == 'g++':
     makefile_options['COMPILER_COMMAND'] = 'g++'
     makefile_options['COMPILER_FLAGS'] = (
         '-O3 -fopenmp -funroll-loops '
-        '-ffast-math -std=c++17 -W -Wall -Wno-unused -mavx' )
+        '-std=c++17 -W -Wall -Wno-unused' )
 if args['cxx'] == 'icpc':
     makefile_options['COMPILER_COMMAND'] = 'icpc'
     makefile_options['COMPILER_FLAGS'] = (

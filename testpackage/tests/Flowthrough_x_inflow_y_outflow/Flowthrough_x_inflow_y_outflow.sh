@@ -6,7 +6,11 @@ cd $(dirname "$0")
 # Compared filename
 filecheck="bulk.0000001.vlsv"
 
-# Serial execution
-SHA_ref="4984d41e6772d452276ad095cb5437d23842f5fe0ca6617f9ba46ddeff186437"
+# Number of MPI processes
+nprocs=1
+# Number of OpenMP threads
+nthreads=1
+# Tolerance that scales with quantity magnitude
+tol=1e-8
 
 source ../../run_and_check.sh $PWD
