@@ -16,9 +16,7 @@ fi
 export OMP_NUM_THREADS=$nthreads
 mpiexec -n $nprocs ../../../vlasiator --run_config $configfile
 
-isIdentical=$(julia -e ' using Pkg;
-   Pkg.add(PackageSpec(url="https://github.com/henry2004y/Vlasiator.jl", rev="master"))
-   using Vlasiator
+isIdentical=$(julia -e ' using Vlasiator
    filenames, tol = ARGS[1:2], parse(Float64, ARGS[3])
    isIdentical = compare(filenames[1], filenames[2], tol)
    println(isIdentical)
