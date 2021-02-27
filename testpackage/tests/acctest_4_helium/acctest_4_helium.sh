@@ -11,6 +11,6 @@ nprocs=1
 # Number of OpenMP threads
 nthreads=1
 # Tolerance that scales with quantity magnitude
-tol=1e-8
+tol=1e-4
 
 source ../../run_and_check.sh $PWD
