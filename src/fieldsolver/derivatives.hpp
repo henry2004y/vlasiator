@@ -24,7 +24,7 @@
 
 #include "../definitions.h"
 #include "../spatial_cell.hpp"
-#include "../sysboundary/sysboundary.h"
+#include "../boundary/sysboundary.h"
 
 #include "fs_limiters.h"
 

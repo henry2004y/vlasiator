@@ -42,7 +42,7 @@
 #include "readparameters.h"
 #include "spatial_cell.hpp"
 #include "datareduction/datareducer.h"
-#include "sysboundary/sysboundary.h"
+#include "boundary/sysboundary.h"
 
 #include "fieldsolver/fs_common.h"
 #include "projects/project.h"

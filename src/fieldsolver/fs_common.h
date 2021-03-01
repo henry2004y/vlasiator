@@ -39,8 +39,8 @@
 #include "../common.h"
 #include "../parameters.h"
 #include "../projects/project.h"
-#include "../sysboundary/sysboundary.h"
-#include "../sysboundary/sysboundarycondition.h"
+#include "../boundary/sysboundary.h"
+#include "../boundary/sysboundarycondition.h"
 
 // Constants: not needed as such, but if field solver is implemented on GPUs 
 // these force CPU to use float accuracy, which in turn helps to compare 

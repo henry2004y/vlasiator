@@ -35,7 +35,7 @@
 #include "logger.h"
 #include "parameters.h"
 #include "datareduction/datareducer.h"
-#include "sysboundary/sysboundary.h"
+#include "boundary/sysboundary.h"
 #include "fieldsolver/fs_common.h"
 #include "fieldsolver/gridGlue.hpp"
 #include "projects/project.h"

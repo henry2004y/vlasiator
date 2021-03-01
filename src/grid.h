@@ -26,7 +26,7 @@
 #include "spatial_cell.hpp"
 #include <dccrg.hpp>
 #include <dccrg_cartesian_geometry.hpp>
-#include "sysboundary/sysboundary.h"
+#include "boundary/sysboundary.h"
 #include "projects/project.h"
 #include <string>
 
