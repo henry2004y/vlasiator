@@ -1,9 +1,9 @@
 # JEMALLOC
 # Use instead of system malloc to reduce memory fragmentation
 # Configure jemalloc with  --with-jemalloc-prefix=je_ when installing it
-CPPFLAGS += -DUSE_JEMALLOC -DJEMALLOC_NO_DEMANGLE
+#CPPFLAGS += -DUSE_JEMALLOC -DJEMALLOC_NO_DEMANGLE
 
-LDFLAGS = -lrt -lgfortran -std=c++17
+LDFLAGS = -lrt -std=c++17
 
 INC_DCCRG := -Ilib/dccrg
 
@@ -23,8 +23,8 @@ LIB_VLSV := -Llib/vlsv -lvlsv
 INC_SILO := -I
 LIB_SILO := -L
 
-INC_JEMALLOC := -Ilib/jemalloc/include
-LIB_JEMALLOC := -Llib/jemalloc/lib -ljemalloc
+#INC_JEMALLOC := -Ilib/jemalloc/include
+#LIB_JEMALLOC := -Llib/jemalloc/lib -ljemalloc
 
 INC_PROFILE := -Ilib/phiprof/include
 LIB_PROFILE := -Llib/phiprof/lib -lphiprof
