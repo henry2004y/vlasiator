@@ -2,7 +2,7 @@ name: Vlasiator CI
 
 on:
   push:
-    branches: [ testsuite ]
+    branches: [ testsuite, BC ]
   pull_request:
     branches: [ testsuite ]
 
