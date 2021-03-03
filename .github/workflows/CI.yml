@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        gcc_v: [9] # Version of GCC
+        gcc_v: [10] # Version of GCC
     env:
       GCC_V: ${{ matrix.gcc_v }}
 
