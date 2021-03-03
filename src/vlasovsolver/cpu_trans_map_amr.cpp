@@ -221,7 +221,7 @@ void computeSpatialSourceCellsForPencil(const dccrg::Dccrg<SpatialCell,dccrg::Ca
    /*loop to negative side and replace all invalid cells with the closest good cell*/
    SpatialCell* lastGoodCell = mpiGrid[ids.front()];
    for(int i = VLASOV_STENCIL_WIDTH - 1; i >= 0 ;--i){
-      if(sourceCells[i] == NULL || sourceCells[i]->sysBoundaryFlag == sysboundarytype::DO_NOT_COMPUTE)
+      if(sourceCells[i] == NULL || sourceCells[i]->boundaryFlag == boundarytype::NOTHING)
          sourceCells[i] = lastGoodCell;
       else
          lastGoodCell = sourceCells[i];
@@ -229,7 +229,7 @@ void computeSpatialSourceCellsForPencil(const dccrg::Dccrg<SpatialCell,dccrg::Ca
    /*loop to positive side and replace all invalid cells with the closest good cell*/
    lastGoodCell = mpiGrid[ids.back()];
    for(int i = VLASOV_STENCIL_WIDTH + L; i < (L + 2*VLASOV_STENCIL_WIDTH); ++i){
-      if(sourceCells[i] == NULL || sourceCells[i]->sysBoundaryFlag == sysboundarytype::DO_NOT_COMPUTE)
+      if(sourceCells[i] == NULL || sourceCells[i]->boundaryFlag == boundarytype::NOTHING)
          sourceCells[i] = lastGoodCell;
       else
          lastGoodCell = sourceCells[i];
@@ -323,7 +323,7 @@ void computeSpatialTargetCellsForPencilsWithFaces(const dccrg::Dccrg<SpatialCell
 
    // Remove any boundary cells from the list of valid targets
    for (uint i = 0; i < GID; ++i) {
-      if (targetCells[i] && targetCells[i]->sysBoundaryFlag != sysboundarytype::NOT_SYSBOUNDARY ) {
+      if (targetCells[i] && targetCells[i]->boundaryFlag != boundarytype::NOT_BOUNDARY ) {
          targetCells[i] = NULL;
       }
    }
@@ -703,7 +703,7 @@ void propagatePencil(
  *
  * @param [in] mpiGrid DCCRG grid object
  * @param [in] localPropagatedCells List of local cells that get propagated
- * ie. not boundary or DO_NOT_COMPUTE
+ * ie. not boundary or NOTHING
  * @param [in] dimension Spatial dimension
  * @param [out] seedIds list of cell ids that will be starting points for pencils
  */
@@ -1016,7 +1016,7 @@ bool checkPencils(
 
    for (auto id : cells) {
 
-      if (mpiGrid[id]->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY )  {
+      if (mpiGrid[id]->boundaryFlag == boundarytype::NOT_BOUNDARY )  {
       
          int myCount = std::count(pencils.ids.begin(), pencils.ids.end(), id);
          
@@ -1102,7 +1102,7 @@ void printPencilsFunc(const setOfPencils& pencils, const uint dimension, const i
  *
  * @param [in] mpiGrid DCCRG grid object
  * @param [in] localPropagatedCells List of local cells that get propagated
- * ie. not boundary or DO_NOT_COMPUTE
+ * ie. not boundary or NOTHING
  * @param [in] remoteTargetCells List of non-local target cells
  * @param dimension Spatial dimension
  * @param [in] dt Time step
@@ -1410,12 +1410,12 @@ bool trans_map_1d_amr(const dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>&
             phiprof::stop(t1);
             phiprof::start(t2);
             
-            // reset blocks in all non-sysboundary neighbor spatial cells for this block id
+            // reset blocks in all non-boundary neighbor spatial cells for this block id
             // At this point the block data is saved in targetBlockData so we can reset the spatial cells
 
             for (auto *spatial_cell: targetCells) {
-               // Check for null and system boundary
-               if (spatial_cell && spatial_cell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY) {
+               // Check for null and boundary
+               if (spatial_cell && spatial_cell->boundaryFlag == boundarytype::NOT_BOUNDARY) {
                   
                   // Get local velocity block id
                   const vmesh::LocalID blockLID = spatial_cell->get_velocity_block_local_id(blockGID, popID);
@@ -1669,7 +1669,7 @@ void update_remote_mapping_contribution_amr(
                SpatialCell *pcell = mpiGrid[nbr];
                
                // 4) it exists and is not a boundary cell,
-               if(pcell && pcell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY) {
+               if(pcell && pcell->boundaryFlag == boundarytype::NOT_BOUNDARY) {
 
                   ccell->neighbor_number_of_blocks.at(sendIndex) = pcell->get_number_of_velocity_blocks(popID);
                   
@@ -1696,7 +1696,7 @@ void update_remote_mapping_contribution_amr(
                      
                   } // closes if(send_cells.find(nbr) == send_cells.end())
                   
-               } // closes if(pcell && pcell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY)
+               } // closes if(pcell && pcell->boundaryFlag == boundarytype::NOT_BOUNDARY)
                
             } // closes if(nbr != INVALID_CELLID && do_translate_cell(ccell) && !mpiGrid.is_local(nbr))
             
@@ -1711,7 +1711,7 @@ void update_remote_mapping_contribution_amr(
          for (const auto nbr : n_nbrs) {
          
             if (nbr != INVALID_CELLID && !mpiGrid.is_local(nbr) &&
-                ccell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY) {
+                ccell->boundaryFlag == boundarytype::NOT_BOUNDARY) {
                //Receive data that ncell mapped to this local cell data array,
                //if 1) ncell is a valid source cell, 2) center cell is to be updated (normal cell) 3) ncell is remote
 

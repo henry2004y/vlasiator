@@ -97,7 +97,7 @@ namespace spatial_cell {
       const uint64_t VEL_BLOCK_PARAMETERS     = (1ull<<6);
       const uint64_t VEL_BLOCK_WITH_CONTENT_STAGE1  = (1ull<<7); 
       const uint64_t VEL_BLOCK_WITH_CONTENT_STAGE2  = (1ull<<8); 
-      const uint64_t CELL_SYSBOUNDARYFLAG     = (1ull<<9);
+      const uint64_t CELL_BOUNDARYFLAG        = (1ull<<9);
       const uint64_t CELL_E                   = (1ull<<10);
       const uint64_t CELL_EDT2                = (1ull<<11);
       const uint64_t CELL_PERB                = (1ull<<12);
@@ -122,14 +122,14 @@ namespace spatial_cell {
       CELL_PARAMETERS
       | CELL_DERIVATIVES | CELL_BVOL_DERIVATIVES
       | VEL_BLOCK_DATA
-      | CELL_SYSBOUNDARYFLAG
+      | CELL_BOUNDARYFLAG
       | POP_METADATA | RANDOMGEN;
 
       //all data, except the distribution function
       const uint64_t ALL_SPATIAL_DATA =
       CELL_PARAMETERS
       | CELL_DERIVATIVES | CELL_BVOL_DERIVATIVES
-      | CELL_SYSBOUNDARYFLAG
+      | CELL_BOUNDARYFLAG
       | POP_METADATA | RANDOMGEN;
    }
 
@@ -303,7 +303,7 @@ namespace spatial_cell {
       std::tuple<void*, int, MPI_Datatype> get_mpi_datatype(const CellID cellID,const int sender_rank,const int receiver_rank,
                                                             const bool receiving,const int neighborhood);
       static uint64_t get_mpi_transfer_type(void);
-      static void set_mpi_transfer_type(const uint64_t type,bool atSysBoundaries=false);
+      static void set_mpi_transfer_type(const uint64_t type,bool atBoundaries=false);
       void set_mpi_transfer_enabled(bool transferEnabled);
       void updateSparseMinValue(const uint popID);
       Real getVelocityBlockMinValue(const uint popID) const;
@@ -330,11 +330,11 @@ namespace spatial_cell {
                                                                                * cell block data. We do not allocate memory for the pointer.*/
       std::array<vmesh::LocalID,MAX_NEIGHBORS_PER_DIM> neighbor_number_of_blocks;
       std::map<int,std::set<int>> face_neighbor_ranks;
-      uint sysBoundaryFlag;                                                   /**< What type of system boundary does the cell belong to. 
-                                                                               * Enumerated in the sysboundarytype namespace's enum.*/
-      uint sysBoundaryLayer;                                                  /**< Layers counted from closest systemBoundary. If 0 then it has not 
-                                                                               * been computed. First sysboundary layer is layer 1.*/
-      int sysBoundaryLayerNew;
+      uint boundaryFlag;                                                   /**< What type of boundary does the cell belong to. 
+                                                                               * Enumerated in the boundarytype namespace's enum.*/
+      uint boundaryLayer;                                                  /**< Layers counted from closest systemBoundary. If 0 then it has not 
+                                                                               * been computed. First boundary layer is layer 1.*/
+      int boundaryLayerNew;
       std::vector<vmesh::GlobalID> velocity_block_with_content_list;          /**< List of existing cells with content, only up-to-date after
                                                                                * call to update_has_content().*/
       vmesh::LocalID velocity_block_with_content_list_size;                   /**< Size of vector. Needed for MPI communication of size before actual list transfer.*/
@@ -342,7 +342,7 @@ namespace spatial_cell {
                                                                                * call to update_has_content. This is also never transferred
                                                                                * over MPI, so is invalid on remote cells.*/
       static uint64_t mpi_transfer_type;                                      /**< Which data is transferred by the mpi datatype given by spatial cells.*/
-      static bool mpiTransferAtSysBoundaries;                                 /**< Do we only transfer data at boundaries (true), or in the whole system (false).*/
+      static bool mpiTransferAtBoundaries;                                 /**< Do we only transfer data at boundaries (true), or in the whole system (false).*/
 
       //SpatialCell& operator=(const SpatialCell& other);
     private:
@@ -1540,7 +1540,7 @@ namespace spatial_cell {
       const vmesh::LocalID blockLID = get_velocity_block_local_id(blockGID, popID);
       //const Velocity_Block block_ptr = at(block);
       if (blockLID == invalid_local_id()) {
-      //if (block_ptr.is_null() == true) {
+      //if (block_ptr.is_null() ) {
          std::cerr << __FILE__ << ":" << __LINE__
             << " block_ptr == NULL" << std::endl; 
          abort();
@@ -1558,7 +1558,7 @@ namespace spatial_cell {
       const vmesh::LocalID blockLID = get_velocity_block_local_id(blockGID, popID);
       //const Velocity_Block block_ptr = at(block);
       if (blockLID == invalid_local_id()) {
-      //if (block_ptr.is_null() == true) {
+      //if (block_ptr.is_null() ) {
          std::cerr << __FILE__ << ":" << __LINE__
             << " block_ptr == NULL" << std::endl; 
          abort();
@@ -1661,7 +1661,7 @@ namespace spatial_cell {
       // Block insert will fail, if the block already exists, or if 
       // there are too many blocks in the spatial cell
       bool success = true;
-      if (populations[popID].vmesh.push_back(block) == false) {
+      if (!populations[popID].vmesh.push_back(block)) {
          return false;
       }
 
@@ -1771,7 +1771,7 @@ namespace spatial_cell {
 		  break;
 	       }
 	    }
-	    if (createBlock == true) add_velocity_block(siblings[s]);
+	    if (createBlock ) add_velocity_block(siblings[s]);
 	    add_velocity_block(siblings[s]);
 	 }*/
 //      }
@@ -1846,9 +1846,9 @@ namespace spatial_cell {
    /*!
     Sets the type of data to transfer by mpi_datatype.
     */
-   inline void SpatialCell::set_mpi_transfer_type(const uint64_t type,bool atSysBoundaries) {
+   inline void SpatialCell::set_mpi_transfer_type(const uint64_t type,bool atBoundaries) {
       SpatialCell::mpi_transfer_type = type;
-      SpatialCell::mpiTransferAtSysBoundaries = atSysBoundaries;
+      SpatialCell::mpiTransferAtBoundaries = atBoundaries;
    }
 
    /*!
@@ -1888,9 +1888,9 @@ namespace spatial_cell {
    }
 
    // inline SpatialCell& SpatialCell::operator=(const SpatialCell& other) {
-   //    this->sysBoundaryFlag = other.sysBoundaryFlag;
-   //    this->sysBoundaryLayer = other.sysBoundaryLayer;
-   //    this->sysBoundaryLayerNew = other.sysBoundaryLayerNew;
+   //    this->boundaryFlag = other.boundaryFlag;
+   //    this->boundaryLayer = other.boundaryLayer;
+   //    this->boundaryLayerNew = other.boundaryLayerNew;
    //    this->velocity_block_with_content_list = other.velocity_block_with_content_list;
    //    this->velocity_block_with_no_content_list = other.velocity_block_with_no_content_list;
    //    this->initialized = other.initialized;

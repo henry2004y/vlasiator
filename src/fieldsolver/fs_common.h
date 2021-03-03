@@ -39,8 +39,8 @@
 #include "../common.h"
 #include "../parameters.h"
 #include "../projects/project.h"
-#include "../boundary/sysboundary.h"
-#include "../boundary/sysboundarycondition.h"
+#include "../boundary/boundary.h"
+#include "../boundary/boundarycondition.h"
 
 // Constants: not needed as such, but if field solver is implemented on GPUs 
 // these force CPU to use float accuracy, which in turn helps to compare 
@@ -76,7 +76,7 @@ bool initializeFieldPropagator(
    FsGrid< std::array<Real, fsgrids::bgbfield::N_BGB>, FS_STENCIL_WIDTH> & BgBGrid,
    FsGrid< std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH> & volGrid,
    FsGrid< fsgrids::technical, FS_STENCIL_WIDTH> & technicalGrid,
-   SysBoundary& sysBoundaries
+   Boundary& boundaries
 );
 
 bool initializeFieldPropagatorAfterRebalance();
@@ -97,7 +97,7 @@ bool propagateFields(
    FsGrid< std::array<Real, fsgrids::bgbfield::N_BGB>, FS_STENCIL_WIDTH> & BgBGrid,
    FsGrid< std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH> & volGrid,
    FsGrid< fsgrids::technical, FS_STENCIL_WIDTH> & technicalGrid,
-   SysBoundary& sysBoundaries,
+   Boundary& boundaries,
    creal& dt,
    cuint subcycles
 );

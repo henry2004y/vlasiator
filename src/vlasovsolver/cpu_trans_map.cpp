@@ -55,10 +55,10 @@ using namespace spatial_cell;
 //#define i_trans_pt_blockv(j, k, b_k) ( ( (j) * WID + (k) * WID2 + ((b_k) + 1 ) * WID3) / VECL )
 #define i_trans_pt_blockv(planeVectorIndex, planeIndex, blockIndex)  ( planeVectorIndex + planeIndex * VEC_PER_PLANE + (blockIndex + 1) * VEC_PER_BLOCK)
 
-//Is cell translated? It is not translated if DO_NO_COMPUTE or if it is sysboundary cell and not in first sysboundarylayer
+//Is cell translated? It is not translated if NOTHING or if it is boundary cell and not in first boundarylayer
 bool do_translate_cell(SpatialCell* SC){
-   if(SC->sysBoundaryFlag == sysboundarytype::DO_NOT_COMPUTE ||
-      (SC->sysBoundaryLayer != 1 && SC->sysBoundaryFlag != sysboundarytype::NOT_SYSBOUNDARY))
+   if(SC->boundaryFlag == boundarytype::NOTHING ||
+      (SC->boundaryLayer != 1 && SC->boundaryFlag != boundarytype::NOT_BOUNDARY))
       return false;
    else
       return true;
@@ -117,21 +117,21 @@ CellID get_spatial_neighbor(const dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geom
    }
    
    // not existing cell or do not compute
-   if( mpiGrid[nbrID]->sysBoundaryFlag == sysboundarytype::DO_NOT_COMPUTE)
+   if( mpiGrid[nbrID]->boundaryFlag == boundarytype::NOTHING)
       return INVALID_CELLID;
 
    //cell on boundary, but not first layer and we want to include
    //first layer (e.g. when we compute source cells)
    if( include_first_boundary_layer &&
-       mpiGrid[nbrID]->sysBoundaryFlag != sysboundarytype::NOT_SYSBOUNDARY &&
-       mpiGrid[nbrID]->sysBoundaryLayer != 1 ) {
+       mpiGrid[nbrID]->boundaryFlag != boundarytype::NOT_BOUNDARY &&
+       mpiGrid[nbrID]->boundaryLayer != 1 ) {
       return INVALID_CELLID;
    }
 
    //cell on boundary, and we want none of the layers,
    //invalid.(e.g. when we compute targets)
    if( !include_first_boundary_layer &&
-       mpiGrid[nbrID]->sysBoundaryFlag != sysboundarytype::NOT_SYSBOUNDARY){
+       mpiGrid[nbrID]->boundaryFlag != boundarytype::NOT_BOUNDARY){
       return INVALID_CELLID;
    }
 
@@ -577,10 +577,10 @@ bool trans_map_1d(const dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpi
          phiprof::stop(t1);
          phiprof::start(t2);
                
-         //reset blocks in all non-sysboundary spatial cells for this block id
+         //reset blocks in all non-boundary spatial cells for this block id
          for(uint celli = 0; celli < allCellsPointer.size(); celli++){
             SpatialCell* spatial_cell = allCellsPointer[celli];
-            if(spatial_cell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY) {
+            if(spatial_cell->boundaryFlag == boundarytype::NOT_BOUNDARY) {
                const vmesh::LocalID blockLID = allCellsBlockLocalID[celli];
                if (blockLID != vmesh::VelocityMesh<vmesh::GlobalID,vmesh::LocalID>::invalidLocalID()) {
                   Realf* blockData = spatial_cell->get_data(blockLID, popID);
@@ -706,7 +706,7 @@ void update_remote_mapping_contribution(
       if (p_ngbr != INVALID_CELLID) pcell = mpiGrid[p_ngbr];
       SpatialCell *mcell = NULL;
       if (m_ngbr != INVALID_CELLID) mcell = mpiGrid[m_ngbr];
-      if (p_ngbr != INVALID_CELLID && pcell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY) 
+      if (p_ngbr != INVALID_CELLID && pcell->boundaryFlag == boundarytype::NOT_BOUNDARY) 
          if (!mpiGrid.is_local(p_ngbr) && do_translate_cell(ccell)) {
             //if (p_ngbr != INVALID_CELLID && !mpiGrid.is_local(p_ngbr) && do_translate_cell(ccell)) {
             //Send data in p_ngbr target array that we just
@@ -719,7 +719,7 @@ void update_remote_mapping_contribution(
          }
       if (m_ngbr != INVALID_CELLID &&
           !mpiGrid.is_local(m_ngbr) &&
-          ccell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY) {
+          ccell->boundaryFlag == boundarytype::NOT_BOUNDARY) {
          //Receive data that mcell mapped to ccell to this local cell
          //data array, if 1) m is a valid source cell, 2) center cell is to be updated (normal cell) 3) m is remote
          //we will here allocate a receive buffer, since we need to aggregate values

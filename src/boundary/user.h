@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef IONOSPHERE_H
-#define IONOSPHERE_H
+#ifndef USER_H
+#define USER_H
 
 #include "../definitions.h"
 #include "../readparameters.h"
@@ -29,35 +29,15 @@
 #include "boundarycondition.h"
 #include <vector>
 
-using namespace projects;
-using namespace std;
-
 namespace BC {
 
-struct IonosphereSpeciesParameters {
-   Real rho;
-   Real V0[3];
-   Real T;
-   Real fluffiness;
-   uint nSpaceSamples;
-   uint nVelocitySamples;
-};
-
-/*!\brief Ionosphere is a class applying ionospheric boundary conditions.
- *
- * Ionosphere is a class handling cells tagged as boundarytype::IONOSPHERE by
- * this boundary condition. It applies ionospheric boundary conditions.
- *
- * These consist in:
- * - Do nothing for the distribution (keep the initial state constant in time);
- * - Keep only the normal perturbed B component and null out the other perturbed
- * components (perfect conductor behavior);
- * - Null out the electric fields.
+/*!\brief Class for boundary conditions with user-set settings.
+ * To be implemented by the user.
  */
-class Ionosphere : public BoundaryCondition {
+class User : public BoundaryCondition {
 public:
-   Ionosphere();
-   ~Ionosphere() override;
+   User();
+   ~User() override;
 
    static void addParameters();
    void getParameters() override;
@@ -69,7 +49,7 @@ public:
                           FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &perBGrid,
                           Project &project) override;
    void updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                    FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 2> &perBGrid, creal t) override;
+                    FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &perBGrid, creal t) override;
    Real
    fieldSolverBoundaryCondMagneticField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &bGrid,
                                         FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j,
@@ -93,36 +73,10 @@ public:
    void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
                                 const CellID &cellID, const uint popID, const bool doCalcMomentsV) override;
 
+   void getFaces(bool *faces) override;
+
    std::string getName() const override;
    uint getIndex() const override;
-
-protected:
-   void generateTemplateCell(Project &project);
-   void setCellFromTemplate(SpatialCell *cell, const uint popID);
-
-   Real shiftedMaxwellianDistribution(const uint popID, creal &vx, creal &vy, creal &vz);
-
-   vector<vmesh::GlobalID> findBlocksToInitialize(SpatialCell &cell, const uint popID);
-
-   std::array<Real, 3> fieldSolverGetNormalDirection(FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid,
-                                                     cint i, cint j, cint k);
-
-   Real center[3]; /*!< Coordinates of the centre of the ionosphere. */
-   Real radius;    /*!< Radius of the ionosphere. */
-   uint geometry;  /*!< Geometry of the ionosphere, 0: inf-norm (diamond), 1: 1-norm (square), 2: 2-norm (circle,
-                      DEFAULT), 3: polar-plane cylinder with line dipole. */
-
-   std::vector<IonosphereSpeciesParameters> speciesParams;
-   Real T;
-   Real rho;
-   Real VX0;
-   Real VY0;
-   Real VZ0;
-
-   uint nSpaceSamples;
-   uint nVelocitySamples;
-
-   spatial_cell::SpatialCell templateCell;
 };
 } // namespace BC
 

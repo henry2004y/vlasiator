@@ -29,13 +29,13 @@
 #include <ctime>
 #include <omp.h>
 #include "grid.h"
-#include "vlasovmover.h"
+#include "vlasovsolver/vlasovmover.h"
 #include "definitions.h"
 #include "mpiconversion.h"
 #include "logger.h"
 #include "parameters.h"
 #include "datareduction/datareducer.h"
-#include "boundary/sysboundary.h"
+#include "boundary/boundary.h"
 #include "fieldsolver/fs_common.h"
 #include "fieldsolver/gridGlue.hpp"
 #include "projects/project.h"
@@ -95,7 +95,7 @@ void initializeGrids(
    FsGrid< std::array<Real, fsgrids::egradpe::N_EGRADPE>, FS_STENCIL_WIDTH> & EGradPeGrid,
    FsGrid< std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH> & volGrid,
    FsGrid< fsgrids::technical, FS_STENCIL_WIDTH> & technicalGrid,
-   SysBoundary& sysBoundaries,
+   Boundary& boundaries,
    Project& project
 ) {
    int myRank;
@@ -145,9 +145,9 @@ void initializeGrids(
       .set_load_balancing_method(&P::loadBalanceAlgorithm[0])
       .set_neighborhood_length(neighborhood_size)
       .set_maximum_refinement_level(P::amrMaxSpatialRefLevel)
-      .set_periodic(sysBoundaries.isBoundaryPeriodic(0),
-                    sysBoundaries.isBoundaryPeriodic(1),
-                    sysBoundaries.isBoundaryPeriodic(2))
+      .set_periodic(boundaries.isPeriodic(0),
+                    boundaries.isPeriodic(1),
+                    boundaries.isPeriodic(2))
       .initialize(comm)
       .set_geometry(geom_params);
 
@@ -181,46 +181,33 @@ void initializeGrids(
    initSpatialCellCoordinates(mpiGrid);
    phiprof::stop("Set spatial cell coordinates");
    
-   phiprof::start("Initialize system boundary conditions");
-   if(sysBoundaries.initSysBoundaries(project, P::t_min) == false) {
-      if (myRank == MASTER_RANK) cerr << "Error in initialising the system boundaries." << endl;
-      exit(1);
-   }
-   phiprof::stop("Initialize system boundary conditions");
+   phiprof::start("Initialize boundary conditions");
+   boundaries.initBoundaries(project, P::t_min);
+   phiprof::stop("Initialize boundary conditions");
    
-   // Initialise system boundary conditions (they need the initialised positions!!)
-   phiprof::start("Classify cells (sys boundary conditions)");
-   if(sysBoundaries.classifyCells(mpiGrid,technicalGrid) == false) {
-      cerr << "(MAIN) ERROR: System boundary conditions were not set correctly." << endl;
-      exit(1);
-   }
-   phiprof::stop("Classify cells (sys boundary conditions)");
-
+   // Initialise boundary conditions (they need the initialised positions!!)
+   phiprof::start("Classify cells (boundary conditions)");
+   boundaries.classifyCells(mpiGrid,technicalGrid);
+   phiprof::stop("Classify cells (boundary conditions)");
 
    // Check refined cells do not touch boundary cells
    phiprof::start("Check boundary refinement");
-   if(!sysBoundaries.checkRefinement(mpiGrid)) {
-      cerr << "(MAIN) ERROR: Boundary cells must have identical refinement level " << endl;
-      exit(1);
-   }
+   boundaries.checkRefinement(mpiGrid);
    phiprof::stop("Check boundary refinement");
    
    if (P::isRestart) {
       logFile << "Restart from "<< P::restartFileName << std::endl << writeVerbose;
       phiprof::start("Read restart");
-      if (readGrid(mpiGrid,perBGrid,EGrid,technicalGrid,P::restartFileName) == false) {
+      if (!readGrid(mpiGrid,perBGrid,EGrid,technicalGrid,P::restartFileName)) {
          logFile << "(MAIN) ERROR: restarting failed" << endl;
          exit(1);
       }
       phiprof::stop("Read restart");
    
-      //initial state for sys-boundary cells, will skip those not set to be reapplied at restart
-      phiprof::start("Apply system boundary conditions state");
-      if (sysBoundaries.applyInitialState(mpiGrid, perBGrid, project) == false) {
-         cerr << " (MAIN) ERROR: System boundary conditions initial state was not applied correctly." << endl;
-         exit(1);
-      }
-      phiprof::stop("Apply system boundary conditions state");
+      // Initialize state for boundary cells
+      phiprof::start("Apply boundary conditions state");
+      boundaries.applyInitialState(mpiGrid, perBGrid, project);
+      phiprof::stop("Apply boundary conditions state");
    }
 
   if (P::amrMaxSpatialRefLevel>0) {
@@ -250,11 +237,11 @@ void initializeGrids(
 
    if (!P::isRestart) {
       //Initial state based on project, background field in all cells
-      //and other initial values in non-sysboundary cells
+      //and other initial values in non-boundary cells
       phiprof::start("Apply initial state");
       // Go through every cell on this node and initialize the 
       //  -Background field on all cells
-      //  -Perturbed fields and ion distribution function in non-sysboundary cells
+      //  -Perturbed fields and ion distribution function in non-boundary cells
       // Each initialization has to be independent to avoid threading problems 
 
       // Allow the project to set up data structures for it's setCell calls
@@ -264,20 +251,17 @@ void initializeGrids(
       #pragma omp parallel for schedule(dynamic)
       for (size_t i=0; i<cells.size(); ++i) {
          SpatialCell* cell = mpiGrid[cells[i]];
-         if (cell->sysBoundaryFlag == sysboundarytype::NOT_SYSBOUNDARY) {
+         if (cell->boundaryFlag == boundarytype::NOT_BOUNDARY) {
             project.setCell(cell);
          }
       }
       phiprof::stop("setCell");
       
-      // Initial state for sys-boundary cells
+      // Initial state for boundary cells
       phiprof::stop("Apply initial state");
-      phiprof::start("Apply system boundary conditions state");
-      if (sysBoundaries.applyInitialState(mpiGrid, perBGrid, project) == false) {
-         cerr << " (MAIN) ERROR: System boundary conditions initial state was not applied correctly." << endl;
-         exit(1);
-      }
-      phiprof::stop("Apply system boundary conditions state");
+      phiprof::start("Apply boundary conditions state");
+      boundaries.applyInitialState(mpiGrid, perBGrid, project);
+      phiprof::stop("Apply boundary conditions state");
       
       for (size_t i=0; i<cells.size(); ++i) {
          mpiGrid[cells[i]]->parameters[CellParams::LBWEIGHTCOUNTER] = 0;
@@ -301,7 +285,7 @@ void initializeGrids(
 
       /*
       // Apply boundary conditions so that we get correct initial moments
-      sysBoundaries.applySysBoundaryVlasovConditions(mpiGrid,Parameters::t);
+      boundaries.applyBoundaryVlasovConditions(mpiGrid,Parameters::t);
       
       //compute moments, and set them  in RHO* and RHO_*_DT2. If restart, they are already read in
       phiprof::start("Init moments");
@@ -313,13 +297,13 @@ void initializeGrids(
 
 
    // Init mesh data container
-   if (getObjectWrapper().meshData.initialize("SpatialGrid") == false) {
+   if (!getObjectWrapper().meshData.initialize("SpatialGrid")) {
       cerr << "(Grid) Failed to initialize mesh data container in " << __FILE__ << ":" << __LINE__ << endl;
       exit(1);
    }
    
    //Balance load before we transfer all data below
-   balanceLoad(mpiGrid, sysBoundaries);
+   balanceLoad(mpiGrid, boundaries);
    
    phiprof::initializeTimer("Fetch Neighbour data","MPI");
    phiprof::start("Fetch Neighbour data");
@@ -329,9 +313,9 @@ void initializeGrids(
    
    phiprof::stop("Fetch Neighbour data");
    
-   if (P::isRestart == false) {
+   if (!P::isRestart) {
       // Apply boundary conditions so that we get correct initial moments
-      sysBoundaries.applySysBoundaryVlasovConditions(mpiGrid,Parameters::t, true); // It doesn't matter here whether we put _R or _V moments
+      boundaries.applyBoundaryVlasovConditions(mpiGrid,Parameters::t, true); // It doesn't matter here whether we put _R or _V moments
       
       //compute moments, and set them  in RHO* and RHO_*_DT2. If restart, they are already read in
       phiprof::start("Init moments");
@@ -446,7 +430,7 @@ void setFaceNeighborRanks( dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& 
    }
 }
 
-void balanceLoad(dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpiGrid, SysBoundary& sysBoundaries){
+void balanceLoad(dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpiGrid, Boundary& boundaries){
    // Invalidate cached cell lists
    Parameters::meshRepartitioned = true;
 
@@ -579,14 +563,14 @@ void balanceLoad(dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpiGrid, S
       updateRemoteVelocityBlockLists(mpiGrid,popID);
    phiprof::stop("update block lists");
 
-   phiprof::start("update sysboundaries");
-   sysBoundaries.updateSysBoundariesAfterLoadBalance( mpiGrid );
-   phiprof::stop("update sysboundaries");
+   phiprof::start("update boundaries");
+   boundaries.updateBoundariesAfterLoadBalance( mpiGrid );
+   phiprof::stop("update boundaries");
 
    phiprof::start("Init solvers");
    // Initialize field propagator (only if in use):
-   if (Parameters::propagateField == true) {
-      if (initializeFieldPropagatorAfterRebalance() == false) {
+   if (Parameters::propagateField) {
+      if (!initializeFieldPropagatorAfterRebalance()) {
          logFile << "(MAIN): Field propagator did not initialize correctly!" << endl << writeVerbose;
          exit(1);
       }
@@ -835,14 +819,14 @@ void updateRemoteVelocityBlockLists(
   Set stencils. These are the stencils (in 2D, real ones in 3D of
   course). x are stencil neighbor to cell local cell o:
 
-NEAREST SYSBOUNDARIES  (nearest neighbor)
+NEAREST BOUNDARIES  (nearest neighbor)
 -----------
   xxx
   xox
   xxx
 -----------
 
-EXTENDED_SYSBOUNDARIES (second nearest neighbor, also in diagonal)
+EXTENDED_BOUNDARIES (second nearest neighbor, also in diagonal)
 -----------
   xxxxx
   xxxxx
@@ -871,7 +855,7 @@ VLASOV_TARGET_{XYZ}
 
 -----------
 
-DIST_FUNC  (Includes all cells which should know about each others blocks and have space for them. VLASOV + SYSBOUNDARIES.
+DIST_FUNC  (Includes all cells which should know about each others blocks and have space for them. VLASOV + BOUNDARIES.
 -----------  
     x
    xxx
@@ -917,7 +901,7 @@ void initializeStencils(dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpi
    }
    //mpiGrid.add_neighborhood(FIELD_SOLVER_NEIGHBORHOOD_ID, neighborhood);
    mpiGrid.add_neighborhood(NEAREST_NEIGHBORHOOD_ID, neighborhood);
-   mpiGrid.add_neighborhood(SYSBOUNDARIES_NEIGHBORHOOD_ID, neighborhood);
+   mpiGrid.add_neighborhood(BOUNDARIES_NEIGHBORHOOD_ID, neighborhood);
 
    neighborhood.clear();
    for (int z = -2; z <= 2; z++) {
@@ -931,27 +915,29 @@ void initializeStencils(dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpi
          }
       }
    }
-   mpiGrid.add_neighborhood(SYSBOUNDARIES_EXTENDED_NEIGHBORHOOD_ID, neighborhood);
+   mpiGrid.add_neighborhood(BOUNDARIES_EXTENDED_NEIGHBORHOOD_ID, neighborhood);
 
    // In spatial AMR using DCCRG, the neighbors are considered relative to a given cell's size.
    // To get two coarse neighbors from a fine cell at interfaces, the stencil size needs to be increased by one.
    int addStencilDepth = 0;
-   if (P::amrMaxSpatialRefLevel > 0) {
-      switch (VLASOV_STENCIL_WIDTH) {
-	 case 1:
-	    // Required cells will be included already
-	    break;
-	 case 2:
-	    // looking from high to low refinement: stencil 2 will only give 1 cell, so need to add 1 
-	    addStencilDepth = 1;
-            break;
-         case 3:
-	    // looking from high to low refinement: stencil 3 will only give 2 cells, so need to add 2
-	    // to reach surely into the third low-refinement neighbour  
-            addStencilDepth = 2;
-            break;
-         default:
-            std::cerr<<"Warning: unrecognized VLASOV_STENCIL_WIDTH in grid.cpp"<<std::endl;
+   if (P::amrMaxSpatialRefLevel > 0)
+   {
+      switch (VLASOV_STENCIL_WIDTH)
+      {
+      case 1:
+         // Required cells will be included already
+         break;
+      case 2:
+         // looking from high to low refinement: stencil 2 will only give 1 cell, so need to add 1
+         addStencilDepth = 1;
+         break;
+      case 3:
+         // looking from high to low refinement: stencil 3 will only give 2 cells, so need to add 2
+         // to reach surely into the third low-refinement neighbour
+         addStencilDepth = 2;
+         break;
+      default:
+         std::cerr << "Warning: unrecognized VLASOV_STENCIL_WIDTH in grid.cpp" << std::endl;
       }
    }
    int full_neighborhood_size = max(2, VLASOV_STENCIL_WIDTH);
@@ -1240,7 +1226,7 @@ bool validateMesh(dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpiGrid,c
       // Exit if all processes are done with mesh refinements
       int16_t globalSuccess = 0;
       int16_t localSuccess = 0;
-      if (needAnotherPass == true) localSuccess=1;
+      if (needAnotherPass ) localSuccess=1;
       MPI_Allreduce(&localSuccess,&globalSuccess,1,MPI_Type<int16_t>(),MPI_MAX,MPI_COMM_WORLD);
       if (globalSuccess == 0) break;
    } while (true);

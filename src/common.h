@@ -140,17 +140,17 @@ namespace CellParams {
       VX_DT2,  /*!< Vx. Calculated by Vlasov propagator, used to propagate BX,BY,BZ.*/
       VY_DT2,  /*!< Vy. Calculated by Vlasov propagator, used to propagate BX,BY,BZ.*/
       VZ_DT2,  /*!< Vz. Calculated by Vlasov propagator, used to propagate BX,BY,BZ.*/
-      RHOQ_DT2,    /*!< Total charge density. Calculated by Vlasov propagator, used to propagate BX,BY,BZ.*/
+      RHOQ_DT2,  /*!< Total charge density. Calculated by Vlasov propagator, used to propagate BX,BY,BZ.*/
       BGBXVOL,   /*!< background magnetic field averaged over spatial cell.*/
       BGBYVOL,   /*!< background magnetic field averaged over spatial cell.*/
       BGBZVOL,   /*!< background magnetic field averaged over spatial cell.*/
-      PERBXVOL,  /*!< perturbed magnetic field  PERBX averaged over spatial cell.*/
-      PERBYVOL,  /*!< perturbed magnetic field  PERBY averaged over spatial cell.*/
-      PERBZVOL,  /*!< perturbed magnetic field  PERBZ averaged over spatial cell.*/
-      EXGRADPE,         /*!< Electron pressure gradient term x.*/
-      EYGRADPE,         /*!< Electron pressure gradient term y.*/
-      EZGRADPE,         /*!< Electron pressure gradient term z.*/
-      RHOM_R,     /*!< RHO after propagation in ordinary space*/
+      PERBXVOL,  /*!< perturbed magnetic field PERBX averaged over spatial cell.*/
+      PERBYVOL,  /*!< perturbed magnetic field PERBY averaged over spatial cell.*/
+      PERBZVOL,  /*!< perturbed magnetic field PERBZ averaged over spatial cell.*/
+      EXGRADPE,  /*!< Electron pressure gradient term x.*/
+      EYGRADPE,  /*!< Electron pressure gradient term y.*/
+      EZGRADPE,  /*!< Electron pressure gradient term z.*/
+      RHOM_R,    /*!< RHO after propagation in ordinary space*/
       VX_R,   /*!< VX after propagation in ordinary space*/
       VY_R,   /*!< VY after propagation in ordinary space*/
       VZ_R,   /*!< VZ after propagation in ordinary space*/
@@ -367,31 +367,41 @@ namespace fsgrids {
    };
    
    struct technical {
-      int sysBoundaryFlag;  /*!< System boundary flags. */
-      int sysBoundaryLayer; /*!< System boundary layer index. */
-      Real maxFsDt;         /*!< maximum timestep allowed in ordinary space by fieldsolver for this cell**/
-      int fsGridRank;       /*!< Rank in the fsGrids cartesian coordinator */
-      uint SOLVE;           /*!< Bit mask to determine whether a given cell should solve E or B components. */
-      int refLevel;         /*!<AMR Refinement Level*/
+      int boundaryFlag;  /*!< boundary flags. */
+      int boundaryLayer; /*!< boundary layer index. */
+      Real maxFsDt;      /*!< maximum timestep allowed in ordinary space by fieldsolver for this cell**/
+      int fsGridRank;    /*!< Rank in the fsGrids cartesian coordinator */
+      uint SOLVE;        /*!< Bit mask to determine whether a given cell should solve E or B components. See namespace compute below.*/
+      int refLevel;      /*!<AMR Refinement Level*/
    };
    
 }
 
-/*! The namespace sysboundarytype contains the identification index of the boundary condition types applied to a cell,
- * it is stored in SpatialCell::sysBoundaryFlag and used by the BoundaryCondition class' functions to determine what type of BC to apply to a cell.
+/*! The namespace boundarytype contains the identification index of the boundary condition types applied to a cell,
+ * it is stored in SpatialCell::boundaryFlag and used by the BoundaryCondition class' functions to determine what type of BC to apply to a cell.
  * At least for the workings of vlasovmover_leveque.cpp the order of the first two entries should not be changed.
  */
-namespace sysboundarytype {
+namespace boundarytype {
    enum {
-      DO_NOT_COMPUTE,   /*!< E.g. cells within the ionospheric outer radius should not be computed at all. */
-      NOT_SYSBOUNDARY,  /*!< Cells within the simulation domain are not boundary cells. */
+      NOTHING,          /*!< e.g. cells within the ionospheric outer radius should not be computed at all. */
+      NOT_BOUNDARY,     /*!< Cells within the simulation domain are not boundary cells. */
       IONOSPHERE,       /*!< Initially a perfectly conducting sphere. */
       OUTFLOW,          /*!< No fixed conditions on the fields and distribution function. */
-      SET_MAXWELLIAN,   /*!< Set Maxwellian boundary condition, i.e. set fields and distribution function. */
-      N_SYSBOUNDARY_CONDITIONS
+      MAXWELLIAN,       /*!< Set Maxwellian BC, i.e. set fields and distribution function. */
+      USER,             /*!< User-set BC. */
+      N_BOUNDARY_CONDITIONS
    };
 }
 
+
+/*! Bit field used to determine whether a given fsgrid cell needs to solve BX, BY, BZ, EX, EY, EZ
+ * BX is ...0001
+ * BY is ...0010
+ * etc so each is shifted one bit further.
+ * The technicalGrid->SOLVE flag contains the bitwise OR of all of these.
+ * To check whether a cell should solve BX, check (cell->SOLVE & compute::BX) against compute::BX.
+ * /!\ WARNING use bitwise operators /!\
+ */
 namespace compute {
    const uint BX = (1 << 0); // 1
    const uint BY = (1 << 1); // 2

@@ -62,9 +62,9 @@ namespace projects {
       RP::add("Flowthrough.emptyBox","Is the simulation domain empty initially?",false);
       RP::add("Flowthrough.densityModel","Plasma density model, 'Maxwellian' or 'SheetMaxwellian'",string("Maxwellian"));
       RP::add("Flowthrough.densityWidth","Width of signal around origin",6.e7);
-      RP::add("Flowthrough.Bx", "Magnetic field x component (T)", 0.0);
-      RP::add("Flowthrough.By", "Magnetic field y component (T)", 0.0);
-      RP::add("Flowthrough.Bz", "Magnetic field z component (T)", 0.0);
+      RP::add("Flowthrough.backgroundBx", "Background magnetic field x component (T)", 0.0);
+      RP::add("Flowthrough.backgroundBy", "Background magnetic field y component (T)", 0.0);
+      RP::add("Flowthrough.backgroundBz", "Background magnetic field z component (T)", 0.0);
 
       // Per-population parameters
       for(uint i=0; i< getObjectWrapper().particleSpecies.size(); i++) {
@@ -86,27 +86,12 @@ namespace projects {
       MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
       typedef Readparameters RP;
 
-      if (!RP::get("Flowthrough.emptyBox",emptyBox)) {
-         if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added!" << endl;
-         exit(1);
-      }
-      if(!RP::get("Flowthrough.Bx", this->Bx)) {
-         if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added!" << endl;
-         exit(1);
-      }
-      if(!RP::get("Flowthrough.By", this->By)) {
-         if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added!" << endl;
-         exit(1);
-      }
-      if(!RP::get("Flowthrough.Bz", this->Bz)) {
-         if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added!" << endl;
-         exit(1);
-      }
+      RP::get("Flowthrough.emptyBox",emptyBox);
+      RP::get("Flowthrough.backgroundBx", this->Bx);
+      RP::get("Flowthrough.backgroundBy", this->By);
+      RP::get("Flowthrough.backgroundBz", this->Bz);
       string densityModelString;
-      if (!RP::get("Flowthrough.densityModel",densityModelString)) {
-         if (myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added!" << endl;
-         exit(1);
-      }
+      RP::get("Flowthrough.densityModel",densityModelString);
       if (densityModelString == "Maxwellian") densityModel = Maxwellian;
       else if (densityModelString == "SheetMaxwellian") densityModel = SheetMaxwellian;
       else if (densityModelString == "Square") densityModel = Square;
@@ -116,48 +101,21 @@ namespace projects {
          if (myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: Unknown option value!" << endl;
          exit(1);
       }
-      if (!RP::get("Flowthrough.densityWidth",this->densityWidth)) {
-         if (myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added!" << endl;
-         exit(1);
-      }
+      RP::get("Flowthrough.densityWidth",this->densityWidth);
 
       // Per-population parameters
       for(uint i=0; i< getObjectWrapper().particleSpecies.size(); i++) {
          const std::string& pop = getObjectWrapper().particleSpecies[i].name;
          FlowthroughSpeciesParameters sP;
 
-         if(!RP::get(pop + "_Flowthrough.rho", sP.rho)) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
-         if(!RP::get(pop + "_Flowthrough.rhoBase", sP.rhoBase)) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
-         if(!RP::get(pop + "_Flowthrough.T", sP.T)) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
-         if(!RP::get(pop + "_Flowthrough.VX0", sP.V0[0])) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
-         if(!RP::get(pop + "_Flowthrough.VY0", sP.V0[1])) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
-         if(!RP::get(pop + "_Flowthrough.VZ0", sP.V0[2])) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
-         if(!RP::get(pop + "_Flowthrough.nSpaceSamples", sP.nSpaceSamples)) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
-         if(!RP::get(pop + "_Flowthrough.nVelocitySamples", sP.nVelocitySamples)) {
-            if(myRank == MASTER_RANK) cerr << __FILE__ << ":" << __LINE__ << " ERROR: This option has not been added for population " << pop << "!" << endl;
-            exit(1);
-         }
+         RP::get(pop + "_Flowthrough.rho", sP.rho);
+         RP::get(pop + "_Flowthrough.rhoBase", sP.rhoBase);
+         RP::get(pop + "_Flowthrough.T", sP.T);
+         RP::get(pop + "_Flowthrough.VX0", sP.V0[0]);
+         RP::get(pop + "_Flowthrough.VY0", sP.V0[1]);
+         RP::get(pop + "_Flowthrough.VZ0", sP.V0[2]);
+         RP::get(pop + "_Flowthrough.nSpaceSamples", sP.nSpaceSamples);
+         RP::get(pop + "_Flowthrough.nVelocitySamples", sP.nVelocitySamples);
 
          speciesParams.push_back(sP);
       }
@@ -264,7 +222,7 @@ namespace projects {
       FsGrid< fsgrids::technical, FS_STENCIL_WIDTH> & technicalGrid
    ) {
       ConstantField bgField;
-      bgField.initialize(Bx,By,Bz); //bg bx, by,bz      
+      bgField.initialize(Bx,By,Bz); //bg bx,by,bz      
       setBackgroundField(bgField, BgBGrid);
    }
    
