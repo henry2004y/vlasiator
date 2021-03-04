@@ -124,7 +124,8 @@ SRC_VLSV2SILO := \
 
 SRC_VLSVDIFF := \
 		src/tools/vlsvdiff.cpp \
-		src/tools/vlsvreaderinterface.cpp
+		src/tools/vlsvreaderinterface.cpp \
+		src/tools/vlsv_util.cpp
 
 SRC_FLUXFUNC := \
 		src/version.cpp \

@@ -43,3 +43,9 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=$PWD/lib/phiprof/lib:$PWD/lib/jemalloc/lib
         cd testpackage && make
+
+    - name: tool
+      run: |
+        make vlsvdiff
+        pwd
+      continue-on-error: true
