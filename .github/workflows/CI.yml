@@ -22,13 +22,11 @@ jobs:
     - uses: webfactory/ssh-agent@v0.5.0
       with:
         ssh-private-key: ${{ secrets.CI_PRIVATE_KEY }}
-    - uses: julia-actions/setup-julia@v1
-    - name: julia
+    - name: Julia
       run: julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/henry2004y/Vlasiator.jl", rev="master"))'
-    - name: MPI and Boost
+    - name: Dependencies
       run: |
-        sudo apt-get install -y gcc-${GCC_V}
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_V} 100 --slave /usr/bin/g++ g++ /usr/bin/g++-${GCC_V} --slave /usr/bin/gcov gcov /usr/bin/gcov-${GCC_V}
         sudo apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
     - name: Reference data
       run: |
