@@ -139,7 +139,7 @@ parser.add_argument('-nompi', dest='mpi', action='store_false')
 
 parser.add_argument('-omp',
                     action='store_true',
-                    default=False,
+                    default=True,
                     help='enable parallelization with OpenMP')
 
 parser.add_argument('-noomp', dest='omp', action='store_false')
@@ -266,7 +266,7 @@ makefile_options['PREPROCESSOR_FLAGS'] = ''
 if args['cxx'] == 'g++':
     makefile_options['COMPILER_COMMAND'] = 'g++'
     makefile_options['COMPILER_FLAGS'] = (
-        '-O3 -fopenmp -funroll-loops '
+        '-O3 -funroll-loops '
         '-std=c++17 -W -Wall -Wno-unused' )
 if args['cxx'] == 'icpc':
     makefile_options['COMPILER_COMMAND'] = 'icpc'
