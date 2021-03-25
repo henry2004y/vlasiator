@@ -587,7 +587,7 @@ void Boundary::applyBoundaryVlasovConditions(dccrg::Dccrg<SpatialCell, dccrg::Ca
 
       timer = phiprof::initializeTimer("Wait for receives", "MPI", "Wait");
       phiprof::start(timer);
-      mpiGrid.wait_remote_neighbor_copy_update_receives(BOUNDARIES_EXTENDED_NEIGHBORHOOD_ID);
+      mpiGrid.wait_remote_neighbor_copy_updates(BOUNDARIES_EXTENDED_NEIGHBORHOOD_ID);
       phiprof::stop(timer);
 
       // Compute vlasov boundary on boundary/process boundary cells
@@ -606,11 +606,6 @@ void Boundary::applyBoundaryVlasovConditions(dccrg::Dccrg<SpatialCell, dccrg::Ca
       else
          calculateMoments_R(mpiGrid, boundaryCells, true);
 
-      phiprof::stop(timer);
-
-      timer = phiprof::initializeTimer("Wait for sends", "MPI", "Wait");
-      phiprof::start(timer);
-      mpiGrid.wait_remote_neighbor_copy_update_sends();
       phiprof::stop(timer);
 
       // WARNING Blocks are changed but lists not updated now, if you need to
