@@ -228,10 +228,10 @@ void projectBoundaryMagneticField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
                                      cint k, Boundary &boundaries, cint &RKCase) {
    if (RKCase == RK_ORDER1 || RKCase == RK_ORDER2_STEP2) {
       boundaries.getBoundary(technicalGrid.get(i, j, k)->boundaryFlag)
-          ->fieldSolverBoundaryCondMagneticFieldProject(perBGrid, technicalGrid, i, j, k);
+          ->fieldSolverBoundaryCondMagneticFieldProjection(perBGrid, technicalGrid, i, j, k);
    } else {
       boundaries.getBoundary(technicalGrid.get(i, j, k)->boundaryFlag)
-          ->fieldSolverBoundaryCondMagneticFieldProject(perBDt2Grid, technicalGrid, i, j, k);
+          ->fieldSolverBoundaryCondMagneticFieldProjection(perBDt2Grid, technicalGrid, i, j, k);
    }
 }
 
