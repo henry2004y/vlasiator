@@ -62,6 +62,13 @@ public:
       abort_mpi(errmsg);
       return 0.;
    }
+   void fieldSolverBoundaryCondMagneticFieldProject(
+       FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &perBGrid,
+       FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k) {
+      std::string errmsg = "ERROR: calling Nothing::";
+      errmsg += __func__;
+      abort_mpi(errmsg);
+   }
    void
    fieldSolverBoundaryCondElectricField(FsGrid<std::array<Real, fsgrids::efield::N_EFIELD>, FS_STENCIL_WIDTH> &EGrid,
                                         cint i, cint j, cint k, cuint component) override {

@@ -43,13 +43,11 @@
 
 using namespace std;
 
-namespace BC
-{
+namespace BC {
 Outflow::Outflow() : BoundaryCondition() {}
 Outflow::~Outflow() {}
 
-void Outflow::addParameters()
-{
+void Outflow::addParameters() {
    const std::string defStr = "Copy";
    Readparameters::addComposing(
        "outflow.faceNoFields",
@@ -62,8 +60,7 @@ void Outflow::addParameters()
                        0);
 
    // Per-population parameters
-   for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++)
-   {
+   for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
       const std::string &pop = getObjectWrapper().particleSpecies[i].name;
 
       Readparameters::addComposing(
@@ -89,63 +86,52 @@ void Outflow::addParameters()
    }
 }
 
-void Outflow::getParameters()
-{
+void Outflow::getParameters() {
 
    Readparameters::get("outflow.faceNoFields", this->faceNoFieldsList);
    Readparameters::get("outflow.precedence", precedence);
    uint reapply;
    Readparameters::get("outflow.reapplyUponRestart", reapply);
    this->applyUponRestart = false;
-   if (reapply == 1)
-   {
+   if (reapply == 1) {
       this->applyUponRestart = true;
    }
 
    // Per-species parameters
-   for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++)
-   {
+   for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
       const std::string &pop = getObjectWrapper().particleSpecies[i].name;
       OutflowSpeciesParameters sP;
 
       // Unless we find out otherwise, we assume that this species will not be treated at any boundary
-      for (int j = 0; j < 6; j++)
-      {
+      for (int j = 0; j < 6; j++) {
          sP.facesToSkipVlasov[j] = true;
       }
 
       std::vector<std::string> thisSpeciesFaceList;
       Readparameters::get(pop + "_outflow.face", thisSpeciesFaceList);
 
-      for (auto &face : thisSpeciesFaceList)
-      {
-         if (face == "x+")
-         {
+      for (auto &face : thisSpeciesFaceList) {
+         if (face == "x+") {
             facesToProcess[0] = true;
             sP.facesToSkipVlasov[0] = false;
          }
-         if (face == "x-")
-         {
+         if (face == "x-") {
             facesToProcess[1] = true;
             sP.facesToSkipVlasov[1] = false;
          }
-         if (face == "y+")
-         {
+         if (face == "y+") {
             facesToProcess[2] = true;
             sP.facesToSkipVlasov[2] = false;
          }
-         if (face == "y-")
-         {
+         if (face == "y-") {
             facesToProcess[3] = true;
             sP.facesToSkipVlasov[3] = false;
          }
-         if (face == "z+")
-         {
+         if (face == "z+") {
             facesToProcess[4] = true;
             sP.facesToSkipVlasov[4] = false;
          }
-         if (face == "z-")
-         {
+         if (face == "z-") {
             facesToProcess[5] = true;
             sP.facesToSkipVlasov[5] = false;
          }
@@ -160,22 +146,14 @@ void Outflow::getParameters()
       Readparameters::get(pop + "_outflow.vlasovScheme_face_y-", vlasovBoundarySchemeName[3]);
       Readparameters::get(pop + "_outflow.vlasovScheme_face_z+", vlasovBoundarySchemeName[4]);
       Readparameters::get(pop + "_outflow.vlasovScheme_face_z-", vlasovBoundarySchemeName[5]);
-      for (uint j = 0; j < 6; j++)
-      {
-         if (vlasovBoundarySchemeName[j] == "None")
-         {
+      for (uint j = 0; j < 6; j++) {
+         if (vlasovBoundarySchemeName[j] == "None") {
             sP.faceVlasovScheme[j] = vlasovscheme::NONE;
-         }
-         else if (vlasovBoundarySchemeName[j] == "Copy")
-         {
+         } else if (vlasovBoundarySchemeName[j] == "Copy") {
             sP.faceVlasovScheme[j] = vlasovscheme::COPY;
-         }
-         else if (vlasovBoundarySchemeName[j] == "Limit")
-         {
+         } else if (vlasovBoundarySchemeName[j] == "Limit") {
             sP.faceVlasovScheme[j] = vlasovscheme::LIMIT;
-         }
-         else
-         {
+         } else {
             abort_mpi(" ERROR: " + vlasovBoundarySchemeName[j] + " is an invalid Outflow Vlasov scheme!");
          }
       }
@@ -186,12 +164,10 @@ void Outflow::getParameters()
    }
 }
 
-void Outflow::initBoundary(creal t, Project &project)
-{
+void Outflow::initBoundary(creal t, Project &project) {
    // The array of bool describes which of the faces are to have outflow
    // boundary conditions, in the order of x+, x-, y+, y-, z+, z-.
-   for (uint i = 0; i < 6; i++)
-   {
+   for (uint i = 0; i < 6; i++) {
       facesToProcess[i] = false;
       facesToSkipFields[i] = false;
       facesToReapply[i] = false;
@@ -202,43 +178,51 @@ void Outflow::initBoundary(creal t, Project &project)
    dynamic = false;
 
    vector<string>::const_iterator it;
-   for (it = faceNoFieldsList.begin(); it != faceNoFieldsList.end(); it++)
-   {
-      if (*it == "x+") facesToSkipFields[0] = true;
-      if (*it == "x-") facesToSkipFields[1] = true;
-      if (*it == "y+") facesToSkipFields[2] = true;
-      if (*it == "y-") facesToSkipFields[3] = true;
-      if (*it == "z+") facesToSkipFields[4] = true;
-      if (*it == "z-") facesToSkipFields[5] = true;
+   for (it = faceNoFieldsList.begin(); it != faceNoFieldsList.end(); it++) {
+      if (*it == "x+")
+         facesToSkipFields[0] = true;
+      if (*it == "x-")
+         facesToSkipFields[1] = true;
+      if (*it == "y+")
+         facesToSkipFields[2] = true;
+      if (*it == "y-")
+         facesToSkipFields[3] = true;
+      if (*it == "z+")
+         facesToSkipFields[4] = true;
+      if (*it == "z-")
+         facesToSkipFields[5] = true;
    }
 
-   for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++)
-   {
+   for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
       OutflowSpeciesParameters &sP = this->speciesParams[i];
-      for (it = sP.faceToReapplyUponRestartList.begin(); it != sP.faceToReapplyUponRestartList.end(); it++)
-      {
-         if (*it == "x+") facesToReapply[0] = true;
-         if (*it == "x-") facesToReapply[1] = true;
-         if (*it == "y+") facesToReapply[2] = true;
-         if (*it == "y-") facesToReapply[3] = true;
-         if (*it == "z+") facesToReapply[4] = true;
-         if (*it == "z-") facesToReapply[5] = true;
+      for (it = sP.faceToReapplyUponRestartList.begin(); it != sP.faceToReapplyUponRestartList.end(); it++) {
+         if (*it == "x+")
+            facesToReapply[0] = true;
+         if (*it == "x-")
+            facesToReapply[1] = true;
+         if (*it == "y+")
+            facesToReapply[2] = true;
+         if (*it == "y-")
+            facesToReapply[3] = true;
+         if (*it == "z+")
+            facesToReapply[4] = true;
+         if (*it == "z-")
+            facesToReapply[5] = true;
       }
    }
 }
 
 void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                             FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid)
-{
+                             FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid) {
 
    bool doAssign;
    std::array<bool, 6> isThisCellOnAFace;
 
    // Assign boundary flags to local DCCRG cells
    vector<CellID> cells = mpiGrid.get_cells();
-   for (const auto &dccrgId : cells)
-   {
-      if (mpiGrid[dccrgId]->boundaryFlag == boundarytype::NOTHING) continue;
+   for (const auto &dccrgId : cells) {
+      if (mpiGrid[dccrgId]->boundaryFlag == boundarytype::NOTHING)
+         continue;
       creal *const cellParams = &(mpiGrid[dccrgId]->parameters[0]);
       creal dx = cellParams[CellParams::DX];
       creal dy = cellParams[CellParams::DY];
@@ -254,20 +238,16 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
       doAssign = false;
       for (int j = 0; j < 6; j++)
          doAssign = doAssign || (facesToProcess[j] && isThisCellOnAFace[j]);
-      if (doAssign)
-      {
+      if (doAssign) {
          mpiGrid[dccrgId]->boundaryFlag = this->getIndex();
       }
    }
 
    // Assign boundary flags to local fsgrid cells
    const std::array<int, 3> gridDims(technicalGrid.getLocalSize());
-   for (int k = 0; k < gridDims[2]; k++)
-   {
-      for (int j = 0; j < gridDims[1]; j++)
-      {
-         for (int i = 0; i < gridDims[0]; i++)
-         {
+   for (int k = 0; k < gridDims[2]; k++) {
+      for (int j = 0; j < gridDims[1]; j++) {
+         for (int i = 0; i < gridDims[0]; i++) {
             const auto &coords = technicalGrid.getPhysicalCoords(i, j, k);
 
             // Shift to the center of the fsgrid cell
@@ -277,7 +257,8 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
             cellCenterCoords[2] += 0.5 * technicalGrid.DZ;
             const auto refLvl = mpiGrid.get_refinement_level(mpiGrid.get_existing_cell(cellCenterCoords));
 
-            if (refLvl == -1) abort_mpi("ERROR: Could not get refinement level of remote DCCRG cell!", 1);
+            if (refLvl == -1)
+               abort_mpi("ERROR: Could not get refinement level of remote DCCRG cell!", 1);
 
             creal dx = P::dx_ini * pow(2, -refLvl);
             creal dy = P::dy_ini * pow(2, -refLvl);
@@ -290,8 +271,7 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
                           dy, dz);
             for (int iface = 0; iface < 6; iface++)
                doAssign = doAssign || (facesToProcess[iface] && isThisCellOnAFace[iface]);
-            if (doAssign)
-            {
+            if (doAssign) {
                technicalGrid.get(i, j, k)->boundaryFlag = this->getIndex();
             }
          }
@@ -350,16 +330,12 @@ void Outflow::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian
 }
 
 void Outflow::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                          FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &perBGrid, creal t)
-{
-}
+                          FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &perBGrid, creal t) {}
 
 Real Outflow::fieldSolverBoundaryCondMagneticField(
     FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &bGrid,
-    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k, creal dt, cuint component)
-{
-   switch (component)
-   {
+    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k, creal dt, cuint component) {
+   switch (component) {
    case 0:
       return fieldBoundaryCopyFromSolvingNbrMagneticField(bGrid, technicalGrid, i, j, k, component, compute::BX);
       break;
@@ -375,20 +351,21 @@ Real Outflow::fieldSolverBoundaryCondMagneticField(
    }
 }
 
+void Outflow::fieldSolverBoundaryCondMagneticFieldProject(
+    FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &bGrid,
+    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k) {}
+
 void Outflow::fieldSolverBoundaryCondElectricField(
     FsGrid<std::array<Real, fsgrids::efield::N_EFIELD>, FS_STENCIL_WIDTH> &EGrid, cint i, cint j, cint k,
-    cuint component)
-{
+    cuint component) {
    EGrid.get(i, j, k)->at(fsgrids::efield::EX + component) = 0.0;
 }
 
 void Outflow::fieldSolverBoundaryCondHallElectricField(
     FsGrid<std::array<Real, fsgrids::ehall::N_EHALL>, FS_STENCIL_WIDTH> &EHallGrid, cint i, cint j, cint k,
-    cuint component)
-{
+    cuint component) {
    std::array<Real, fsgrids::ehall::N_EHALL> *cp = EHallGrid.get(i, j, k);
-   switch (component)
-   {
+   switch (component) {
    case 0:
       cp->at(fsgrids::ehall::EXHALL_000_100) = 0.0;
       cp->at(fsgrids::ehall::EXHALL_010_110) = 0.0;
@@ -413,23 +390,20 @@ void Outflow::fieldSolverBoundaryCondHallElectricField(
 }
 
 void Outflow::fieldSolverBoundaryCondGradPeElectricField(
-    FsGrid<std::array<Real, fsgrids::egradpe::N_EGRADPE>, 2> &EGradPeGrid, cint i, cint j, cint k, cuint component)
-{
+    FsGrid<std::array<Real, fsgrids::egradpe::N_EGRADPE>, 2> &EGradPeGrid, cint i, cint j, cint k, cuint component) {
    EGradPeGrid.get(i, j, k)->at(fsgrids::egradpe::EXGRADPE + component) = 0.0;
 }
 
 void Outflow::fieldSolverBoundaryCondDerivatives(
     FsGrid<std::array<Real, fsgrids::dperb::N_DPERB>, FS_STENCIL_WIDTH> &dPerBGrid,
     FsGrid<std::array<Real, fsgrids::dmoments::N_DMOMENTS>, FS_STENCIL_WIDTH> &dMomentsGrid, cint i, cint j, cint k,
-    cuint RKCase, cuint component)
-{
+    cuint RKCase, cuint component) {
    this->setCellDerivativesToZero(dPerBGrid, dMomentsGrid, i, j, k, component);
 }
 
 void Outflow::fieldSolverBoundaryCondBVOLDerivatives(
     FsGrid<std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH> &volGrid, cint i, cint j, cint k,
-    cuint component)
-{
+    cuint component) {
    this->setCellBVOLDerivativesToZero(volGrid, i, j, k, component);
 }
 
@@ -439,8 +413,7 @@ void Outflow::fieldSolverBoundaryCondBVOLDerivatives(
  * @param cellID
  */
 void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                                      const CellID &cellID, const uint popID, const bool doCalcMoments_V)
-{
+                                      const CellID &cellID, const uint popID, const bool doCalcMoments_V) {
    const OutflowSpeciesParameters &sP = this->speciesParams[popID];
    SpatialCell *cell = mpiGrid[cellID];
    creal *const cellParams = cell->parameters.data();
@@ -454,12 +427,9 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
    bool isThisCellOnAFace[6];
    determineFace(&isThisCellOnAFace[0], x, y, z, dx, dy, dz, true);
 
-   for (uint i = 0; i < 6; i++)
-   {
-      if (isThisCellOnAFace[i] && facesToProcess[i] && !sP.facesToSkipVlasov[i])
-      {
-         switch (sP.faceVlasovScheme[i])
-         {
+   for (uint i = 0; i < 6; i++) {
+      if (isThisCellOnAFace[i] && facesToProcess[i] && !sP.facesToSkipVlasov[i]) {
+         switch (sP.faceVlasovScheme[i]) {
          case vlasovscheme::NONE:
             break;
          case vlasovscheme::COPY:
@@ -476,8 +446,7 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
    }
 }
 
-void Outflow::getFaces(bool *faces)
-{
+void Outflow::getFaces(bool *faces) {
    for (uint i = 0; i < 6; i++)
       faces[i] = facesToProcess[i];
 }
