@@ -630,7 +630,7 @@ bool trans_map_1d(const dccrg::Dccrg<SpatialCell,dccrg::Cartesian_Geometry>& mpi
 /*!
 
   This function communicates the mapping on process boundaries, and then updates the data to their correct values.
-  TODO, this could be inside an openmp region, in which case some m ore barriers and masters should be added
+  TODO, this could be inside an openmp region, in which case some more barriers and masters should be added
 
   \par dimension: 0,1,2 for x,y,z
   \par direction: 1 for + dir, -1 for - dir
@@ -647,13 +647,6 @@ void update_remote_mapping_contribution(
    vector<CellID> receive_cells;
    vector<CellID> send_cells;
    vector<Realf*> receiveBuffers;
-
-//    int myRank;   
-//    MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
-
-   // MPI_Barrier(MPI_COMM_WORLD);
-   // cout << "begin update_remote_mapping_contribution, dimension = " << dimension << ", direction = " << direction << endl;
-   // MPI_Barrier(MPI_COMM_WORLD);
    
    //normalize
    if(direction > 0) direction = 1;
@@ -782,10 +775,6 @@ void update_remote_mapping_contribution(
    for (size_t c=0; c < receiveBuffers.size(); ++c) {
       aligned_free(receiveBuffers[c]);
    }
-
-   // MPI_Barrier(MPI_COMM_WORLD);
-   // cout << "end update_remote_mapping_contribution, dimension = " << dimension << ", direction = " << direction << endl;
-   // MPI_Barrier(MPI_COMM_WORLD);
 
 }
 
