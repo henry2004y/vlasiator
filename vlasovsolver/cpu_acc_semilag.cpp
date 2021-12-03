@@ -75,8 +75,6 @@ uint getAccelerationSubcycles(SpatialCell* spatial_cell, Real dt, const uint pop
 
  * @param spatial_cell Spatial cell containing the accelerated population.
  * @param popID ID of the accelerated particle species.
- * @param vmesh Velocity mesh.
- * @param blockContainer Velocity block data container.
  * @param map_order Order in which vx,vy,vz mappings are performed. 
  * @param dt Time step of one subcycle.
 */
@@ -93,7 +91,7 @@ void cpu_accelerate_cell(SpatialCell* spatial_cell,
    // compute transform, forward in time and backward in time
    phiprof::start("compute-transform");
 
-   //compute the transform performed in this acceleration
+   // compute the transform performed in this acceleration
    Transform<Real,3,Affine> fwd_transform= compute_acceleration_transformation(spatial_cell,popID,dt);
    Transform<Real,3,Affine> bwd_transform= fwd_transform.inverse();
    phiprof::stop("compute-transform");
