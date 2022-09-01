@@ -55,6 +55,7 @@ void Slab::addParameters() {
    RP::add("Slab.bx0R", "Right domain B field value (T)", 1.0e-9);
    RP::add("Slab.by0R", "Right domain B field value (T)", 2.0e-9);
    RP::add("Slab.bz0R", "Right domain B field value (T)", 3.0e-9);
+   RP::add("Slab.halfWidth", "Halfwidth of the current sheet (m)", 0.0);
 
    RP::add("Slab.AMR_L1width", "L1 AMR region width (m)", 0);
    RP::add("Slab.AMR_L2width", "L2 AMR region width (m)", 0);
@@ -91,6 +92,7 @@ void Slab::getParameters() {
    RP::get("Slab.bx0R", this->b0R[0]);
    RP::get("Slab.by0R", this->b0R[1]);
    RP::get("Slab.bz0R", this->b0R[2]);
+   RP::get("Slab.halfWidth", this->halfWidth);
 
    RP::get("Slab.AMR_L1width", this->AMR_L1width);
    RP::get("Slab.AMR_L2width", this->AMR_L2width);
@@ -150,20 +152,22 @@ Real Slab::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, c
    Real KB = physicalconstants::K_B;
    const SlabSpeciesParameters& sP = this->speciesParams[popID];
 
-   Real f;
+   Real f, n, T;
+   creal(&v0)[3] = x < 0 ? sP.v0L : sP.v0R;
    if (x < 0) {
-      f = sP.nL * std::pow(mass / (2.0 * M_PI * KB * sP.TL), 1.5) *
-          exp(-mass *
-              ((vx - sP.v0L[0]) * (vx - sP.v0L[0]) + (vy - sP.v0L[1]) * (vy - sP.v0L[1]) +
-               (vz - sP.v0L[2]) * (vz - sP.v0L[2])) /
-              (2.0 * KB * sP.TL));
+      n = sP.nL;
+      T = sP.TL;
    } else {
-      f = sP.nR * std::pow(mass / (2.0 * M_PI * KB * sP.TR), 1.5) *
-          exp(-mass *
-              ((vx - sP.v0R[0]) * (vx - sP.v0R[0]) + (vy - sP.v0R[1]) * (vy - sP.v0R[1]) +
-               (vz - sP.v0R[2]) * (vz - sP.v0R[2])) /
-              (2.0 * KB * sP.TR));
+      n = sP.nR;
+      T = sP.TR;
    }
+   if (halfWidth != 0) {
+      n = 0.5 * ((sP.nL + sP.nR) + (sP.nL - sP.nR) * tanh(x / halfWidth));
+   }
+
+   f = n * std::pow(mass / (2.0 * M_PI * KB * T), 1.5) *
+       exp(-mass * ((vx - v0[0]) * (vx - v0[0]) + (vy - v0[1]) * (vy - v0[1]) + (vz - v0[2]) * (vz - v0[2])) /
+           (2.0 * KB * T));
 
    return f;
 }

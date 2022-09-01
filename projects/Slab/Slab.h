@@ -34,11 +34,9 @@ struct SlabSpeciesParameters {
    Real nL;
    Real v0L[3];
    Real TL;
-
    Real nR;
    Real v0R[3];
    Real TR;
-
    uint nSpaceSamples;
    uint nVelocitySamples;
 };
@@ -61,6 +59,7 @@ public:
 protected:
    Real b0L[3];
    Real b0R[3];
+   Real halfWidth;
 
    Real AMR_L1width;
    Real AMR_L2width;
