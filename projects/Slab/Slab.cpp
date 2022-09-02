@@ -49,13 +49,14 @@ bool Slab::initialize() { return Project::initialize(); }
 void Slab::addParameters() {
    typedef Readparameters RP;
 
-   RP::add("Slab.bx0L", "Left domain B field value (T)", 1.0e-9);
-   RP::add("Slab.by0L", "Left domain B field value (T)", 2.0e-9);
+   RP::add("Slab.bx0L", "Left domain B field value (T)", 0.0e-9);
+   RP::add("Slab.by0L", "Left domain B field value (T)", 0.0e-9);
    RP::add("Slab.bz0L", "Left domain B field value (T)", 3.0e-9);
-   RP::add("Slab.bx0R", "Right domain B field value (T)", 1.0e-9);
-   RP::add("Slab.by0R", "Right domain B field value (T)", 2.0e-9);
+   RP::add("Slab.bx0R", "Right domain B field value (T)", 0.0e-9);
+   RP::add("Slab.by0R", "Right domain B field value (T)", 0.0e-9);
    RP::add("Slab.bz0R", "Right domain B field value (T)", 3.0e-9);
    RP::add("Slab.halfWidth", "Halfwidth of the current sheet (m)", 0.0);
+   RP::add("Slab.Tratio", "Te/Ti for setting B field from pressure balance", 0.4);
 
    RP::add("Slab.AMR_L1width", "L1 AMR region width (m)", 0);
    RP::add("Slab.AMR_L2width", "L2 AMR region width (m)", 0);
@@ -93,6 +94,7 @@ void Slab::getParameters() {
    RP::get("Slab.by0R", this->b0R[1]);
    RP::get("Slab.bz0R", this->b0R[2]);
    RP::get("Slab.halfWidth", this->halfWidth);
+   RP::get("Slab.Tratio", this->Tratio); // redundant in field solver!
 
    RP::get("Slab.AMR_L1width", this->AMR_L1width);
    RP::get("Slab.AMR_L2width", this->AMR_L2width);
@@ -162,12 +164,11 @@ Real Slab::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, c
       T = sP.TR;
    }
    if (halfWidth != 0) {
-      n = 0.5 * ((sP.nL + sP.nR) + (sP.nL - sP.nR) * tanh(x / halfWidth));
+      n = 0.5 * ((sP.nL + sP.nR) + (sP.nR - sP.nL) * tanh(x / halfWidth));
    }
 
    f = n * std::pow(mass / (2.0 * M_PI * KB * T), 1.5) *
-       exp(-mass * ((vx - v0[0]) * (vx - v0[0]) + (vy - v0[1]) * (vy - v0[1]) + (vz - v0[2]) * (vz - v0[2])) /
-           (2.0 * KB * T));
+       exp(-mass * (sqr(vx - v0[0]) + sqr(vy - v0[1]) + sqr(vz - v0[2])) / (2.0 * KB * T));
 
    return f;
 }
@@ -216,21 +217,51 @@ void Slab::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
 
+      if (this->halfWidth != 0) {
 #pragma omp parallel for collapse(3)
-      for (int x = 0; x < localSize[0]; ++x) {
-         for (int y = 0; y < localSize[1]; ++y) {
-            for (int z = 0; z < localSize[2]; ++z) {
-               const std::array<Real, 3> xyz = perBGrid.getPhysicalCoords(x, y, z);
-               std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(x, y, z);
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
 
-               if (xyz[0] < 0.0) {
-                  cell->at(fsgrids::bfield::PERBX) = this->b0L[0];
-                  cell->at(fsgrids::bfield::PERBY) = this->b0L[1];
-                  cell->at(fsgrids::bfield::PERBZ) = this->b0L[2];
-               } else {
-                  cell->at(fsgrids::bfield::PERBX) = this->b0R[0];
-                  cell->at(fsgrids::bfield::PERBY) = this->b0R[1];
-                  cell->at(fsgrids::bfield::PERBZ) = this->b0R[2];
+                  // Assume only one ion species
+                  const SlabSpeciesParameters& sP = this->speciesParams[0];
+                  Real KB = physicalconstants::K_B;
+                  Real MU_0 = physicalconstants::MU_0;
+                  Real n, Pi, Pe, PB, Bz;
+
+                  n = 0.5 * ((sP.nL + sP.nR) + (sP.nR - sP.nL) * tanh(x[0] / halfWidth));
+
+                  Pi = sP.nL * KB * sP.TL;
+                  Pe = sP.nL * KB * sP.TL * this->Tratio;
+                  PB = Pi + Pe + sqr(this->b0L[2]) / (2 * MU_0) - n * KB * sP.TL * (1 + this->Tratio);
+
+                  Bz = std::sqrt(PB * 2 * MU_0);
+
+                  cell->at(fsgrids::bfield::PERBX) = 0.0;
+                  cell->at(fsgrids::bfield::PERBY) = 0.0;
+                  cell->at(fsgrids::bfield::PERBZ) = Bz;
+               }
+            }
+         }
+      } else {
+#pragma omp parallel for collapse(3)
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
+
+                  if (x[0] < 0.0) {
+                     cell->at(fsgrids::bfield::PERBX) = this->b0L[0];
+                     cell->at(fsgrids::bfield::PERBY) = this->b0L[1];
+                     cell->at(fsgrids::bfield::PERBZ) = this->b0L[2];
+                  } else {
+                     cell->at(fsgrids::bfield::PERBX) = this->b0R[0];
+                     cell->at(fsgrids::bfield::PERBY) = this->b0R[1];
+                     cell->at(fsgrids::bfield::PERBZ) = this->b0R[2];
+                  }
                }
             }
          }
@@ -253,13 +284,13 @@ bool Slab::refineSpatialCells(dccrg::Dccrg<spatial_cell::SpatialCell, dccrg::Car
       for (uint i = 0; i < P::xcells_ini; ++i) {
          for (uint j = 0; j < P::ycells_ini; ++j) {
             for (uint k = 0; k < P::zcells_ini; ++k) {
-               std::array<double, 3> xyz;
-               xyz[0] = P::xmin + (i + 0.5) * P::dx_ini;
-               xyz[1] = P::ymin + (j + 0.5) * P::dy_ini;
-               xyz[2] = P::zmin + (k + 0.5) * P::dz_ini;
+               std::array<double, 3> x;
+               x[0] = P::xmin + (i + 0.5) * P::dx_ini;
+               x[1] = P::ymin + (j + 0.5) * P::dy_ini;
+               x[2] = P::zmin + (k + 0.5) * P::dz_ini;
 
-               if (abs(xyz[0]) < AMR_L1width) {
-                  CellID myCell = mpiGrid.get_existing_cell(xyz);
+               if (abs(x[0]) < AMR_L1width) {
+                  CellID myCell = mpiGrid.get_existing_cell(x);
                   mpiGrid.refine_completely(myCell);
                }
             }
@@ -276,14 +307,13 @@ bool Slab::refineSpatialCells(dccrg::Dccrg<spatial_cell::SpatialCell, dccrg::Car
       for (uint i = 0; i < 2 * P::xcells_ini; ++i) {
          for (uint j = 0; j < 2 * P::ycells_ini; ++j) {
             for (uint k = 0; k < 2 * P::zcells_ini; ++k) {
+               std::array<double, 3> x;
+               x[0] = P::xmin + (i + 0.5) * 0.5 * P::dx_ini;
+               x[1] = P::ymin + (j + 0.5) * 0.5 * P::dy_ini;
+               x[2] = P::zmin + (k + 0.5) * 0.5 * P::dz_ini;
 
-               std::array<double, 3> xyz;
-               xyz[0] = P::xmin + (i + 0.5) * 0.5 * P::dx_ini;
-               xyz[1] = P::ymin + (j + 0.5) * 0.5 * P::dy_ini;
-               xyz[2] = P::zmin + (k + 0.5) * 0.5 * P::dz_ini;
-
-               if (abs(xyz[0]) < AMR_L2width) {
-                  CellID myCell = mpiGrid.get_existing_cell(xyz);
+               if (abs(x[0]) < AMR_L2width) {
+                  CellID myCell = mpiGrid.get_existing_cell(x);
                   mpiGrid.refine_completely(myCell);
                }
             }
@@ -300,14 +330,13 @@ bool Slab::refineSpatialCells(dccrg::Dccrg<spatial_cell::SpatialCell, dccrg::Car
       for (uint i = 0; i < 4 * P::xcells_ini; ++i) {
          for (uint j = 0; j < 4 * P::ycells_ini; ++j) {
             for (uint k = 0; k < 4 * P::zcells_ini; ++k) {
+               std::array<double, 3> x;
+               x[0] = P::xmin + (i + 0.5) * 0.25 * P::dx_ini;
+               x[1] = P::ymin + (j + 0.5) * 0.25 * P::dy_ini;
+               x[2] = P::zmin + (k + 0.5) * 0.25 * P::dz_ini;
 
-               std::array<double, 3> xyz;
-               xyz[0] = P::xmin + (i + 0.5) * 0.25 * P::dx_ini;
-               xyz[1] = P::ymin + (j + 0.5) * 0.25 * P::dy_ini;
-               xyz[2] = P::zmin + (k + 0.5) * 0.25 * P::dz_ini;
-
-               if (abs(xyz[0]) < AMR_L3width) {
-                  CellID myCell = mpiGrid.get_existing_cell(xyz);
+               if (abs(x[0]) < AMR_L3width) {
+                  CellID myCell = mpiGrid.get_existing_cell(x);
                   mpiGrid.refine_completely(myCell);
                }
             }
@@ -324,14 +353,13 @@ bool Slab::refineSpatialCells(dccrg::Dccrg<spatial_cell::SpatialCell, dccrg::Car
       for (uint i = 0; i < 8 * P::xcells_ini; ++i) {
          for (uint j = 0; j < 8 * P::ycells_ini; ++j) {
             for (uint k = 0; k < 8 * P::zcells_ini; ++k) {
+               std::array<double, 3> x;
+               x[0] = P::xmin + (i + 0.5) * 0.125 * P::dx_ini;
+               x[1] = P::ymin + (j + 0.5) * 0.125 * P::dy_ini;
+               x[2] = P::zmin + (k + 0.5) * 0.125 * P::dz_ini;
 
-               std::array<double, 3> xyz;
-               xyz[0] = P::xmin + (i + 0.5) * 0.125 * P::dx_ini;
-               xyz[1] = P::ymin + (j + 0.5) * 0.125 * P::dy_ini;
-               xyz[2] = P::zmin + (k + 0.5) * 0.125 * P::dz_ini;
-
-               if (abs(xyz[0]) < AMR_L4width) {
-                  CellID myCell = mpiGrid.get_existing_cell(xyz);
+               if (abs(x[0]) < AMR_L4width) {
+                  CellID myCell = mpiGrid.get_existing_cell(x);
                   mpiGrid.refine_completely(myCell);
                }
             }

@@ -60,6 +60,7 @@ protected:
    Real b0L[3];
    Real b0R[3];
    Real halfWidth;
+   Real Tratio;
 
    Real AMR_L1width;
    Real AMR_L2width;
