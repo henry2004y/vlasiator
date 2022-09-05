@@ -290,25 +290,26 @@ void SysBoundaryCondition::vlasovBoundaryCopyFromClosestNbrAndLimit(
 /*! Function used to copy the distribution and moments from one cell to another.*/
 void SysBoundaryCondition::copyCellData(SpatialCell* from, SpatialCell* to, const bool copyMomentsOnly,
                                         const uint popID, const bool doCalcMomentsV) {
+   namespace CP = CellParams;
    if (popID == 0) {
       if (doCalcMomentsV) {
-         to->parameters[CellParams::RHOM_V] = from->parameters[CellParams::RHOM_V];
-         to->parameters[CellParams::VX_V] = from->parameters[CellParams::VX_V];
-         to->parameters[CellParams::VY_V] = from->parameters[CellParams::VY_V];
-         to->parameters[CellParams::VZ_V] = from->parameters[CellParams::VZ_V];
-         to->parameters[CellParams::RHOQ_V] = from->parameters[CellParams::RHOQ_V];
-         to->parameters[CellParams::P_11_V] = from->parameters[CellParams::P_11_V];
-         to->parameters[CellParams::P_22_V] = from->parameters[CellParams::P_22_V];
-         to->parameters[CellParams::P_33_V] = from->parameters[CellParams::P_33_V];
+         to->parameters[CP::RHOM_V] = from->parameters[CP::RHOM_V];
+         to->parameters[CP::VX_V] = from->parameters[CP::VX_V];
+         to->parameters[CP::VY_V] = from->parameters[CP::VY_V];
+         to->parameters[CP::VZ_V] = from->parameters[CP::VZ_V];
+         to->parameters[CP::RHOQ_V] = from->parameters[CP::RHOQ_V];
+         to->parameters[CP::P_11_V] = from->parameters[CP::P_11_V];
+         to->parameters[CP::P_22_V] = from->parameters[CP::P_22_V];
+         to->parameters[CP::P_33_V] = from->parameters[CP::P_33_V];
       } else {
-         to->parameters[CellParams::RHOM_R] = from->parameters[CellParams::RHOM_R];
-         to->parameters[CellParams::VX_R] = from->parameters[CellParams::VX_R];
-         to->parameters[CellParams::VY_R] = from->parameters[CellParams::VY_R];
-         to->parameters[CellParams::VZ_R] = from->parameters[CellParams::VZ_R];
-         to->parameters[CellParams::RHOQ_R] = from->parameters[CellParams::RHOQ_R];
-         to->parameters[CellParams::P_11_R] = from->parameters[CellParams::P_11_R];
-         to->parameters[CellParams::P_22_R] = from->parameters[CellParams::P_22_R];
-         to->parameters[CellParams::P_33_R] = from->parameters[CellParams::P_33_R];
+         to->parameters[CP::RHOM_R] = from->parameters[CP::RHOM_R];
+         to->parameters[CP::VX_R] = from->parameters[CP::VX_R];
+         to->parameters[CP::VY_R] = from->parameters[CP::VY_R];
+         to->parameters[CP::VZ_R] = from->parameters[CP::VZ_R];
+         to->parameters[CP::RHOQ_R] = from->parameters[CP::RHOQ_R];
+         to->parameters[CP::P_11_R] = from->parameters[CP::P_11_R];
+         to->parameters[CP::P_22_R] = from->parameters[CP::P_22_R];
+         to->parameters[CP::P_33_R] = from->parameters[CP::P_33_R];
       }
    }
 

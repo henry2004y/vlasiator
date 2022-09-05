@@ -279,22 +279,23 @@ void Maxwellian::generateTemplateCell(spatial_cell::SpatialCell& templateCell, R
 
    calculateCellMoments(&templateCell, true, true);
 
-   templateCell.parameters[CellParams::RHOM_R] = templateCell.parameters[CellParams::RHOM];
-   templateCell.parameters[CellParams::VX_R] = templateCell.parameters[CellParams::VX];
-   templateCell.parameters[CellParams::VY_R] = templateCell.parameters[CellParams::VY];
-   templateCell.parameters[CellParams::VZ_R] = templateCell.parameters[CellParams::VZ];
-   templateCell.parameters[CellParams::RHOQ_R] = templateCell.parameters[CellParams::RHOQ];
-   templateCell.parameters[CellParams::P_11_R] = templateCell.parameters[CellParams::P_11];
-   templateCell.parameters[CellParams::P_22_R] = templateCell.parameters[CellParams::P_22];
-   templateCell.parameters[CellParams::P_33_R] = templateCell.parameters[CellParams::P_33];
-   templateCell.parameters[CellParams::RHOM_V] = templateCell.parameters[CellParams::RHOM];
-   templateCell.parameters[CellParams::VX_V] = templateCell.parameters[CellParams::VX];
-   templateCell.parameters[CellParams::VY_V] = templateCell.parameters[CellParams::VY];
-   templateCell.parameters[CellParams::VZ_V] = templateCell.parameters[CellParams::VZ];
-   templateCell.parameters[CellParams::RHOQ_V] = templateCell.parameters[CellParams::RHOQ];
-   templateCell.parameters[CellParams::P_11_V] = templateCell.parameters[CellParams::P_11];
-   templateCell.parameters[CellParams::P_22_V] = templateCell.parameters[CellParams::P_22];
-   templateCell.parameters[CellParams::P_33_V] = templateCell.parameters[CellParams::P_33];
+   namespace CP = CellParams;
+   templateCell.parameters[CP::RHOM_R] = templateCell.parameters[CP::RHOM];
+   templateCell.parameters[CP::VX_R] = templateCell.parameters[CP::VX];
+   templateCell.parameters[CP::VY_R] = templateCell.parameters[CP::VY];
+   templateCell.parameters[CP::VZ_R] = templateCell.parameters[CP::VZ];
+   templateCell.parameters[CP::RHOQ_R] = templateCell.parameters[CP::RHOQ];
+   templateCell.parameters[CP::P_11_R] = templateCell.parameters[CP::P_11];
+   templateCell.parameters[CP::P_22_R] = templateCell.parameters[CP::P_22];
+   templateCell.parameters[CP::P_33_R] = templateCell.parameters[CP::P_33];
+   templateCell.parameters[CP::RHOM_V] = templateCell.parameters[CP::RHOM];
+   templateCell.parameters[CP::VX_V] = templateCell.parameters[CP::VX];
+   templateCell.parameters[CP::VY_V] = templateCell.parameters[CP::VY];
+   templateCell.parameters[CP::VZ_V] = templateCell.parameters[CP::VZ];
+   templateCell.parameters[CP::RHOQ_V] = templateCell.parameters[CP::RHOQ];
+   templateCell.parameters[CP::P_11_V] = templateCell.parameters[CP::P_11];
+   templateCell.parameters[CP::P_22_V] = templateCell.parameters[CP::P_22];
+   templateCell.parameters[CP::P_33_V] = templateCell.parameters[CP::P_33];
 }
 
 std::string Maxwellian::getName() const { return "Maxwellian"; }
