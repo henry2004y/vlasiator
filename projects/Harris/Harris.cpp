@@ -142,9 +142,8 @@ void Harris::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>
                               FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
    setBackgroundFieldToZero(BgBGrid);
 
-   // hyzhou: I don't know how to get grid size info here?
-   const Real Lx = 1.1585768245569592e7;
-   const Real Lz = 5.792884122784796e6;
+   const Real Lx = P::xmax - P::xmin;
+   const Real Lz = P::zmax - P::zmin;
 
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
