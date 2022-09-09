@@ -41,6 +41,7 @@ bool Harris::initialize(void) { return Project::initialize(); }
 
 void Harris::addParameters() {
    typedef Readparameters RP;
+   RP::add("Harris.type", "Type of the initialization: 1. single layer, 2. double layer", 1);
    RP::add("Harris.Scale_size", "Harris sheet scale size (m)", 150000.0);
    RP::add("Harris.BX0", "Reference Magnetic field (T)", 8.33061003094e-8);
    RP::add("Harris.BY0", "Reference Magnetic field (T)", 8.33061003094e-8);
@@ -61,6 +62,7 @@ void Harris::addParameters() {
 void Harris::getParameters() {
    Project::getParameters();
    typedef Readparameters RP;
+   RP::get("Harris.type", this->type);
    RP::get("Harris.Scale_size", this->LAMBDA);
    RP::get("Harris.BX0", this->BX0);
    RP::get("Harris.BY0", this->BY0);
@@ -87,9 +89,19 @@ Real Harris::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy,
    Real mass = getObjectWrapper().particleSpecies[popID].mass;
    auto KB = physicalconstants::K_B;
 
-   Real f;
-   Real sech2 = sqr(1.0 / std::cosh(z / this->LAMBDA));
-   Real n = sP.n * sech2 + 0.2 * sP.n;
+   Real f, n;
+
+   if (this->type == 1) {
+      Real sech2 = sqr(1.0 / std::cosh(z / this->LAMBDA));
+      n = sP.n * sech2 + 0.2 * sP.n;
+   } else if (this->type == 2) {
+      const Real Lx = P::xmax - P::xmin;
+      const Real Lz = P::zmax - P::zmin;
+
+      n = sP.n * (sqr(1.0 / std::cosh((z - 0.25 * Lz) / this->LAMBDA)) +
+                  sqr(1.0 / std::cosh((z + 0.25 * Lz) / this->LAMBDA))) +
+          0.2 * sP.n;
+   }
 
    f = n * std::pow(mass / (2.0 * M_PI * KB * sP.T), 1.5) *
        exp(-mass * (sqr(vx) + sqr(vy) + sqr(vz)) / (2.0 * KB * sP.T));
@@ -148,20 +160,51 @@ void Harris::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
 
+      if (this->type == 1) {
 #pragma omp parallel for collapse(3)
-      for (int i = 0; i < localSize[0]; ++i) {
-         for (int j = 0; j < localSize[1]; ++j) {
-            for (int k = 0; k < localSize[2]; ++k) {
-               const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
-               std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
 
-               cell->at(fsgrids::bfield::PERBX) =
-                   this->BX0 * tanh((x[2] + 0.5 * perBGrid.DZ) / this->LAMBDA) +
-                   this->PSI0 * (-M_PI / Lz) * cos(2 * M_PI * x[0] / Lx) * sin(M_PI * x[2] / Lz);
-               cell->at(fsgrids::bfield::PERBY) = 0.0;
-               cell->at(fsgrids::bfield::PERBZ) =
-                   this->PSI0 * (-2 * M_PI / Lx) * sin(2 * M_PI * x[0] / Lx) * cos(M_PI * x[2] / Lz);
+                  cell->at(fsgrids::bfield::PERBX) = this->BX0 * tanh((x[2] + 0.5 * perBGrid.DZ) / this->LAMBDA) +
+                                                     this->PSI0 * (-M_PI / Lz) *
+                                                         cos(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
+                                                         sin(M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz);
+                  cell->at(fsgrids::bfield::PERBY) = 0.0;
+                  cell->at(fsgrids::bfield::PERBZ) = this->PSI0 * (-2 * M_PI / Lx) *
+                                                     sin(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
+                                                     cos(M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz);
+               }
             }
+         }
+      } else if (this->type == 2) {
+#pragma omp parallel for collapse(3)
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
+
+                  cell->at(fsgrids::bfield::PERBX) =
+                      this->BX0 * (tanh((x[2] + 0.5 * perBGrid.DZ - 0.25 * Lz) / this->LAMBDA) -
+                                   tanh((x[2] + 0.5 * perBGrid.DZ + 0.25 * Lz) / this->LAMBDA) + 1.0) +
+                      this->PSI0 * (-M_PI / Lz) * cos(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
+                          sin(2 * M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz - 0.25);
+                  cell->at(fsgrids::bfield::PERBY) = 0.0;
+                  cell->at(fsgrids::bfield::PERBZ) = this->PSI0 * (-2 * M_PI / Lx) *
+                                                     sin(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
+                                                     cos(2 * M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz);
+               }
+            }
+         }
+      } else {
+         int myRank;
+         MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+         if (myRank == MASTER_RANK) {
+            std::cerr << "unknown initialization type: " << this->type << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
          }
       }
    }
