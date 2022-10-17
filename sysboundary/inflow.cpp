@@ -47,8 +47,7 @@ Inflow::Inflow() : SysBoundaryCondition() {}
 Inflow::~Inflow() {}
 
 void Inflow::initBoundary(creal t, Project& project) {
-   // The array of bool describes which of the faces are to have inflow boundary
-   // conditions, in the order of x+, x-, y+, y-, z+, z-.
+   // inflow boundary faces in the order of x+, x-, y+, y-, z+, z-.
    std::fill_n(facesToProcess, 6, false);
 
    this->getParameters();

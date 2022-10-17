@@ -103,18 +103,17 @@ public:
    virtual uint getIndex() const = 0;
 
 protected:
-   /*! Array of bool telling which faces are going to be processed by the boundary condition.*/
+   /*! Faces processed by this boundary condition.*/
    bool facesToProcess[6];
-   /*! Array of template spatial cells replicated over the corresponding
-    * simulation volume face. Only the template for an active face is actually
-    * being touched at all by the code. */
+   /*! Template spatial cells replicated over the volume faces.
+    * Only the template for an active face is actually being used. */
    spatial_cell::SpatialCell templateCells[6];
    Real templateB[6][3];
    /*! Time interval for applying the dynamic BC. */
    Real tInterval;
    /*! Last simulation time the dynamic BC is applied. */
    Real tLastApply;
-   /*! List of faces on which inflow boundary conditions are to be applied ([xyz][+-]). */
+   /*! Faces on which inflow boundary conditions are to be applied ([xyz][+-]). */
    std::vector<std::string> faceList;
    std::vector<InflowSpeciesParameters> speciesParams;
    std::vector<std::vector<Real>> loadFile(const char* file, unsigned int nParams);

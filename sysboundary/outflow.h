@@ -32,11 +32,11 @@
 namespace SBC {
 
 struct OutflowSpeciesParameters {
-   /*! Array of bool telling which faces are going to be skipped by the Vlasov boundary condition.*/
+   /*! Faces to be skipped by the Vlasov boundary condition.*/
    std::array<bool, 6> facesToSkipVlasov;
-   /*! List of schemes to use for the Vlasov outflow boundary conditions on each face ([xyz][+-]). */
+   /*! Schemes to use for the Vlasov outflow boundary conditions on each face ([xyz][+-]). */
    std::array<uint, 6> faceVlasovScheme;
-   /*! List of faces on which outflow boundary conditions are to be reapplied upon restart ([xyz][+-]). */
+   /*! Faces on which outflow boundary conditions are to be reapplied upon restart ([xyz][+-]). */
    std::vector<std::string> faceToReapplyUponRestartList;
 
    /*! Factor by which to quench the inflowing parts of the velocity distribution function.*/
@@ -100,15 +100,15 @@ public:
    uint getIndex() const override;
 
 protected:
-   /*! Array of bool telling which faces are going to be processed by the boundary condition.*/
+   /*! Faces processed by this boundary condition.*/
    bool facesToProcess[6];
-   /*! Array of bool telling which faces are going to be processed by the fields boundary condition.*/
+   /*! Faces not processed by the associated fields boundary condition.*/
    bool facesToSkipFields[6];
-   /*! Array of bool telling which faces are going to be reapplied upon restart.*/
+   /*! Faces on which conditions to be reapplied upon restart.*/
    bool facesToReapply[6];
-   /*! List of faces on which outflow boundary conditions are to be applied ([xyz][+-]). */
+   /*! Faces on which outflow boundary conditions are to be applied ([xyz][+-]). */
    std::vector<std::string> faceList;
-   /*! List of faces on which no fields outflow boundary conditions are to be applied ([xyz][+-]). */
+   /*! Faces on which no fields outflow boundary conditions are to be applied ([xyz][+-]). */
    std::vector<std::string> faceNoFieldsList;
    std::vector<OutflowSpeciesParameters> speciesParams;
 
