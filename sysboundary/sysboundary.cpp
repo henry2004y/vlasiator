@@ -578,7 +578,8 @@ void SysBoundary::applyBoundaryVlasovConditions(
 
       // Compute Vlasov boundary condition on boundary/process inner cells
       vector<CellID> localCells;
-      getBoundaryCellList(mpiGrid, mpiGrid.get_local_cells_not_on_process_boundary(SYSBOUNDARIES_EXTENDED_NEIGHBORHOOD_ID), localCells);
+      getBoundaryCellList(
+          mpiGrid, mpiGrid.get_local_cells_not_on_process_boundary(SYSBOUNDARIES_EXTENDED_NEIGHBORHOOD_ID), localCells);
 
 #pragma omp parallel for
       for (uint i = 0; i < localCells.size(); i++) {

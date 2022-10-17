@@ -142,7 +142,7 @@ protected:
    /*! bool telling whether to call again applyInitialState upon restarting the simulation. */
    bool applyUponRestart;
 
-   void determineFace(bool *isThisCellOnAFace, creal x, creal y, creal z, creal dx, creal dy, creal dz,
+   void determineFace(bool (&isThisCellOnAFace)[6], creal x, creal y, creal z, creal dx, creal dy, creal dz,
                       const bool excludeSlicesAndPeriodicDimensions = false);
    void copyCellData(SpatialCell *from, SpatialCell *to, const bool copyMomentsOnly, const uint popID,
                      const bool doCalcMomentsV);

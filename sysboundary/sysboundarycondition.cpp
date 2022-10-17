@@ -57,7 +57,7 @@ SysBoundaryCondition::~SysBoundaryCondition() {}
  * be part of the face if that face has a depth of 1 only (single-cell thick
  * slices/columns) or if that direction is periodic. Set to false by default.
  */
-void SysBoundaryCondition::determineFace(bool* isThisCellOnAFace, creal x, creal y, creal z, creal dx, creal dy,
+void SysBoundaryCondition::determineFace(bool (&isThisCellOnAFace)[6], creal x, creal y, creal z, creal dx, creal dy,
                                          creal dz, const bool excludeSlicesAndPeriodicDimensions) {
    isThisCellOnAFace[0] = (x > Parameters::xmax - 2.0 * dx) ? true : false;
    isThisCellOnAFace[1] = (x < Parameters::xmin + 2.0 * dx) ? true : false;

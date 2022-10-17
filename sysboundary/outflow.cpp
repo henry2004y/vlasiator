@@ -215,7 +215,7 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
                              FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
 
    bool doAssign;
-   std::array<bool, 6> isThisCellOnAFace;
+   bool isThisCellOnAFace[6];
 
    // Assign boundary flags to local DCCRG cells
    for (auto& dccrgId : getLocalCells()) {
@@ -230,8 +230,7 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
       creal y = cellParams[CellParams::YCRD] + 0.5 * dy;
       creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
-      isThisCellOnAFace.fill(false);
-      determineFace(isThisCellOnAFace.data(), x, y, z, dx, dy, dz);
+      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz);
 
       // Comparison of the array defining which faces to use and the array telling on which faces this cell is
       doAssign = false;
@@ -264,11 +263,9 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
             creal dy = P::dy_ini * pow(2, -refLvl);
             creal dz = P::dz_ini * pow(2, -refLvl);
 
-            isThisCellOnAFace.fill(false);
             doAssign = false;
 
-            determineFace(isThisCellOnAFace.data(), cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx,
-                          dy, dz);
+            determineFace(isThisCellOnAFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
             for (int iface = 0; iface < 6; iface++)
                doAssign = doAssign || (facesToProcess[iface] && isThisCellOnAFace[iface]);
             if (doAssign) {
@@ -301,7 +298,7 @@ void Outflow::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian
          creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
          bool isThisCellOnAFace[6];
-         determineFace(&isThisCellOnAFace[0], x, y, z, dx, dy, dz);
+         determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz);
 
          doApply = false;
          // Comparison of the array defining which faces to use and the array telling on which faces this cell is
@@ -425,7 +422,7 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
    creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
    bool isThisCellOnAFace[6];
-   determineFace(&isThisCellOnAFace[0], x, y, z, dx, dy, dz, true);
+   determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
 
    for (uint i = 0; i < 6; i++) {
       if (isThisCellOnAFace[i] && facesToProcess[i] && !sP.facesToSkipVlasov[i]) {

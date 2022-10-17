@@ -80,7 +80,7 @@ void Inflow::initBoundary(creal t, Project& project) {
 void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                             FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
    bool doAssign;
-   std::array<bool, 6> isThisCellOnAFace;
+   bool isThisCellOnAFace[6];
 
    // Assign boundary flags to local DCCRG cells
    const vector<CellID>& cells = getLocalCells();
@@ -96,8 +96,7 @@ void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>
       creal y = cellParams[CellParams::YCRD] + 0.5 * dy;
       creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
-      isThisCellOnAFace.fill(false);
-      determineFace(isThisCellOnAFace.data(), x, y, z, dx, dy, dz);
+      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz);
       // Comparison of the array defining which faces to use and the array telling on which faces this cell is
       doAssign = false;
       for (int j = 0; j < 6; j++) {
@@ -130,11 +129,9 @@ void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>
             creal dy = P::dy_ini * pow(2, -refLvl);
             creal dz = P::dz_ini * pow(2, -refLvl);
 
-            isThisCellOnAFace.fill(false);
             doAssign = false;
 
-            determineFace(isThisCellOnAFace.data(), cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2],
-                          dx, dy, dz);
+            determineFace(isThisCellOnAFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
             for (int iface = 0; iface < 6; iface++) {
                doAssign = doAssign || (facesToProcess[iface] && isThisCellOnAFace[iface]);
             }
@@ -187,7 +184,7 @@ Real Inflow::fieldSolverBoundaryCondMagneticField(
    creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + Parameters::zmin;
 
    bool isThisCellOnAFace[6];
-   determineFace(&isThisCellOnAFace[0], x, y, z, dx, dy, dz, true);
+   determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
 
    for (uint i = 0; i < 6; i++) {
       if (isThisCellOnAFace[i]) {
@@ -267,7 +264,7 @@ void Inflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cart
       creal z = cell->parameters[CellParams::ZCRD] + 0.5 * dz;
 
       bool isThisCellOnAFace[6];
-      determineFace(&isThisCellOnAFace[0], x, y, z, dx, dy, dz, true);
+      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
 
       for (uint i = 0; i < 6; i++) {
          if (facesToProcess[i] && isThisCellOnAFace[i]) {
@@ -281,7 +278,7 @@ void Inflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cart
 
 void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                               FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& perBGrid) {
-   std::array<bool, 6> isThisCellOnAFace;
+   bool isThisCellOnAFace[6];
    const std::array<int, 3> gridDims(perBGrid.getLocalSize());
 
    for (int k = 0; k < gridDims[2]; k++) {
@@ -307,8 +304,7 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
             creal dy = P::dy_ini * pow(2, -refLvl);
             creal dz = P::dz_ini * pow(2, -refLvl);
 
-            determineFace(isThisCellOnAFace.data(), cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx,
-                          dy, dz);
+            determineFace(isThisCellOnAFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
 
             for (uint iface = 0; iface < 6; iface++) {
                if (facesToProcess[iface] && isThisCellOnAFace[iface]) {
@@ -341,7 +337,7 @@ void Inflow::setCellsFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesi
       creal z = cell->parameters[CellParams::ZCRD] + 0.5 * dz;
 
       bool isThisCellOnAFace[6];
-      determineFace(&isThisCellOnAFace[0], x, y, z, dx, dy, dz, true);
+      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
 
       for (uint i = 0; i < 6; i++) {
          if (facesToProcess[i] && isThisCellOnAFace[i]) {
