@@ -440,12 +440,12 @@ void Inflow::generateTemplateCells(creal t) {
 
 /*!Interpolate the input data to the given time.
  * The first entry of each line is assumed to be the time.
- * \param inputDataIndex Index used to get the correct face's input data.
+ * \param face Index of the input data face.
  * \param t Current simulation time.
  * \param outputData Pointer to the location where to write the result.
  * Make sure from the calling side that nParams Real values can be written there!
  */
-void Inflow::interpolate(const int inputDataIndex, const uint popID, creal t, Real* outputData) {
+void Inflow::interpolate(const int face, const uint popID, creal t, Real* outputData) {
    InflowSpeciesParameters& sP = speciesParams[popID];
 
    // Find first data[0] value which is >= t
@@ -454,12 +454,12 @@ void Inflow::interpolate(const int inputDataIndex, const uint popID, creal t, Re
    Real s; // 0 <= s < 1
 
    // Use the first value of data if interpolating for time before data starts
-   if (t < sP.inputData[inputDataIndex][0][0]) {
+   if (t < sP.inputData[face][0][0]) {
       i1 = i2 = 0;
       s = 0;
    } else {
-      for (uint i = 0; i < sP.inputData[inputDataIndex].size(); i++) {
-         if (sP.inputData[inputDataIndex][i][0] >= t) {
+      for (uint i = 0; i < sP.inputData[face].size(); i++) {
+         if (sP.inputData[face][i][0] >= t) {
             found = true;
             i2 = (int)i;
             break;
@@ -473,11 +473,11 @@ void Inflow::interpolate(const int inputDataIndex, const uint popID, creal t, Re
             s = 0.0;
          } else {
             // normal case, now both i1 and i2 are >= 0 and < nlines, and i1 = i2-1
-            s = (t - sP.inputData[inputDataIndex][i1][0]) /
-                (sP.inputData[inputDataIndex][i2][0] - sP.inputData[inputDataIndex][i1][0]);
+            s = (t - sP.inputData[face][i1][0]) /
+                (sP.inputData[face][i2][0] - sP.inputData[face][i1][0]);
          }
       } else {
-         i1 = i2 = sP.inputData[inputDataIndex].size() - 1;
+         i1 = i2 = sP.inputData[face].size() - 1;
          s = 0.0;
       }
    }
@@ -485,7 +485,7 @@ void Inflow::interpolate(const int inputDataIndex, const uint popID, creal t, Re
    creal s1 = 1 - s;
 
    for (uint i = 0; i < sP.nParams - 1; i++) {
-      outputData[i] = s1 * sP.inputData[inputDataIndex][i1][i + 1] + s * sP.inputData[inputDataIndex][i2][i + 1];
+      outputData[i] = s1 * sP.inputData[face][i1][i + 1] + s * sP.inputData[face][i2][i + 1];
    }
 }
 
