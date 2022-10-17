@@ -288,7 +288,7 @@ void SysBoundaryCondition::vlasovBoundaryCopyFromClosestNbrAndLimit(
 }
 
 /*! Function used to copy the distribution and moments from one cell to another.*/
-void SysBoundaryCondition::copyCellData(SpatialCell* from, SpatialCell* to, const bool copyMomentsOnly,
+void SysBoundaryCondition::copyCellData(const SpatialCell* from, SpatialCell* to, const bool copyMomentsOnly,
                                         const uint popID, const bool doCalcMomentsV) {
    namespace CP = CellParams;
    if (popID == 0) {

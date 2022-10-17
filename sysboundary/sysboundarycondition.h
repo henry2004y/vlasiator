@@ -144,7 +144,7 @@ protected:
 
    void determineFace(bool (&isThisCellOnAFace)[6], creal x, creal y, creal z, creal dx, creal dy, creal dz,
                       const bool excludeSlicesAndPeriodicDimensions = false);
-   void copyCellData(SpatialCell *from, SpatialCell *to, const bool copyMomentsOnly, const uint popID,
+   void copyCellData(const SpatialCell *from, SpatialCell *to, const bool copyMomentsOnly, const uint popID,
                      const bool doCalcMomentsV);
    void averageCellData(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
                         std::vector<CellID> cellList, SpatialCell *to, const uint popID, const bool doCalcMomentsV,
