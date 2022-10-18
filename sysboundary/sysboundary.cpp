@@ -547,8 +547,7 @@ void SysBoundary::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
  * so that the interpolated ones can be done.
  */
 void SysBoundary::applyBoundaryVlasovConditions(
-    dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid, creal t,
-    const bool doCalcMomentsV) {
+    dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid, creal t, const bool doCalcMomentsV) {
 
    if (sysBoundaries.size() == 0) {
       return; // no system boundaries
