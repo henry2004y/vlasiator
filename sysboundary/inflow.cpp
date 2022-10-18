@@ -267,8 +267,37 @@ void Inflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cart
 
       for (uint i = 0; i < 6; i++) {
          if (facesToProcess[i] && isThisCellOnAFace[i]) {
-            copyCellData(&templateCells[i], cell, false, popID, true); // copy also vdf, _V
-            copyCellData(&templateCells[i], cell, true, popID, false); // don't copy vdf again but copy _R now
+            copyCellData(&templateCells[i], cell, true, popID, doCalcMomentsV);
+            break; // Effectively sets the precedence of faces through the order of faces.
+         }
+      }
+   }
+}
+
+void Inflow::setCellsFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
+                                  const uint popID) {
+   // Assign boundary flags to local DCCRG cells
+   const std::vector<CellID>& cells = getLocalCells();
+#pragma omp parallel for
+   for (size_t c = 0; c < cells.size(); c++) {
+      SpatialCell* cell = mpiGrid[cells[c]];
+      if (cell->sysBoundaryFlag != this->getIndex()) {
+         continue;
+      }
+      creal dx = cell->parameters[CellParams::DX];
+      creal dy = cell->parameters[CellParams::DY];
+      creal dz = cell->parameters[CellParams::DZ];
+      creal x = cell->parameters[CellParams::XCRD] + 0.5 * dx;
+      creal y = cell->parameters[CellParams::YCRD] + 0.5 * dy;
+      creal z = cell->parameters[CellParams::ZCRD] + 0.5 * dz;
+
+      bool isThisCellOnAFace[6];
+      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
+
+      for (uint i = 0; i < 6; i++) {
+         if (facesToProcess[i] && isThisCellOnAFace[i]) {
+            copyCellData(&templateCells[i], cell, false, popID, true); // copy vdf and moments for accel.
+            copyCellData(&templateCells[i], cell, true, popID, false); // copy moments for trans.
             break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
@@ -313,36 +342,6 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
                   break;
                }
             }
-         }
-      }
-   }
-}
-
-void Inflow::setCellsFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                                  const uint popID) {
-   // Assign boundary flags to local DCCRG cells
-   const std::vector<CellID>& cells = getLocalCells();
-#pragma omp parallel for
-   for (size_t c = 0; c < cells.size(); c++) {
-      SpatialCell* cell = mpiGrid[cells[c]];
-      if (cell->sysBoundaryFlag != this->getIndex()) {
-         continue;
-      }
-      creal dx = cell->parameters[CellParams::DX];
-      creal dy = cell->parameters[CellParams::DY];
-      creal dz = cell->parameters[CellParams::DZ];
-      creal x = cell->parameters[CellParams::XCRD] + 0.5 * dx;
-      creal y = cell->parameters[CellParams::YCRD] + 0.5 * dy;
-      creal z = cell->parameters[CellParams::ZCRD] + 0.5 * dz;
-
-      bool isThisCellOnAFace[6];
-      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
-
-      for (uint i = 0; i < 6; i++) {
-         if (facesToProcess[i] && isThisCellOnAFace[i]) {
-            copyCellData(&templateCells[i], cell, false, popID, true); // copy also vdf, _V
-            copyCellData(&templateCells[i], cell, true, popID, false); // don't copy vdf again but copy _R now
-            break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
    }
