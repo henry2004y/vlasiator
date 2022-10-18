@@ -45,17 +45,13 @@ SysBoundaryCondition::SysBoundaryCondition() {}
 
 SysBoundaryCondition::~SysBoundaryCondition() {}
 
-/*!\brief Function used to determine on which face(s) if any cell at the given
- * coordinates is.
+/*!\brief Function used to determine on which face(s) if any cell at the given coordinates is.
  * This function is used by some of the classes inheriting from this base class.
- * Depth is hard-coded to be 2 as other parts of the code (field solver
- * especially) rely on that.
- * \param isThisCellOnAFace Pointer to an array of 6 bool returning of each face
- * whether the cell is on that face.
+ * Depth is hard-coded to be 2 as other parts of the code (field solver especially) rely on that.
+ * \param isThisCellOnAFace Array of 6 bool returning of each face whether the cell is on that face.
  * Order: 0 x+; 1 x-; 2 y+; 3 y-; 4 z+; 5 z-
- * \param excludeSlicesAndPeriodicDimensions If true, do not consider a cell to
- * be part of the face if that face has a depth of 1 only (single-cell thick
- * slices/columns) or if that direction is periodic. Set to false by default.
+ * \param excludeSlicesAndPeriodicDimensions If true, do not consider a cell to be part of the face if that face has a
+ * depth of 1 only (single-cell thick slices/columns) or if that direction is periodic. Set to false by default.
  */
 void SysBoundaryCondition::determineFace(bool (&isThisCellOnAFace)[6], creal x, creal y, creal z, creal dx, creal dy,
                                          creal dz, const bool excludeSlicesAndPeriodicDimensions) {
