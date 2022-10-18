@@ -742,9 +742,9 @@ void Conductingsphere::fieldSolverBoundaryCondBVOLDerivatives(
 }
 
 void Conductingsphere::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                                         const CellID &cellID, const uint popID, const bool calculate_V_moments) {
+                                         const CellID &cellID, const uint popID, const bool doCalcMomentsV) {
    phiprof::start("vlasovBoundaryCondition (Conductingsphere)");
-   this->vlasovBoundaryFluffyCopyFromAllCloseNbrs(mpiGrid, cellID, popID, calculate_V_moments,
+   this->vlasovBoundaryFluffyCopyFromAllCloseNbrs(mpiGrid, cellID, popID, doCalcMomentsV,
                                                   this->speciesParams[popID].fluffiness);
    phiprof::stop("vlasovBoundaryCondition (Conductingsphere)");
 }

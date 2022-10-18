@@ -3708,7 +3708,7 @@ void Ionosphere::fieldSolverBoundaryCondBVOLDerivatives(
 }
 
 void Ionosphere::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                                         const CellID& cellID, const uint popID, const bool calculate_V_moments) {
+                                         const CellID& cellID, const uint popID, const bool doCalcMomentsV) {
    phiprof::start("vlasovBoundaryCondition (Ionosphere)");
 
    // TODO Make this a more elegant solution

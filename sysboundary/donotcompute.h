@@ -107,7 +107,7 @@ public:
       abort_mpi(errmsg);
    }
    void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                                const CellID &cellID, const uint popID, const bool calculate_V_moments) override {
+                                const CellID &cellID, const uint popID, const bool doCalcMomentsV) override {
       std::string errmsg = "ERROR: calling DoNotCompute::";
       errmsg += __func__;
       abort_mpi(errmsg);
