@@ -79,7 +79,7 @@ void Inflow::initBoundary(creal t, Project& project) {
 void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                             FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
    bool doAssign;
-   bool isThisCellOnAFace[6];
+   bool isCellOnFace[6];
 
    // Assign boundary flags to local DCCRG cells
    const vector<CellID>& cells = getLocalCells();
@@ -95,11 +95,11 @@ void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>
       creal y = cellParams[CellParams::YCRD] + 0.5 * dy;
       creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
-      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz);
+      determineFace(isCellOnFace, x, y, z, dx, dy, dz);
       // Comparison of the array defining which faces to use and the array telling on which faces this cell is
       doAssign = false;
       for (int j = 0; j < 6; j++) {
-         doAssign = doAssign || (facesToProcess[j] && isThisCellOnAFace[j]);
+         doAssign = doAssign || (facesToProcess[j] && isCellOnFace[j]);
       }
       if (doAssign) {
          mpiGrid[id]->sysBoundaryFlag = this->getIndex();
@@ -130,9 +130,9 @@ void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>
 
             doAssign = false;
 
-            determineFace(isThisCellOnAFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
+            determineFace(isCellOnFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
             for (int iface = 0; iface < 6; iface++) {
-               doAssign = doAssign || (facesToProcess[iface] && isThisCellOnAFace[iface]);
+               doAssign = doAssign || (facesToProcess[iface] && isCellOnFace[iface]);
             }
             if (doAssign) {
                technicalGrid.get(i, j, k)->sysBoundaryFlag = this->getIndex();
@@ -182,11 +182,11 @@ Real Inflow::fieldSolverBoundaryCondMagneticField(
    creal y = (convert<Real>(globalIndices[1]) + 0.5) * technicalGrid.DY + Parameters::ymin;
    creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + Parameters::zmin;
 
-   bool isThisCellOnAFace[6];
-   determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
+   bool isCellOnFace[6];
+   determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
    for (uint i = 0; i < 6; i++) {
-      if (isThisCellOnAFace[i]) {
+      if (isCellOnFace[i]) {
          result = templateB[i][component];
          break; // This effectively sets the precedence of faces through the order of faces.
       }
@@ -262,11 +262,11 @@ void Inflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cart
       creal y = cell->parameters[CellParams::YCRD] + 0.5 * dy;
       creal z = cell->parameters[CellParams::ZCRD] + 0.5 * dz;
 
-      bool isThisCellOnAFace[6];
-      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
+      bool isCellOnFace[6];
+      determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
       for (uint i = 0; i < 6; i++) {
-         if (facesToProcess[i] && isThisCellOnAFace[i]) {
+         if (facesToProcess[i] && isCellOnFace[i]) {
             copyCellData(&templateCells[i], cell, true, popID, doCalcMomentsV);
             break; // Effectively sets the precedence of faces through the order of faces.
          }
@@ -291,11 +291,11 @@ void Inflow::setCellsFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesi
       creal y = cell->parameters[CellParams::YCRD] + 0.5 * dy;
       creal z = cell->parameters[CellParams::ZCRD] + 0.5 * dz;
 
-      bool isThisCellOnAFace[6];
-      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
+      bool isCellOnFace[6];
+      determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
       for (uint i = 0; i < 6; i++) {
-         if (facesToProcess[i] && isThisCellOnAFace[i]) {
+         if (facesToProcess[i] && isCellOnFace[i]) {
             copyCellData(&templateCells[i], cell, false, popID, true); // copy vdf and moments for accel.
             copyCellData(&templateCells[i], cell, true, popID, false); // copy moments for trans.
             break; // Effectively sets the precedence of faces through the order of faces.
@@ -306,7 +306,7 @@ void Inflow::setCellsFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesi
 
 void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                               FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& perBGrid) {
-   bool isThisCellOnAFace[6];
+   bool isCellOnFace[6];
    const std::array<int, 3> gridDims(perBGrid.getLocalSize());
 
    for (int k = 0; k < gridDims[2]; k++) {
@@ -332,10 +332,10 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
             creal dy = P::dy_ini * pow(2, -refLvl);
             creal dz = P::dz_ini * pow(2, -refLvl);
 
-            determineFace(isThisCellOnAFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
+            determineFace(isCellOnFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
 
             for (uint iface = 0; iface < 6; iface++) {
-               if (facesToProcess[iface] && isThisCellOnAFace[iface]) {
+               if (facesToProcess[iface] && isCellOnFace[iface]) {
                   perBGrid.get(i, j, k)->at(fsgrids::bfield::PERBX) = templateB[iface][0];
                   perBGrid.get(i, j, k)->at(fsgrids::bfield::PERBY) = templateB[iface][1];
                   perBGrid.get(i, j, k)->at(fsgrids::bfield::PERBZ) = templateB[iface][2];

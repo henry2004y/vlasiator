@@ -215,7 +215,7 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
                              FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
 
    bool doAssign;
-   bool isThisCellOnAFace[6];
+   bool isCellOnFace[6];
 
    // Assign boundary flags to local DCCRG cells
    for (auto& dccrgId : getLocalCells()) {
@@ -230,12 +230,12 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
       creal y = cellParams[CellParams::YCRD] + 0.5 * dy;
       creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
-      determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz);
+      determineFace(isCellOnFace, x, y, z, dx, dy, dz);
 
-      // Comparison of the array defining which faces to use and the array telling on which faces this cell is
+      // Set which faces to use and which faces this cell is on
       doAssign = false;
       for (int j = 0; j < 6; j++)
-         doAssign = doAssign || (facesToProcess[j] && isThisCellOnAFace[j]);
+         doAssign = doAssign || (facesToProcess[j] && isCellOnFace[j]);
       if (doAssign) {
          mpiGrid[dccrgId]->sysBoundaryFlag = this->getIndex();
       }
@@ -265,9 +265,9 @@ void Outflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
 
             doAssign = false;
 
-            determineFace(isThisCellOnAFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
+            determineFace(isCellOnFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
             for (int iface = 0; iface < 6; iface++)
-               doAssign = doAssign || (facesToProcess[iface] && isThisCellOnAFace[iface]);
+               doAssign = doAssign || (facesToProcess[iface] && isCellOnFace[iface]);
             if (doAssign) {
                technicalGrid.get(i, j, k)->sysBoundaryFlag = this->getIndex();
             }
@@ -297,14 +297,14 @@ void Outflow::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian
          creal y = cellParams[CellParams::YCRD] + 0.5 * dy;
          creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
-         bool isThisCellOnAFace[6];
-         determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz);
+         bool isCellOnFace[6];
+         determineFace(isCellOnFace, x, y, z, dx, dy, dz);
 
          doApply = false;
          // Comparison of the array defining which faces to use and the array telling on which faces this cell is
          for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
             for (uint j = 0; j < 6; j++) {
-               doApply = doApply || (facesToReapply[j] && isThisCellOnAFace[j]);
+               doApply = doApply || (facesToReapply[j] && isCellOnFace[j]);
             }
          }
       }
@@ -421,11 +421,11 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
    creal y = cellParams[CellParams::YCRD] + 0.5 * dy;
    creal z = cellParams[CellParams::ZCRD] + 0.5 * dz;
 
-   bool isThisCellOnAFace[6];
-   determineFace(isThisCellOnAFace, x, y, z, dx, dy, dz, true);
+   bool isCellOnFace[6];
+   determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
    for (uint i = 0; i < 6; i++) {
-      if (isThisCellOnAFace[i] && facesToProcess[i] && !sP.facesToSkipVlasov[i]) {
+      if (isCellOnFace[i] && facesToProcess[i] && !sP.facesToSkipVlasov[i]) {
          switch (sP.faceVlasovScheme[i]) {
          case vlasovscheme::NONE:
             break;

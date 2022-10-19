@@ -48,32 +48,32 @@ SysBoundaryCondition::~SysBoundaryCondition() {}
 /*!\brief Function used to determine on which face(s) if any cell at the given coordinates is.
  * This function is used by some of the classes inheriting from this base class.
  * Depth is hard-coded to be 2 as other parts of the code (field solver especially) rely on that.
- * \param isThisCellOnAFace Array of 6 bool returning of each face whether the cell is on that face.
+ * \param isCellOnFace Array storing whether the cell is on faces.
  * Order: 0 x+; 1 x-; 2 y+; 3 y-; 4 z+; 5 z-
  * \param excludeSlicesAndPeriodicDimensions If true, do not consider a cell to be part of the face if that face has a
  * depth of 1 only (single-cell thick slices/columns) or if that direction is periodic. Set to false by default.
  */
-void SysBoundaryCondition::determineFace(bool (&isThisCellOnAFace)[6], creal x, creal y, creal z, creal dx, creal dy,
+void SysBoundaryCondition::determineFace(bool (&isCellOnFace)[6], creal x, creal y, creal z, creal dx, creal dy,
                                          creal dz, const bool excludeSlicesAndPeriodicDimensions) {
-   isThisCellOnAFace[0] = (x > Parameters::xmax - 2.0 * dx) ? true : false;
-   isThisCellOnAFace[1] = (x < Parameters::xmin + 2.0 * dx) ? true : false;
-   isThisCellOnAFace[2] = (y > Parameters::ymax - 2.0 * dy) ? true : false;
-   isThisCellOnAFace[3] = (y < Parameters::ymin + 2.0 * dy) ? true : false;
-   isThisCellOnAFace[4] = (z > Parameters::zmax - 2.0 * dz) ? true : false;
-   isThisCellOnAFace[5] = (z < Parameters::zmin + 2.0 * dz) ? true : false;
+   isCellOnFace[0] = (x > Parameters::xmax - 2.0 * dx) ? true : false;
+   isCellOnFace[1] = (x < Parameters::xmin + 2.0 * dx) ? true : false;
+   isCellOnFace[2] = (y > Parameters::ymax - 2.0 * dy) ? true : false;
+   isCellOnFace[3] = (y < Parameters::ymin + 2.0 * dy) ? true : false;
+   isCellOnFace[4] = (z > Parameters::zmax - 2.0 * dz) ? true : false;
+   isCellOnFace[5] = (z < Parameters::zmin + 2.0 * dz) ? true : false;
 
    if (excludeSlicesAndPeriodicDimensions) {
       if (Parameters::xcells_ini == 1 || this->periodic[0]) {
-         isThisCellOnAFace[0] = false;
-         isThisCellOnAFace[1] = false;
+         isCellOnFace[0] = false;
+         isCellOnFace[1] = false;
       }
       if (Parameters::ycells_ini == 1 || this->periodic[1]) {
-         isThisCellOnAFace[2] = false;
-         isThisCellOnAFace[3] = false;
+         isCellOnFace[2] = false;
+         isCellOnFace[3] = false;
       }
       if (Parameters::zcells_ini == 1 || this->periodic[2]) {
-         isThisCellOnAFace[4] = false;
-         isThisCellOnAFace[5] = false;
+         isCellOnFace[4] = false;
+         isCellOnFace[5] = false;
       }
    }
 }
