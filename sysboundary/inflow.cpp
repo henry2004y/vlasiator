@@ -111,14 +111,13 @@ void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>
    for (int k = 0; k < gridDims[2]; k++) {
       for (int j = 0; j < gridDims[1]; j++) {
          for (int i = 0; i < gridDims[0]; i++) {
-            const auto coords = technicalGrid.getPhysicalCoords(i, j, k);
+            // Get the center of the fsgrid cell
+            auto coords = technicalGrid.getPhysicalCoords(i, j, k);
+            coords[0] += 0.5 * technicalGrid.DX;
+            coords[1] += 0.5 * technicalGrid.DY;
+            coords[2] += 0.5 * technicalGrid.DZ;
 
-            // Shift to the center of the fsgrid cell
-            auto cellCenterCoords = coords;
-            cellCenterCoords[0] += 0.5 * technicalGrid.DX;
-            cellCenterCoords[1] += 0.5 * technicalGrid.DY;
-            cellCenterCoords[2] += 0.5 * technicalGrid.DZ;
-            const auto refLvl = mpiGrid.get_refinement_level(mpiGrid.get_existing_cell(cellCenterCoords));
+            const auto refLvl = mpiGrid.get_refinement_level(mpiGrid.get_existing_cell(coords));
 
             if (refLvl == -1) {
                abort_mpi("Error, could not get refinement level of remote DCCRG cell!", 1);
@@ -130,7 +129,7 @@ void Inflow::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>
 
             doAssign = false;
 
-            determineFace(isCellOnFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
+            determineFace(isCellOnFace, coords[0], coords[1], coords[2], dx, dy, dz);
             for (int iface = 0; iface < 6; iface++) {
                doAssign = doAssign || (facesToProcess[iface] && isCellOnFace[iface]);
             }
@@ -312,17 +311,13 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
    for (int k = 0; k < gridDims[2]; k++) {
       for (int j = 0; j < gridDims[1]; j++) {
          for (int i = 0; i < gridDims[0]; i++) {
-            const auto coords = perBGrid.getPhysicalCoords(i, j, k);
+            // Get the center of the fsgrid cell
+            auto coords = perBGrid.getPhysicalCoords(i, j, k);
+            coords[0] += 0.5 * perBGrid.DX;
+            coords[1] += 0.5 * perBGrid.DY;
+            coords[2] += 0.5 * perBGrid.DZ;
 
-            // TODO: This code up to determineFace() should be in a separate
-            // function, it gets called in a lot of places.
-            // Shift to the center of the fsgrid cell
-            auto cellCenterCoords = coords;
-            cellCenterCoords[0] += 0.5 * perBGrid.DX;
-            cellCenterCoords[1] += 0.5 * perBGrid.DY;
-            cellCenterCoords[2] += 0.5 * perBGrid.DZ;
-
-            const auto refLvl = mpiGrid.get_refinement_level(mpiGrid.get_existing_cell(cellCenterCoords));
+            const auto refLvl = mpiGrid.get_refinement_level(mpiGrid.get_existing_cell(coords));
 
             if (refLvl == -1) {
                abort_mpi("Error, could not get refinement level of remote DCCRG cell!", 1);
@@ -332,7 +327,7 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
             creal dy = P::dy_ini * pow(2, -refLvl);
             creal dz = P::dz_ini * pow(2, -refLvl);
 
-            determineFace(isCellOnFace, cellCenterCoords[0], cellCenterCoords[1], cellCenterCoords[2], dx, dy, dz);
+            determineFace(isCellOnFace, coords[0], coords[1], coords[2], dx, dy, dz);
 
             for (uint iface = 0; iface < 6; iface++) {
                if (facesToProcess[iface] && isCellOnFace[iface]) {
