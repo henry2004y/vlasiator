@@ -147,7 +147,7 @@ void SysBoundary::initBoundaries(Project& project, creal t) {
          this->addBoundary(new SBC::Outflow, project, t);
 
          bool faces[6];
-         this->getBoundary(sysboundarytype::OUTFLOW)->getFaces(&faces[0]);
+         this->getBoundary(sysboundarytype::OUTFLOW)->getFaces(faces);
 
          if ((faces[0] || faces[1]) && periodic[0])
             SBC::abort_mpi("Conflict: x boundaries set to periodic but found Outflow conditions!");
@@ -178,7 +178,7 @@ void SysBoundary::initBoundaries(Project& project, creal t) {
          this->addBoundary(new SBC::Maxwellian, project, t);
          anyDynamic = anyDynamic || this->getBoundary(sysboundarytype::MAXWELLIAN)->isDynamic();
          bool faces[6];
-         this->getBoundary(sysboundarytype::MAXWELLIAN)->getFaces(&faces[0]);
+         this->getBoundary(sysboundarytype::MAXWELLIAN)->getFaces(faces);
 
          if ((faces[0] || faces[1]) && periodic[0])
             SBC::abort_mpi("Conflict: x boundaries set to periodic but found Maxwellian also!");

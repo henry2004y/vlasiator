@@ -97,7 +97,7 @@ public:
    virtual void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                                         const CellID& cellID, const uint popID, const bool doCalcMomentsV);
 
-   virtual void getFaces(bool* faces);
+   virtual void getFaces(bool (&faces)[6]);
 
    virtual std::string getName() const = 0;
    virtual uint getIndex() const = 0;

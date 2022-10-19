@@ -78,7 +78,7 @@ void DoNotCompute::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cart
 void DoNotCompute::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
                             FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &perBGrid, creal t) {}
 
-void DoNotCompute::getFaces(bool *faces) {}
+void DoNotCompute::getFaces(bool (&faces)[6]) {}
 
 std::string DoNotCompute::getName() const { return "DoNotCompute"; }
 

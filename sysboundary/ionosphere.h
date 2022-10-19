@@ -364,7 +364,7 @@ public:
    void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                                 const CellID& cellID, const uint popID, const bool doCalcMomentsV) override;
 
-   void getFaces(bool *faces) override;
+   void getFaces(bool (&faces)[6]) override;
    std::string getName() const override;
    uint getIndex() const override;
 

@@ -442,7 +442,7 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
    }
 }
 
-void Outflow::getFaces(bool* faces) {
+void Outflow::getFaces(bool (&faces)[6]) {
    for (uint iface = 0; iface < 6; iface++)
       faces[iface] = facesToProcess[iface];
 }

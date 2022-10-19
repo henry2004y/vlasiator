@@ -49,7 +49,7 @@ public:
                           Project &project) override;
    void updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
                     FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &perBGrid, creal t) override;
-   void getFaces(bool *faces) override;
+   void getFaces(bool (&faces)[6]) override;
    std::string getName() const override;
    uint getIndex() const override;
 

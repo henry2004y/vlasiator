@@ -92,7 +92,7 @@ void User::fieldSolverBoundaryCondBVOLDerivatives(
     FsGrid<std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH> &volGrid, cint i, cint j, cint k,
     cuint component) {}
 
-void User::getFaces(bool *faces) {}
+void User::getFaces(bool (&faces)[6]) {}
 
 string User::getName() const { return "User"; }
 uint User::getIndex() const { return sysboundarytype::USER; }

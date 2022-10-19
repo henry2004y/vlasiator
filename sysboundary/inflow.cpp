@@ -342,7 +342,7 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
    }
 }
 
-void Inflow::getFaces(bool* faces) {
+void Inflow::getFaces(bool (&faces)[6]) {
    for (uint iface = 0; iface < 6; iface++) {
       faces[iface] = facesToProcess[iface];
    }
