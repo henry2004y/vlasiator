@@ -97,14 +97,14 @@ public:
    virtual void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                                         const CellID& cellID, const uint popID, const bool doCalcMomentsV);
 
-   virtual void getFaces(bool (&faces)[6]);
+   virtual void getFaces(std::array<bool, 6>& faces);
 
    virtual std::string getName() const = 0;
    virtual uint getIndex() const = 0;
 
 protected:
    /*! Faces processed by this boundary condition.*/
-   bool facesToProcess[6];
+   std::array<bool, 6> facesToProcess = {false};
    /*! Template spatial cells replicated over the volume faces.
     * Only the template for an active face is actually being used. */
    spatial_cell::SpatialCell templateCells[6];

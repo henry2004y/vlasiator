@@ -914,7 +914,7 @@ void Conductingsphere::setCellFromTemplate(SpatialCell *cell, const uint popID) 
    copyCellData(&templateCell, cell, true, popID, false); // don't copy vdf again but copy _R now
 }
 
-void Conductingsphere::getFaces(bool (&faces)[6]) {}
+void Conductingsphere::getFaces(std::array<bool, 6>& faces) {}
 
 std::string Conductingsphere::getName() const { return "Conductingsphere"; }
 

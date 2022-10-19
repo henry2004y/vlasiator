@@ -4127,7 +4127,7 @@ void Ionosphere::setCellFromTemplate(SpatialCell* cell, const uint popID) {
    copyCellData(&templateCell, cell, true, popID, false); // don't copy vdf again but copy _R now
 }
 
-void Ionosphere::getFaces(bool (&faces)[6]) {}
+void Ionosphere::getFaces(std::array<bool, 6>& faces) {}
 
 std::string Ionosphere::getName() const { return "Ionosphere"; }
 

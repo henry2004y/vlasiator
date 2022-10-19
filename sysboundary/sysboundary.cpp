@@ -146,7 +146,7 @@ void SysBoundary::initBoundaries(Project& project, creal t) {
       if (*it == "Outflow") {
          this->addBoundary(new SBC::Outflow, project, t);
 
-         bool faces[6];
+         std::array<bool, 6> faces;
          this->getBoundary(sysboundarytype::OUTFLOW)->getFaces(faces);
 
          if ((faces[0] || faces[1]) && periodic[0])
@@ -177,7 +177,7 @@ void SysBoundary::initBoundaries(Project& project, creal t) {
       } else if (*it == "Maxwellian") {
          this->addBoundary(new SBC::Maxwellian, project, t);
          anyDynamic = anyDynamic || this->getBoundary(sysboundarytype::MAXWELLIAN)->isDynamic();
-         bool faces[6];
+         std::array<bool, 6> faces;
          this->getBoundary(sysboundarytype::MAXWELLIAN)->getFaces(faces);
 
          if ((faces[0] || faces[1]) && periodic[0])

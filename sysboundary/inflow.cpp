@@ -48,7 +48,6 @@ Inflow::~Inflow() {}
 
 void Inflow::initBoundary(creal t, Project& project) {
    // inflow boundary faces in the order of x+, x-, y+, y-, z+, z-.
-   std::fill_n(facesToProcess, 6, false);
 
    this->getParameters();
 
@@ -342,10 +341,8 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
    }
 }
 
-void Inflow::getFaces(bool (&faces)[6]) {
-   for (uint iface = 0; iface < 6; iface++) {
-      faces[iface] = facesToProcess[iface];
-   }
+void Inflow::getFaces(std::array<bool, 6>& faces) {
+   faces = facesToProcess;
 }
 
 void Inflow::loadInputData(const uint popID) {

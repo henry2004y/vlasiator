@@ -95,13 +95,13 @@ public:
    void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
                                 const CellID& cellID, const uint popID, const bool doCalcMomentsV) override;
 
-   void getFaces(bool (&faces)[6]) override;
+   void getFaces(std::array<bool, 6>& faces) override;
    std::string getName() const override;
    uint getIndex() const override;
 
 protected:
    /*! Faces processed by this boundary condition.*/
-   bool facesToProcess[6];
+   std::array<bool, 6> facesToProcess = {false};
    /*! Faces not processed by the associated fields boundary condition.*/
    bool facesToSkipFields[6];
    /*! Faces on which conditions to be reapplied upon restart.*/
