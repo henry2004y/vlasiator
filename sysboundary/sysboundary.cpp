@@ -95,9 +95,10 @@ void SysBoundary::getParameters() {
    Readparameters::get("boundaries.periodic_y", periodic_y);
    Readparameters::get("boundaries.periodic_z", periodic_z);
 
-   periodic[0] = (periodic_x == "yes") ? true : false;
-   periodic[1] = (periodic_y == "yes") ? true : false;
-   periodic[2] = (periodic_z == "yes") ? true : false;
+   const char yes[] = "yes";
+   periodic[0] = (periodic_x == yes) ? true : false;
+   periodic[1] = (periodic_y == yes) ? true : false;
+   periodic[2] = (periodic_z == yes) ? true : false;
 }
 
 /*! Add a new SBC::SysBoundaryCondition.
@@ -134,11 +135,11 @@ void SysBoundary::initBoundaries(Project& project, creal t) {
 
    if (sysBoundaryCondList.size() == 0) {
       if (!periodic[0] && !Readparameters::helpRequested)
-         SBC::abort_mpi("Non-periodic in x but no boundary condtion loaded!");
+         SBC::abort_mpi("Non-periodic in x but no boundary condition loaded!");
       if (!periodic[1] && !Readparameters::helpRequested)
-         SBC::abort_mpi("Non-periodic in y but no boundary condtion loaded!");
+         SBC::abort_mpi("Non-periodic in y but no boundary condition loaded!");
       if (!periodic[2] && !Readparameters::helpRequested)
-         SBC::abort_mpi("Non-periodic in z but no boundary condtion loaded!");
+         SBC::abort_mpi("Non-periodic in z but no boundary condition loaded!");
    }
 
    for (it = sysBoundaryCondList.begin(); it != sysBoundaryCondList.end(); it++) {
@@ -642,9 +643,8 @@ unsigned int SysBoundary::size() const { return sysBoundaries.size(); }
 /*! Check whether any boundary condition is dynamic in time. */
 bool SysBoundary::isDynamic() const { return anyDynamic; }
 
-/*! Get a bool telling whether the system is periodic in the queried direction.
+/*! Check periodicity in the queried direction.
  * \param direction 0: x, 1: y, 2: z.
- * \retval periodic Is the system periodic in the queried direction.
  */
 bool SysBoundary::isPeriodic(uint direction) const { return periodic[direction]; }
 
