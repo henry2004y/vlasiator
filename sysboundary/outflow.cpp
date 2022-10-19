@@ -165,10 +165,10 @@ void Outflow::getParameters() {
 void Outflow::initBoundary(creal t, Project& project) {
    // The array of bool describes which of the faces are to have outflow
    // boundary conditions, in the order of x+, x-, y+, y-, z+, z-.
-   for (uint i = 0; i < 6; i++) {
-      facesToProcess[i] = false;
-      facesToSkipFields[i] = false;
-      facesToReapply[i] = false;
+   for (uint iface = 0; iface < 6; iface++) {
+      facesToProcess[iface] = false;
+      facesToSkipFields[iface] = false;
+      facesToReapply[iface] = false;
    }
 
    this->getParameters();
@@ -424,9 +424,9 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   for (uint i = 0; i < 6; i++) {
-      if (isCellOnFace[i] && facesToProcess[i] && !sP.facesToSkipVlasov[i]) {
-         switch (sP.faceVlasovScheme[i]) {
+   for (uint iface = 0; iface < 6; iface++) {
+      if (isCellOnFace[iface] && facesToProcess[iface] && !sP.facesToSkipVlasov[iface]) {
+         switch (sP.faceVlasovScheme[iface]) {
          case vlasovscheme::NONE:
             break;
          case vlasovscheme::COPY:
@@ -443,8 +443,8 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
 }
 
 void Outflow::getFaces(bool* faces) {
-   for (uint i = 0; i < 6; i++)
-      faces[i] = facesToProcess[i];
+   for (uint iface = 0; iface < 6; iface++)
+      faces[iface] = facesToProcess[iface];
 }
 
 std::string Outflow::getName() const { return "Outflow"; }

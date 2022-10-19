@@ -157,9 +157,9 @@ void Inflow::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geomet
       tLastApply = t;
    }
 #pragma omp parallel for
-   for (uint i = 0; i < 6; i++) {
-      if (facesToProcess[i]) {
-         generateTemplateCell(templateCells[i], templateB[i], i, t);
+   for (uint iface = 0; iface < 6; iface++) {
+      if (facesToProcess[iface]) {
+         generateTemplateCell(templateCells[iface], templateB[iface], iface, t);
       }
    }
 
@@ -184,9 +184,9 @@ Real Inflow::fieldSolverBoundaryCondMagneticField(
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   for (uint i = 0; i < 6; i++) {
-      if (isCellOnFace[i]) {
-         result = templateB[i][component];
+   for (uint iface = 0; iface < 6; iface++) {
+      if (isCellOnFace[iface]) {
+         result = templateB[iface][component];
          break; // This effectively sets the precedence of faces through the order of faces.
       }
    }
@@ -264,9 +264,9 @@ void Inflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cart
       bool isCellOnFace[6];
       determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-      for (uint i = 0; i < 6; i++) {
-         if (facesToProcess[i] && isCellOnFace[i]) {
-            copyCellData(&templateCells[i], cell, true, popID, doCalcMomentsV);
+      for (uint iface = 0; iface < 6; iface++) {
+         if (facesToProcess[iface] && isCellOnFace[iface]) {
+            copyCellData(&templateCells[iface], cell, true, popID, doCalcMomentsV);
             break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
@@ -293,10 +293,10 @@ void Inflow::setCellsFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesi
       bool isCellOnFace[6];
       determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-      for (uint i = 0; i < 6; i++) {
-         if (facesToProcess[i] && isCellOnFace[i]) {
-            copyCellData(&templateCells[i], cell, false, popID, true); // copy vdf and moments for accel.
-            copyCellData(&templateCells[i], cell, true, popID, false); // copy moments for trans.
+      for (uint iface = 0; iface < 6; iface++) {
+         if (facesToProcess[iface] && isCellOnFace[iface]) {
+            copyCellData(&templateCells[iface], cell, false, popID, true); // copy vdf and moments for accel.
+            copyCellData(&templateCells[iface], cell, true, popID, false); // copy moments for trans.
             break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
@@ -343,17 +343,17 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
 }
 
 void Inflow::getFaces(bool* faces) {
-   for (uint i = 0; i < 6; i++) {
-      faces[i] = facesToProcess[i];
+   for (uint iface = 0; iface < 6; iface++) {
+      faces[iface] = facesToProcess[iface];
    }
 }
 
 void Inflow::loadInputData(const uint popID) {
    InflowSpeciesParameters& sP = speciesParams[popID];
 
-   for (uint i = 0; i < 6; i++) {
-      if (facesToProcess[i])
-         sP.inputData[i] = loadFile(sP.files[i].c_str(), sP.nParams);
+   for (uint iface = 0; iface < 6; iface++) {
+      if (facesToProcess[iface])
+         sP.inputData[iface] = loadFile(sP.files[iface].c_str(), sP.nParams);
    }
 }
 
@@ -425,9 +425,9 @@ vector<std::vector<Real>> Inflow::loadFile(const char* fn, const unsigned int nP
  */
 void Inflow::generateTemplateCells(creal t) {
 #pragma omp parallel for
-   for (uint i = 0; i < 6; i++) {
-      if (facesToProcess[i]) {
-         generateTemplateCell(templateCells[i], templateB[i], i, t);
+   for (uint iface = 0; iface < 6; iface++) {
+      if (facesToProcess[iface]) {
+         generateTemplateCell(templateCells[iface], templateB[iface], iface, t);
       }
    }
 }
