@@ -341,9 +341,7 @@ void Inflow::setBFromTemplate(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_G
    }
 }
 
-void Inflow::getFaces(std::array<bool, 6>& faces) {
-   faces = facesToProcess;
-}
+void Inflow::getFaces(std::array<bool, 6>& faces) { faces = facesToProcess; }
 
 void Inflow::loadInputData(const uint popID) {
    InflowSpeciesParameters& sP = speciesParams[popID];

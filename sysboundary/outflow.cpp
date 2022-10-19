@@ -442,9 +442,7 @@ void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Car
    }
 }
 
-void Outflow::getFaces(std::array<bool, 6>& faces) {
-   faces = facesToProcess;
-}
+void Outflow::getFaces(std::array<bool, 6>& faces) { faces = facesToProcess; }
 
 std::string Outflow::getName() const { return "Outflow"; }
 uint Outflow::getIndex() const { return sysboundarytype::OUTFLOW; }
