@@ -214,9 +214,8 @@ void SysBoundaryCondition::vlasovBoundaryFluffyCopyFromAllCloseNbrs(
    averageCellData(mpiGrid, closeCells, mpiGrid[cellID], popID, doCalcMomentsV, fluffiness);
 }
 
-/*! Function used to copy the distribution from (one of) the closest
- * sysboundarytype::NOT_SYSBOUNDARY cell but limit to values no higher than where it
- * can flow into. Moments are recomputed.
+/*! Function used to copy the distribution from (one of) the closest sysboundarytype::NOT_SYSBOUNDARY cell but limit to
+ * values no higher than where it can flow into. Moments are recomputed.
  */
 void SysBoundaryCondition::vlasovBoundaryCopyFromClosestNbrAndLimit(
     const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid, const CellID& cellID, const uint popID) {
@@ -228,9 +227,8 @@ void SysBoundaryCondition::vlasovBoundaryCopyFromClosestNbrAndLimit(
       abort_mpi("No closest cell found!", 1);
    }
    const std::array<SpatialCell*, 27> flowtoCells = getFlowtoCells(cellID);
-   // Do not allow block adjustment, the block structure when calling
-   // vlasovBoundaryCondition should be static just copy data to existing
-   // blocks, no modification of to blocks allowed.
+   // Do not allow block adjustment, the block structure when calling vlasovBoundaryCondition should be static just copy
+   // data to existing blocks, no modification of to blocks allowed.
    for (vmesh::LocalID blockLID = 0; blockLID < to->get_number_of_velocity_blocks(popID); ++blockLID) {
       const vmesh::GlobalID blockGID = to->get_velocity_block_global_id(blockLID, popID);
       // const Realf* fromBlock_data = from->get_data(from->get_velocity_block_local_id(blockGID) );
