@@ -93,7 +93,7 @@ public:
        FsGrid<std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH>& volGrid, cint i, cint j, cint k,
        cuint component) override;
    void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                                const CellID& cellID, const uint popID, const bool doCalcMomentsV) override;
+                                const CellID& cellID, const uint popID, creal t, const bool doCalcMomentsV) override;
 
    void getFaces(std::array<bool, 6>& faces) override;
    std::string getName() const override;

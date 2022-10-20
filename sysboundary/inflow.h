@@ -95,7 +95,7 @@ public:
    fieldSolverBoundaryCondBVOLDerivatives(FsGrid<std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH>& volGrid,
                                           cint i, cint j, cint k, cuint component);
    virtual void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                                        const CellID& cellID, const uint popID, const bool doCalcMomentsV);
+                                        const CellID& cellID, const uint popID, creal t, const bool doCalcMomentsV);
 
    virtual void getFaces(std::array<bool, 6>& faces);
 

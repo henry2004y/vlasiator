@@ -410,7 +410,7 @@ void Outflow::fieldSolverBoundaryCondBVOLDerivatives(
  * @param cellID
  */
 void Outflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                                      const CellID& cellID, const uint popID, const bool doCalcMomentsV) {
+                                      const CellID& cellID, const uint popID, creal t, const bool doCalcMomentsV) {
    const OutflowSpeciesParameters& sP = this->speciesParams[popID];
    SpatialCell* cell = mpiGrid[cellID];
    creal* const cellParams = cell->parameters.data();

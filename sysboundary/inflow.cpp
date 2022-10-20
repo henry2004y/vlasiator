@@ -249,7 +249,7 @@ void Inflow::fieldSolverBoundaryCondBVOLDerivatives(
 }
 
 void Inflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                                     const CellID& cellID, const uint popID, const bool doCalcMomentsV) {
+                                     const CellID& cellID, const uint popID, creal t, const bool doCalcMomentsV) {
    if (dynamic) {
       SpatialCell* cell = mpiGrid[cellID];
 

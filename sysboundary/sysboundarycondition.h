@@ -107,7 +107,7 @@ public:
     * @param cellID Spatial cell ID.
     * @param popID Particle species ID.*/
    virtual void vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                                        const CellID &cellID, const uint popID, const bool doCalcMomentsV) = 0;
+                                        const CellID &cellID, const uint popID, creal t, const bool doCalcMomentsV) = 0;
 
    /*! Function used to know which faces the boundary condition is applied to.
     * @param faces Pointer to array of 6 bool in which the values are returned whether the corresponding face is of that
