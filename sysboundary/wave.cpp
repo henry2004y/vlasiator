@@ -246,18 +246,8 @@ void Wave::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Ge
          }
          // TODO: a separate func setCell?
          for (uint popID = 0; popID < getObjectWrapper().particleSpecies.size(); ++popID) {
-            Real rho, T, Vx, Vy, Vz, Bx, By, Bz;
-            rho = n0;
-            T = T0;
-            Vx = V0[0];
-            Vy = V0[1];
-            Vz = V0[2];
-            Bx = B0[0];
-            By = B0[1];
-            Bz = B0[2];
-
-            std::vector<vmesh::GlobalID> blocksToInit = findBlocksToInit(popID, cell, rho, T, Vx, Vy, Vz);
-            Realf* data = cell->get_data(popID);
+            std::vector<vmesh::GlobalID> blocksToInit = findBlocksToInit(popID, cell, n0, T0, V0[0], V0[1], V0[2]);
+            Realf* f = cell->get_data(popID);
 
             for (vmesh::GlobalID i = 0; i < blocksToInit.size(); ++i) {
                const vmesh::GlobalID blockGID = blocksToInit[i];
@@ -266,41 +256,43 @@ void Wave::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Ge
                creal vxBlock = block_parameters[BlockParams::VXCRD];
                creal vyBlock = block_parameters[BlockParams::VYCRD];
                creal vzBlock = block_parameters[BlockParams::VZCRD];
-               creal dvxCell = block_parameters[BlockParams::DVX];
-               creal dvyCell = block_parameters[BlockParams::DVY];
-               creal dvzCell = block_parameters[BlockParams::DVZ];
+               creal dvx = block_parameters[BlockParams::DVX];
+               creal dvy = block_parameters[BlockParams::DVY];
+               creal dvz = block_parameters[BlockParams::DVZ];
 
                // Calculate volume-averaged distribution function for each cell in the block.
-               for (uint kc = 0; kc < WID; ++kc)
-                  for (uint jc = 0; jc < WID; ++jc)
+               for (uint kc = 0; kc < WID; ++kc) {
+                  creal vzC = vzBlock + kc * dvz;
+                  for (uint jc = 0; jc < WID; ++jc) {
+                     creal vyC = vyBlock + jc * dvy;
                      for (uint ic = 0; ic < WID; ++ic) {
-                        creal vxCell = vxBlock + ic * dvxCell;
-                        creal vyCell = vyBlock + jc * dvyCell;
-                        creal vzCell = vzBlock + kc * dvzCell;
-                        Real avr = maxwellian(popID, rho, T, vxCell + 0.5 * dvxCell - Vx, vyCell + 0.5 * dvyCell - Vy,
-                                              vzCell + 0.5 * dvzCell - Vz);
+                        creal vxC = vxBlock + ic * dvx;
                         // hyzhou: most values are very close to 0!
-                        data[blockLID * WID3 + cellIndex(ic, jc, kc)] = avr;
+                        f[blockLID * WID3 + cellIndex(ic, jc, kc)] = maxwellian(
+                            popID, n0, T0, vxC + 0.5 * dvx - V0[0], vyC + 0.5 * dvy - V0[1], vzC + 0.5 * dvz - V0[2]);
+                        ;
+                     }
+                  }
+               } // loop over cells in velocity block
+            } // loop over velocity blocks
 
-                     } // for-loop over cells in velocity block
-            }          // for-loop over velocity blocks
-
-            // hyzhou: RHO is set later?
-            cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
-            cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
-            for (int idim = 0; idim < 3; idim++) {
-               cell->get_population(popID).V_R[idim] = cell->get_population(popID).V[idim];
-               cell->get_population(popID).V_V[idim] = cell->get_population(popID).V[idim];
-               cell->get_population(popID).P_R[idim] = cell->get_population(popID).P[idim];
-               cell->get_population(popID).P_V[idim] = cell->get_population(popID).P[idim];
-            }
-
-            // Get rid of blocks not fulfilling the criteria here to save memory.
+            // Store blocks according to the sparsity threshold
             cell->adjustSingleCellVelocityBlocks(popID);
-         } // for-loop over particle species
+         } // loop over particle species
 
          // For all species
          calculateCellMoments(cell, true, true);
+
+         for (uint popID = 0; popID < getObjectWrapper().particleSpecies.size(); ++popID) {
+            cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
+            cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
+            for (int i = 0; i < 3; i++) {
+               cell->get_population(popID).V_R[i] = cell->get_population(popID).V[i];
+               cell->get_population(popID).V_V[i] = cell->get_population(popID).V[i];
+               cell->get_population(popID).P_R[i] = cell->get_population(popID).P[i];
+               cell->get_population(popID).P_V[i] = cell->get_population(popID).P[i];
+            }
+         }
 
          cell->parameters[CP::RHOM_R] = cell->parameters[CP::RHOM];
          cell->parameters[CP::VX_R] = cell->parameters[CP::VX];
@@ -360,7 +352,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
          Vz = V0[2] + V1[2] * tmp;
 
          std::vector<vmesh::GlobalID> blocksToInit = findBlocksToInit(popID, cell, rho, T, Vx, Vy, Vz);
-         Realf* data = cell->get_data(popID);
+         Realf* f = cell->get_data(popID);
 
          for (vmesh::GlobalID i = 0; i < blocksToInit.size(); ++i) {
             const vmesh::GlobalID blockGID = blocksToInit[i];
@@ -369,26 +361,25 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
             creal vxBlock = block_parameters[BlockParams::VXCRD];
             creal vyBlock = block_parameters[BlockParams::VYCRD];
             creal vzBlock = block_parameters[BlockParams::VZCRD];
-            creal dvxCell = block_parameters[BlockParams::DVX];
-            creal dvyCell = block_parameters[BlockParams::DVY];
-            creal dvzCell = block_parameters[BlockParams::DVZ];
+            creal dvx = block_parameters[BlockParams::DVX];
+            creal dvy = block_parameters[BlockParams::DVY];
+            creal dvz = block_parameters[BlockParams::DVZ];
 
             // Calculate volume-averaged distribution function for each cell in the block.
-            for (uint kc = 0; kc < WID; ++kc)
-               for (uint jc = 0; jc < WID; ++jc)
+            for (uint kc = 0; kc < WID; ++kc) {
+               creal vzC = vzBlock + kc * dvz;
+               for (uint jc = 0; jc < WID; ++jc) {
+                  creal vyC = vyBlock + jc * dvy;
                   for (uint ic = 0; ic < WID; ++ic) {
-                     creal vxCell = vxBlock + ic * dvxCell;
-                     creal vyCell = vyBlock + jc * dvyCell;
-                     creal vzCell = vzBlock + kc * dvzCell;
-                     Real avr = maxwellian(popID, rho, T, vxCell + 0.5 * dvxCell - Vx, vyCell + 0.5 * dvyCell - Vy,
-                                           vzCell + 0.5 * dvzCell - Vz);
+                     creal vxC = vxBlock + ic * dvx;
                      // hyzhou: most values are very close to 0!
-                     data[blockLID * WID3 + cellIndex(ic, jc, kc)] = avr;
+                     f[blockLID * WID3 + cellIndex(ic, jc, kc)] =
+                         maxwellian(popID, rho, T, vxC + 0.5 * dvx - Vx, vyC + 0.5 * dvy - Vy, vzC + 0.5 * dvz - Vz);
+                  }
+               }
+            } // loop over cells in velocity block
+         }  // loop over velocity blocks
 
-                  } // for-loop over cells in velocity block
-         }          // for-loop over velocity blocks
-
-         // hyzhou: where is RHO set? Is it set when the cell is created?
          cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
          cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
          for (int idim = 0; idim < 3; idim++) {
@@ -398,7 +389,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
             cell->get_population(popID).P_V[idim] = cell->get_population(popID).P[idim];
          }
 
-         // Get rid of blocks not fulfilling the criteria here to save memory.
+         // Store blocks according to the sparsity threshold
          cell->adjustSingleCellVelocityBlocks(popID);
 
          break; // Effectively sets the precedence of faces through the order of faces.
