@@ -162,16 +162,16 @@ bool ObjectWrapper::getParameters() {
 
       
       //Get thermal / suprathermal moments parameters
-      Readparameters::get(pop + "_thermal.radius", species.thermalRadius);
-      Readparameters::get(pop + "_thermal.vx", species.thermalV[0]);
-      Readparameters::get(pop + "_thermal.vy", species.thermalV[1]);
-      Readparameters::get(pop + "_thermal.vz", species.thermalV[2]);
+      RP::get(pop + "_thermal.radius", species.thermalRadius);
+      RP::get(pop + "_thermal.vx", species.thermalV[0]);
+      RP::get(pop + "_thermal.vy", species.thermalV[1]);
+      RP::get(pop + "_thermal.vz", species.thermalV[2]);
 
       //Get energy density parameters
-      Readparameters::get(pop + "_energydensity.limit1", species.EnergyDensityLimit1);
-      Readparameters::get(pop + "_energydensity.limit2", species.EnergyDensityLimit2);
-      Readparameters::get(pop + "_energydensity.solarwindenergy", species.SolarWindEnergy);
-      Readparameters::get(pop + "_energydensity.solarwindspeed", species.SolarWindSpeed);
+      RP::get(pop + "_energydensity.limit1", species.EnergyDensityLimit1);
+      RP::get(pop + "_energydensity.limit2", species.EnergyDensityLimit2);
+      RP::get(pop + "_energydensity.solarwindenergy", species.SolarWindEnergy);
+      RP::get(pop + "_energydensity.solarwindspeed", species.SolarWindSpeed);
       
       const Real EPSILON = 1.e-25;
       if (species.SolarWindEnergy < EPSILON) {
@@ -182,10 +182,10 @@ bool ObjectWrapper::getParameters() {
       }
 
       // Get precipitation parameters
-      Readparameters::get(pop + "_precipitation.nChannels", species.precipitationNChannels);
-      Readparameters::get(pop + "_precipitation.emin", species.precipitationEmin);
-      Readparameters::get(pop + "_precipitation.emax", species.precipitationEmax);
-      Readparameters::get(pop + "_precipitation.lossConeAngle", species.precipitationLossConeAngle);
+      RP::get(pop + "_precipitation.nChannels", species.precipitationNChannels);
+      RP::get(pop + "_precipitation.emin", species.precipitationEmin);
+      RP::get(pop + "_precipitation.emax", species.precipitationEmax);
+      RP::get(pop + "_precipitation.lossConeAngle", species.precipitationLossConeAngle);
       // Convert from eV to SI units
       species.precipitationEmin = species.precipitationEmin*physicalconstants::CHARGE;
       species.precipitationEmax = species.precipitationEmax*physicalconstants::CHARGE;
