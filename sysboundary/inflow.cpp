@@ -265,7 +265,7 @@ void Inflow::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cart
 
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
-            copyCellData(&templateCells[iface], cell, true, popID, doCalcMomentsV);
+            copyCellData(&templateCells[iface], cell, false, popID, doCalcMomentsV);
             break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
