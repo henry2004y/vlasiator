@@ -758,8 +758,7 @@ void SysBoundaryCondition::setPeriodicity(bool isFacePeriodic[3]) {
       this->periodic[i] = isFacePeriodic[i];
 }
 
-/*! Get a bool telling whether to call again applyInitialState upon restarting
- * the simulation. */
+/*! Get a bool telling whether to call again applyInitialState upon restarting the simulation. */
 bool SysBoundaryCondition::doApplyUponRestart() const { return this->applyUponRestart; }
 
 /*! Helper function for error handling. err_type default to 0.*/
