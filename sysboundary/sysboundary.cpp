@@ -36,6 +36,7 @@
 #include "conductingsphere.h"
 #include "maxwellian.h"
 #include "outflow.h"
+#include "wave.h"
 #include "sysboundary.h"
 #include "user.h"
 
@@ -51,7 +52,7 @@ bool precedenceSort(const SBC::SysBoundaryCondition* first, const SBC::SysBounda
 
 SysBoundary::SysBoundary() : anyDynamic(false) {}
 
-SysBoundary::~SysBoundary() {
+SysBoundary::~SysBoundary() {   
    // Call delete for each SysBoundaryCondition
    for (std::list<SBC::SysBoundaryCondition*>::iterator it = sysBoundaries.begin(); it != sysBoundaries.end(); it++) {
       delete *it;
@@ -80,6 +81,7 @@ void SysBoundary::addParameters() {
    SBC::Conductingsphere::addParameters();
    SBC::Outflow::addParameters();
    SBC::Maxwellian::addParameters();
+   SBC::Wave::addParameters();
    SBC::User::addParameters();
 }
 
@@ -197,6 +199,29 @@ void SysBoundary::initBoundaries(Project& project, creal t) {
 
          if ((faces[4] || faces[5]) && P::zcells_ini < 5)
             SBC::abort_mpi("Maxwellian condition loaded on z- or z+ face but not enough cells in z!");
+      } else if (*it == "Wave") {
+         this->addBoundary(new SBC::Wave, project, t);
+         anyDynamic = true;
+         std::array<bool, 6> faces;
+         this->getBoundary(sysboundarytype::WAVE)->getFaces(faces);
+
+         if ((faces[0] || faces[1]) && periodic[0])
+            SBC::abort_mpi("Conflict: x boundaries set to periodic but found Wave also!");
+
+         if ((faces[2] || faces[3]) && periodic[1])
+            SBC::abort_mpi("Conflict: y boundaries set to periodic but found Wave also!");
+
+         if ((faces[4] || faces[5]) && periodic[2])
+            SBC::abort_mpi("Conflict: z boundaries set to periodic but found Wave also!");
+
+         if ((faces[0] || faces[1]) && P::xcells_ini < 5)
+            SBC::abort_mpi("Wave condition loaded on x- or x+ face but not enough cells in x!");
+
+         if ((faces[2] || faces[3]) && P::ycells_ini < 5)
+            SBC::abort_mpi("Wave condition loaded on y- or y+ face but not enough cells in y!");
+
+         if ((faces[4] || faces[5]) && P::zcells_ini < 5)
+            SBC::abort_mpi("Wave condition loaded on z- or z+ face but not enough cells in z!");
       } else {
          std::ostringstream msg;
          msg << "Unknown type of boundary read: " << *it;

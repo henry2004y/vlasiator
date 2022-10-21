@@ -405,7 +405,8 @@ enum ionosphereParameters {
 };
 
 /*! The namespace sysboundarytype contains the identification index of the boundary condition types applied to a cell,
- * it is stored in SpatialCell::sysBoundaryFlag and used by the BoundaryCondition class' functions to determine what type of BC to apply to a cell.
+ * it is stored in SpatialCell::sysBoundaryFlag and used by the BoundaryCondition class' functions to determine what
+ * type of BC to apply to a cell.
  * At least for the workings of vlasovmover_leveque.cpp the order of the first two entries should not be changed.
  */
 namespace sysboundarytype {
@@ -416,6 +417,7 @@ namespace sysboundarytype {
       CONDUCTINGSPHERE, /*!< A perfectly conducting sphere as a simple inner boundary. */
       OUTFLOW,          /*!< No fixed conditions on the fields and distribution function. */
       MAXWELLIAN,       /*!< Set Maxwellian boundary condition, i.e. set fields and distribution function. */
+      WAVE,             /*!< Analytic wave boundary condition on a face. */
       USER,             /*!< User-defined boundary condition. */
       N_SYSBOUNDARY_CONDITIONS
    };
