@@ -344,7 +344,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
    for (uint iface = 0; iface < 6; iface++) {
       if (facesToProcess[iface] && isCellOnFace[iface]) {
          Real rho, T, Vx, Vy, Vz, tmp;
-         tmp = std::sin(2 * PI * freq * t);
+         tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
          rho = n0 + n1 * tmp;
          T = T0 + T1 * tmp;
          Vx = V0[0] + V1[0] * tmp;
