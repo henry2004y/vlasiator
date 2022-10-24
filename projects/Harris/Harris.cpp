@@ -43,10 +43,10 @@ void Harris::addParameters() {
    typedef Readparameters RP;
    RP::add("Harris.type", "Type of the initialization: 1. single layer, 2. double layer", 1);
    RP::add("Harris.Scale_size", "Harris sheet scale size (m)", 150000.0);
-   RP::add("Harris.BX0", "Reference Magnetic field (T)", 8.33061003094e-8);
-   RP::add("Harris.BY0", "Reference Magnetic field (T)", 8.33061003094e-8);
-   RP::add("Harris.BZ0", "Reference Magnetic field (T)", 8.33061003094e-8);
-   RP::add("Harris.PSI0", "Perturbation of the magnetic flux (T*m)", 0.0);
+   RP::add("Harris.Bx0", "Reference Magnetic field (T)", 8.33061003094e-8);
+   RP::add("Harris.By0", "Reference Magnetic field (T)", 8.33061003094e-8);
+   RP::add("Harris.Bz0", "Reference Magnetic field (T)", 8.33061003094e-8);
+   RP::add("Harris.Psi0", "Perturbation of the magnetic flux (T*m)", 0.0);
 
    // Per-population parameters
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
@@ -62,12 +62,21 @@ void Harris::addParameters() {
 void Harris::getParameters() {
    Project::getParameters();
    typedef Readparameters RP;
-   RP::get("Harris.type", this->type);
-   RP::get("Harris.Scale_size", this->LAMBDA);
-   RP::get("Harris.BX0", this->BX0);
-   RP::get("Harris.BY0", this->BY0);
-   RP::get("Harris.BZ0", this->BZ0);
-   RP::get("Harris.PSI0", this->PSI0);
+   RP::get("Harris.type", type);
+   RP::get("Harris.Scale_size", lambda);
+   RP::get("Harris.Bx0", Bx0);
+   RP::get("Harris.By0", By0);
+   RP::get("Harris.Bz0", Bz0);
+   RP::get("Harris.Psi0", Psi0);
+
+   if (type != 1 || type != 2) {
+      int myRank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      if (myRank == MASTER_RANK) {
+         std::cerr << "unknown initialization type: " << type << std::endl;
+         MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+   }
 
    // Per-population parameters
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
@@ -83,29 +92,36 @@ void Harris::getParameters() {
    }
 }
 
-Real Harris::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
-                             creal& dvz, const uint popID) const {
+Real Harris::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
+                           creal& dvz, const uint popID) const {
    const HarrisSpeciesParameters& sP = speciesParams[popID];
    Real mass = getObjectWrapper().particleSpecies[popID].mass;
    auto KB = physicalconstants::K_B;
 
    Real f, n;
 
-   if (this->type == 1) {
-      Real sech2 = sqr(1.0 / std::cosh(z / this->LAMBDA));
+   if (type == 1) {
+      Real sech2 = sqr(1.0 / std::cosh(z / lambda));
       n = sP.n * sech2 + 0.2 * sP.n;
-   } else if (this->type == 2) {
+   } else if (type == 2) {
       const Real Lx = P::xmax - P::xmin;
       const Real Lz = P::zmax - P::zmin;
 
-      n = sP.n * (sqr(1.0 / std::cosh((z - 0.25 * Lz) / this->LAMBDA)) +
-                  sqr(1.0 / std::cosh((z + 0.25 * Lz) / this->LAMBDA))) +
+      n = sP.n * (sqr(1.0 / std::cosh((z - 0.25 * Lz) / lambda)) + sqr(1.0 / std::cosh((z + 0.25 * Lz) / lambda))) +
           0.2 * sP.n;
    }
 
    f = n * std::pow(mass / (2.0 * M_PI * KB * sP.T), 1.5) *
        exp(-mass * (sqr(vx) + sqr(vy) + sqr(vz)) / (2.0 * KB * sP.T));
 
+   return f;
+}
+
+Real Harris::getBiMaxwellian(const uint popID, creal rho, creal Tpar, creal Tperp, creal vpar, creal vperp) const {
+   const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
+   Real c1 = MASS / (2.0 * physicalconstants::K_B);
+   Real c2 = c1 / M_PI;
+   Real f = rho / (sqrt(Tpar) * Tperp) * sqrt(c2) * c2 * exp(-c1 * (vperp * vperp) / Tperp - c1 * vpar * vpar / Tpar);
    return f;
 }
 
@@ -129,14 +145,14 @@ Real Harris::calcPhaseSpaceDensity(creal& x, creal& y, creal& z, creal& dx, crea
                for (uint vi = 0; vi < sP.nVelocitySamples; ++vi)
                   for (uint vj = 0; vj < sP.nVelocitySamples; ++vj)
                      for (uint vk = 0; vk < sP.nVelocitySamples; ++vk) {
-                        avg += getDistribValue(x + i * d_x, y + j * d_y, z + k * d_z, vx + vi * d_vx, vy + vj * d_vy,
-                                               vz + vk * d_vz, dvx, dvy, dvz, popID);
+                        avg += getMaxwellian(x + i * d_x, y + j * d_y, z + k * d_z, vx + vi * d_vx, vy + vj * d_vy,
+                                             vz + vk * d_vz, dvx, dvy, dvz, popID);
                      }
       return avg / (sP.nSpaceSamples * sP.nSpaceSamples * sP.nSpaceSamples) /
              (sP.nVelocitySamples * sP.nVelocitySamples * sP.nVelocitySamples);
    } else {
-      return getDistribValue(x + 0.5 * dx, y + 0.5 * dy, z + 0.5 * dz, vx + 0.5 * dvx, vy + 0.5 * dvy, vz + 0.5 * dvz,
-                             dvx, dvy, dvz, popID);
+      return getMaxwellian(x + 0.5 * dx, y + 0.5 * dy, z + 0.5 * dz, vx + 0.5 * dvx, vy + 0.5 * dvy, vz + 0.5 * dvz,
+                           dvx, dvy, dvz, popID);
    }
 }
 
@@ -160,7 +176,7 @@ void Harris::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
 
-      if (this->type == 1) {
+      if (type == 1) {
 #pragma omp parallel for collapse(3)
          for (int i = 0; i < localSize[0]; ++i) {
             for (int j = 0; j < localSize[1]; ++j) {
@@ -168,18 +184,18 @@ void Harris::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>
                   const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
                   std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
 
-                  cell->at(fsgrids::bfield::PERBX) = this->BX0 * tanh((x[2] + 0.5 * perBGrid.DZ) / this->LAMBDA) +
-                                                     this->PSI0 * (-M_PI / Lz) *
+                  cell->at(fsgrids::bfield::PERBX) = Bx0 * tanh((x[2] + 0.5 * perBGrid.DZ) / lambda) +
+                                                     Psi0 * (-M_PI / Lz) *
                                                          cos(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
                                                          sin(M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz);
                   cell->at(fsgrids::bfield::PERBY) = 0.0;
-                  cell->at(fsgrids::bfield::PERBZ) = this->PSI0 * (-2 * M_PI / Lx) *
+                  cell->at(fsgrids::bfield::PERBZ) = Psi0 * (-2 * M_PI / Lx) *
                                                      sin(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
                                                      cos(M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz);
                }
             }
          }
-      } else if (this->type == 2) {
+      } else if (type == 2) {
 #pragma omp parallel for collapse(3)
          for (int i = 0; i < localSize[0]; ++i) {
             for (int j = 0; j < localSize[1]; ++j) {
@@ -188,23 +204,16 @@ void Harris::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>
                   std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
 
                   cell->at(fsgrids::bfield::PERBX) =
-                      this->BX0 * (tanh((x[2] + 0.5 * perBGrid.DZ - 0.25 * Lz) / this->LAMBDA) -
-                                   tanh((x[2] + 0.5 * perBGrid.DZ + 0.25 * Lz) / this->LAMBDA) + 1.0) +
-                      this->PSI0 * (-M_PI / Lz) * cos(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
+                      Bx0 * (tanh((x[2] + 0.5 * perBGrid.DZ - 0.25 * Lz) / lambda) -
+                             tanh((x[2] + 0.5 * perBGrid.DZ + 0.25 * Lz) / lambda) + 1.0) +
+                      Psi0 * (-M_PI / Lz) * cos(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
                           sin(2 * M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz - 0.25);
                   cell->at(fsgrids::bfield::PERBY) = 0.0;
-                  cell->at(fsgrids::bfield::PERBZ) = this->PSI0 * (-2 * M_PI / Lx) *
+                  cell->at(fsgrids::bfield::PERBZ) = Psi0 * (-2 * M_PI / Lx) *
                                                      sin(2 * M_PI * (x[0] + 0.5 * perBGrid.DX) / Lx) *
                                                      cos(2 * M_PI * (x[2] + 0.5 * perBGrid.DZ) / Lz);
                }
             }
-         }
-      } else {
-         int myRank;
-         MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-         if (myRank == MASTER_RANK) {
-            std::cerr << "unknown initialization type: " << this->type << std::endl;
-            MPI_Abort(MPI_COMM_WORLD, 1);
          }
       }
    }

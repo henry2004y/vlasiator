@@ -52,12 +52,13 @@ public:
 
 protected:
    int type;
-   Real LAMBDA;
-   Real BX0, BY0, BZ0, PSI0;
+   Real lambda;
+   Real Bx0, By0, Bz0, Psi0;
    std::vector<HarrisSpeciesParameters> speciesParams;
 
-   Real getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
+   Real getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
                         creal& dvz, const uint popID) const;
+   Real getBiMaxwellian(const uint popID, creal rho, creal Tpar, creal Tperp, creal vpar, creal vperp) const;
    virtual std::vector<std::array<Real, 3>> getV0(creal x, creal y, creal z, const uint popID) const;
 
 }; // class Harris
