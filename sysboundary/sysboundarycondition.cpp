@@ -41,10 +41,6 @@ namespace SBC {
 // ***** DEFINITIONS FOR SYSBOUNDARYCONDITION BASE CLASS *****
 // ************************************************************
 
-SysBoundaryCondition::SysBoundaryCondition() {}
-
-SysBoundaryCondition::~SysBoundaryCondition() {}
-
 /*!\brief Function used to determine on which face(s) if any cell at the given coordinates is.
  * This function is used by some of the classes inheriting from this base class.
  * Depth is hard-coded to be 2 as other parts of the code (field solver especially) rely on that.
