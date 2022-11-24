@@ -50,7 +50,7 @@ bool precedenceSort(const SBC::SysBoundaryCondition* first, const SBC::SysBounda
 // ***** DEFINITIONS FOR SYSBOUNDARY CLASS *****
 // ************************************************************
 
-SysBoundary::SysBoundary() : anyDynamic(false) {}
+SysBoundary::SysBoundary() {}
 
 SysBoundary::~SysBoundary() {   
    // Call delete for each SysBoundaryCondition

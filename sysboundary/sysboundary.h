@@ -90,10 +90,10 @@ private:
    /*! List of boundary conditions (SBC) to be used. */
    std::vector<std::string> sysBoundaryCondList;
    /*! bool telling whether any boundary condition is dynamic in time (and thus needs updating). */
-   bool anyDynamic;
+   bool anyDynamic = false;
 
    /*! Array of bool telling whether the system is periodic in any direction. */
-   bool periodic[3];
+   bool periodic[3] = {true};
 };
 
 bool precedenceSort(const SBC::SysBoundaryCondition *first, const SBC::SysBoundaryCondition *second);
