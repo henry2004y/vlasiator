@@ -51,23 +51,24 @@ namespace SBC {
  */
 void SysBoundaryCondition::determineFace(bool (&isCellOnFace)[6], creal x, creal y, creal z, creal dx, creal dy,
                                          creal dz, const bool excludeSlicesAndPeriodicDimensions) {
-   isCellOnFace[0] = (x > Parameters::xmax - 2.0 * dx) ? true : false;
-   isCellOnFace[1] = (x < Parameters::xmin + 2.0 * dx) ? true : false;
-   isCellOnFace[2] = (y > Parameters::ymax - 2.0 * dy) ? true : false;
-   isCellOnFace[3] = (y < Parameters::ymin + 2.0 * dy) ? true : false;
-   isCellOnFace[4] = (z > Parameters::zmax - 2.0 * dz) ? true : false;
-   isCellOnFace[5] = (z < Parameters::zmin + 2.0 * dz) ? true : false;
+   typedef Parameters P;
+   isCellOnFace[0] = (x > P::xmax - 2.0 * dx) ? true : false;
+   isCellOnFace[1] = (x < P::xmin + 2.0 * dx) ? true : false;
+   isCellOnFace[2] = (y > P::ymax - 2.0 * dy) ? true : false;
+   isCellOnFace[3] = (y < P::ymin + 2.0 * dy) ? true : false;
+   isCellOnFace[4] = (z > P::zmax - 2.0 * dz) ? true : false;
+   isCellOnFace[5] = (z < P::zmin + 2.0 * dz) ? true : false;
 
    if (excludeSlicesAndPeriodicDimensions) {
-      if (Parameters::xcells_ini == 1 || this->periodic[0]) {
+      if (P::xcells_ini == 1 || this->periodic[0]) {
          isCellOnFace[0] = false;
          isCellOnFace[1] = false;
       }
-      if (Parameters::ycells_ini == 1 || this->periodic[1]) {
+      if (P::ycells_ini == 1 || this->periodic[1]) {
          isCellOnFace[2] = false;
          isCellOnFace[3] = false;
       }
-      if (Parameters::zcells_ini == 1 || this->periodic[2]) {
+      if (P::zcells_ini == 1 || this->periodic[2]) {
          isCellOnFace[4] = false;
          isCellOnFace[5] = false;
       }

@@ -72,7 +72,7 @@ void Wave::addParameters() {
       RP::add(pop + "_wave.vz0", "Background bulk velocuty in z", 0.0);
       RP::add(pop + "_wave.n0", "Background number density", 1.0e6);
       RP::add(pop + "_wave.T0", "Background temperature", 1.0e6);
-      
+
       RP::add(pop + "_wave.vx1", "Perturbed velocity magnitude in x", 0.0);
       RP::add(pop + "_wave.vy1", "Perturbed velocity magnitude in y", 0.0);
       RP::add(pop + "_wave.vz1", "Perturbed velocuty magnitude in z", 0.0);
@@ -83,6 +83,8 @@ void Wave::addParameters() {
 
 void Wave::initBoundary(creal t, Project& project) {
    this->getParameters();
+
+   dynamic = true;
 
    for (auto& it : faceList) {
       if (it == "x+") {
@@ -114,7 +116,7 @@ void Wave::getParameters() {
    RP::get("wave.Bx0", B0[0]);
    RP::get("wave.By0", B0[1]);
    RP::get("wave.Bz0", B0[2]);
-   
+
    RP::get("wave.Bx1", B1[0]);
    RP::get("wave.By1", B1[1]);
    RP::get("wave.Bz1", B1[2]);
@@ -242,7 +244,7 @@ void Wave::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Ge
          if (cell->sysBoundaryFlag != this->getIndex()) {
             continue;
          }
-         // TODO: a separate func setCell?
+
          for (uint popID = 0; popID < getObjectWrapper().particleSpecies.size(); ++popID) {
             std::vector<vmesh::GlobalID> blocksToInit = findBlocksToInit(popID, cell, n0, T0, V0[0], V0[1], V0[2]);
             Realf* f = cell->get_data(popID);
@@ -272,7 +274,7 @@ void Wave::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Ge
                      }
                   }
                } // loop over cells in velocity block
-            } // loop over velocity blocks
+            }    // loop over velocity blocks
 
             // Store blocks according to the sparsity threshold
             cell->adjustSingleCellVelocityBlocks(popID);
@@ -310,13 +312,10 @@ void Wave::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Ge
          cell->parameters[CP::P_33_V] = cell->parameters[CP::P_33];
       }
    }
-   setB(mpiGrid, perBGrid, 0.0);
 }
 
 void Wave::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                       FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& perBGrid, creal t) {
-   setB(mpiGrid, perBGrid, t);   
-}
+                       FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& perBGrid, creal t) {}
 
 Real Wave::maxwellian(const uint popID, creal rho, creal T, creal vx, creal vy, creal vz) {
    const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
@@ -376,7 +375,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
                   }
                }
             } // loop over cells in velocity block
-         }  // loop over velocity blocks
+         }    // loop over velocity blocks
 
          cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
          cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
@@ -393,10 +392,6 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
          break; // Effectively sets the precedence of faces through the order of faces.
       }
    }
-}
-
-void Wave::setCell(SpatialCell* cell, const uint popID, creal t, const bool doCalcMomentsV) {
-   
 }
 
 // Find velocity blocks to initialize.
@@ -455,69 +450,38 @@ std::vector<vmesh::GlobalID> Wave::findBlocksToInit(const uint popID, spatial_ce
    return blocksToInit;
 }
 
-void Wave::setB(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
-                FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& perBGrid, creal t) {
-   bool isCellOnFace[6];
-   const std::array<int, 3> gridDims(perBGrid.getLocalSize());
-
-   for (int k = 0; k < gridDims[2]; k++) {
-      for (int j = 0; j < gridDims[1]; j++) {
-         for (int i = 0; i < gridDims[0]; i++) {
-            // Get the center of the fsgrid cell
-            auto coords = perBGrid.getPhysicalCoords(i, j, k);
-            coords[0] += 0.5 * perBGrid.DX;
-            coords[1] += 0.5 * perBGrid.DY;
-            coords[2] += 0.5 * perBGrid.DZ;
-
-            const auto refLvl = mpiGrid.get_refinement_level(mpiGrid.get_existing_cell(coords));
-
-            if (refLvl == -1) {
-               abort_mpi("Error, could not get refinement level of remote DCCRG cell!", 1);
-            }
-
-            creal dx = P::dx_ini * pow(2, -refLvl);
-            creal dy = P::dy_ini * pow(2, -refLvl);
-            creal dz = P::dz_ini * pow(2, -refLvl);
-
-            determineFace(isCellOnFace, coords[0], coords[1], coords[2], dx, dy, dz);
-
-            for (uint iface = 0; iface < 6; iface++) {
-               if (facesToProcess[iface] && isCellOnFace[iface]) {
-                  //TODO: change it later
-                  perBGrid.get(i, j, k)->at(fsgrids::bfield::PERBX) = B0[0] + B1[0];
-                  perBGrid.get(i, j, k)->at(fsgrids::bfield::PERBY) = B0[1] + B1[1];
-                  perBGrid.get(i, j, k)->at(fsgrids::bfield::PERBZ) = B0[2] + B1[2];
-                  break;
-               }
-            }
-         }
-      }
-   }
-}
-
+// Set the perturbed magnetic field boundary condition.
 Real Wave::fieldSolverBoundaryCondMagneticField(
     FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& bGrid,
-    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, creal dt, cuint component) {
-   Real result = 0.0;
-   creal dx = Parameters::dx_ini;
-   creal dy = Parameters::dy_ini;
-   creal dz = Parameters::dz_ini;
+    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, cuint component) {
+   typedef Parameters P;
+   Real dB = 0.0;
+   creal dx = P::dx_ini;
+   creal dy = P::dy_ini;
+   creal dz = P::dz_ini;
    const array<int, 3> globalIndices = technicalGrid.getGlobalIndices(i, j, k);
-   creal x = (convert<Real>(globalIndices[0]) + 0.5) * technicalGrid.DX + Parameters::xmin;
-   creal y = (convert<Real>(globalIndices[1]) + 0.5) * technicalGrid.DY + Parameters::ymin;
-   creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + Parameters::zmin;
+   creal x = (convert<Real>(globalIndices[0]) + 0.5) * technicalGrid.DX + P::xmin;
+   creal y = (convert<Real>(globalIndices[1]) + 0.5) * technicalGrid.DY + P::ymin;
+   creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + P::zmin;
+
+   auto coords = bGrid.getPhysicalCoords(i, j, k);
+   coords[0] += 0.5 * bGrid.DX;
+   coords[1] += 0.5 * bGrid.DY;
+   coords[2] += 0.5 * bGrid.DZ;
 
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
    for (uint iface = 0; iface < 6; iface++) {
       if (isCellOnFace[iface]) {
-         // result = templateB[iface][component];
-         result = 0.0;
+         Real tmp, t;
+         t = P::t + 0.5 * P::dt;
+         tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+         dB = B0[component] + B1[component] * tmp;
          break; // This effectively sets the precedence of faces through the order of faces.
       }
    }
-   return result;
+   return dB;
 }
 
 void Wave::fieldSolverBoundaryCondMagneticFieldProjection(

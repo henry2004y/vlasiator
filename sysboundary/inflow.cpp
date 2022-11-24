@@ -168,25 +168,26 @@ void Inflow::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geomet
 Real Inflow::fieldSolverBoundaryCondMagneticField(
     FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& bGrid,
     FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, cuint component) {
-   Real result = 0.0;
-   creal dx = Parameters::dx_ini;
-   creal dy = Parameters::dy_ini;
-   creal dz = Parameters::dz_ini;
+   typedef Parameters P;
+   Real dB = 0.0;
+   creal dx = P::dx_ini;
+   creal dy = P::dy_ini;
+   creal dz = P::dz_ini;
    const array<int, 3> globalIndices = technicalGrid.getGlobalIndices(i, j, k);
-   creal x = (convert<Real>(globalIndices[0]) + 0.5) * technicalGrid.DX + Parameters::xmin;
-   creal y = (convert<Real>(globalIndices[1]) + 0.5) * technicalGrid.DY + Parameters::ymin;
-   creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + Parameters::zmin;
+   creal x = (convert<Real>(globalIndices[0]) + 0.5) * technicalGrid.DX + P::xmin;
+   creal y = (convert<Real>(globalIndices[1]) + 0.5) * technicalGrid.DY + P::ymin;
+   creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + P::zmin;
 
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
    for (uint iface = 0; iface < 6; iface++) {
       if (isCellOnFace[iface]) {
-         result = templateB[iface][component];
+         dB = templateB[iface][component];
          break; // This effectively sets the precedence of faces through the order of faces.
       }
    }
-   return result;
+   return dB;
 }
 
 void Inflow::fieldSolverBoundaryCondMagneticFieldProjection(
