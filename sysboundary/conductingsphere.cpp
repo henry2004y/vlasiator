@@ -486,7 +486,7 @@ Conductingsphere::fieldSolverGetNormalDirection(FsGrid<fsgrids::technical, FS_ST
  */
 Real Conductingsphere::fieldSolverBoundaryCondMagneticField(
     FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &bGrid,
-    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k, creal dt, cuint component) {
+    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k, cuint component) {
    if (technicalGrid.get(i, j, k)->sysBoundaryLayer == 1) {
       switch (component) {
       case 0:

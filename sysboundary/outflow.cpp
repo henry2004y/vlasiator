@@ -329,7 +329,7 @@ void Outflow::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geome
 
 Real Outflow::fieldSolverBoundaryCondMagneticField(
     FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& bGrid,
-    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, creal dt, cuint component) {
+    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, cuint component) {
    switch (component) {
    case 0:
       return fieldBoundaryCopyFromSolvingNbrMagneticField(bGrid, technicalGrid, i, j, k, component, compute::BX);
