@@ -70,7 +70,7 @@ void propagateMagneticField(
    std::array<Real, fsgrids::efield::N_EFIELD> * EGrid2;
    std::array<Real, fsgrids::bfield::N_BFIELD> * perBDt2Grid0;
    
-   if (doX == true) {
+   if (doX) {
       switch (RKCase) {
          case RK_ORDER1:
             EGrid0 = EGrid.get(i,j,k);
@@ -100,7 +100,7 @@ void propagateMagneticField(
       }
    }
    
-   if (doY == true) {
+   if (doY) {
       switch (RKCase) {
          case RK_ORDER1:
             EGrid0 = EGrid.get(i,j,k);
@@ -127,7 +127,7 @@ void propagateMagneticField(
       }
    }
    
-   if (doZ == true) {
+   if (doZ) {
       switch (RKCase) {
          case RK_ORDER1:
             EGrid0 = EGrid.get(i,j,k);
@@ -166,7 +166,6 @@ void propagateMagneticField(
  * \param technicalGrid fsGrid holding technical information (such as boundary types)
  * \param i,j,k fsGrid cell coordinates for the current cell
  * \param sysBoundaries System boundary conditions existing
- * \param dt Length of the time step
  * \param RKCase Element in the enum defining the Runge-Kutta method steps
  * 
  * \sa propagateMagneticFieldSimple propagateMagneticField
@@ -181,14 +180,13 @@ void propagateSysBoundaryMagneticField(
    cint j,
    cint k,
    SysBoundary& sysBoundaries,
-   creal& dt,
    cint& RKCase,
    cuint component
 ) {
    if (RKCase == RK_ORDER1 || RKCase == RK_ORDER2_STEP2) {
-      perBGrid.get(i,j,k)->at(fsgrids::bfield::PERBX + component) = sysBoundaries.getBoundary(technicalGrid.get(i,j,k)->sysBoundaryFlag)->fieldSolverBoundaryCondMagneticField(perBGrid, technicalGrid, i, j, k, dt, component);
+      perBGrid.get(i,j,k)->at(fsgrids::bfield::PERBX + component) = sysBoundaries.getBoundary(technicalGrid.get(i,j,k)->sysBoundaryFlag)->fieldSolverBoundaryCondMagneticField(perBGrid, technicalGrid, i, j, k, component);
    } else {
-      perBDt2Grid.get(i,j,k)->at(fsgrids::bfield::PERBX + component) = sysBoundaries.getBoundary(technicalGrid.get(i,j,k)->sysBoundaryFlag)->fieldSolverBoundaryCondMagneticField(perBDt2Grid, technicalGrid, i, j, k, dt, component);
+      perBDt2Grid.get(i,j,k)->at(fsgrids::bfield::PERBX + component) = sysBoundaries.getBoundary(technicalGrid.get(i,j,k)->sysBoundaryFlag)->fieldSolverBoundaryCondMagneticField(perBDt2Grid, technicalGrid, i, j, k, component);
    }
 }
 
@@ -297,13 +295,13 @@ void propagateMagneticFieldSimple(
             // L1 pass
             if (technicalGrid.get(i,j,k)->sysBoundaryLayer == 1) {
                if ((bitfield & compute::BX) != compute::BX) {
-                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, dt, RKCase, 0);
+                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, RKCase, 0);
                }
                if ((bitfield & compute::BY) != compute::BY) {
-                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, dt, RKCase, 1);
+                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, RKCase, 1);
                }
                if ((bitfield & compute::BZ) != compute::BZ) {
-                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, dt, RKCase, 2);
+                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, RKCase, 2);
                }
             }
          }
@@ -333,7 +331,7 @@ void propagateMagneticFieldSimple(
                technicalGrid.get(i,j,k)->sysBoundaryLayer == 2
             ) {
                for (uint component = 0; component < 3; component++) {
-                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, dt, RKCase, component);
+                  propagateSysBoundaryMagneticField(perBGrid, perBDt2Grid, EGrid, EDt2Grid, technicalGrid, i, j, k, sysBoundaries, RKCase, component);
                }
             }
          }
