@@ -54,8 +54,7 @@ namespace SBC {
  */
 class SysBoundaryCondition {
 public:
-   SysBoundaryCondition();
-   virtual ~SysBoundaryCondition();
+   virtual ~SysBoundaryCondition() = default;
 
    static void addParameters() = delete;
    virtual void getParameters() = 0;
