@@ -46,8 +46,6 @@
 #endif
 
 namespace SBC {
-Conductingsphere::Conductingsphere() : SysBoundaryCondition() {}
-Conductingsphere::~Conductingsphere() {}
 
 void Conductingsphere::addParameters() {
    Readparameters::add("conductingsphere.centerX", "X coordinate of conductingsphere center (m)", 0.0);

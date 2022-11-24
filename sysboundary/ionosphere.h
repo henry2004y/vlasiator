@@ -324,8 +324,7 @@ extern SphericalTriGrid ionosphereGrid;
  */
 class Ionosphere : public SysBoundaryCondition {
 public:
-   Ionosphere();
-   ~Ionosphere() override;
+   Ionosphere() = default;
 
    static void addParameters();
    void getParameters() override;

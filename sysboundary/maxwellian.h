@@ -41,8 +41,7 @@ namespace SBC {
  */
 class Maxwellian : public Inflow {
 public:
-   Maxwellian();
-   ~Maxwellian() override;
+   Maxwellian() = default;
 
    static void addParameters();
    void getParameters() override;

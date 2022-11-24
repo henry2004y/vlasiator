@@ -32,8 +32,6 @@
 #include "donotcompute.h"
 
 namespace SBC {
-DoNotCompute::DoNotCompute() : SysBoundaryCondition() {}
-DoNotCompute::~DoNotCompute() {}
 
 void DoNotCompute::addParameters() {}
 void DoNotCompute::getParameters() {}

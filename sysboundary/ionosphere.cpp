@@ -2775,10 +2775,6 @@ void SphericalTriGrid::solveInternal(int& iteration, int& nRestarts, Real& miner
 
 // Actual ionosphere object implementation
 
-Ionosphere::Ionosphere() : SysBoundaryCondition() {}
-
-Ionosphere::~Ionosphere() {}
-
 void Ionosphere::addParameters() {
    Readparameters::add("ionosphere.centerX", "X coordinate of ionosphere center (m)", 0.0);
    Readparameters::add("ionosphere.centerY", "Y coordinate of ionosphere center (m)", 0.0);

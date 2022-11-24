@@ -43,9 +43,6 @@
 
 namespace SBC {
 
-Inflow::Inflow() : SysBoundaryCondition() {}
-Inflow::~Inflow() {}
-
 void Inflow::initBoundary(creal t, Project& project) {
    // inflow boundary faces in the order of x+, x-, y+, y-, z+, z-.
 

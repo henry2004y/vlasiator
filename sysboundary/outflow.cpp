@@ -42,8 +42,6 @@
 #endif
 
 namespace SBC {
-Outflow::Outflow() : SysBoundaryCondition() {}
-Outflow::~Outflow() {}
 
 void Outflow::addParameters() {
    const std::string defStr = "Copy";

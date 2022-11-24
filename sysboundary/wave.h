@@ -35,8 +35,7 @@ namespace SBC {
  */
 class Wave : public SysBoundaryCondition {
 public:
-   Wave();
-   ~Wave() override;
+   Wave() = default;
 
    static void addParameters();
    void getParameters() override;

@@ -58,8 +58,7 @@ struct InflowSpeciesParameters {
  */
 class Inflow : public SysBoundaryCondition {
 public:
-   Inflow();
-   virtual ~Inflow();
+   Inflow() = default;
 
    virtual void getParameters() = 0;
 

@@ -35,8 +35,7 @@ namespace SBC {
 /*!\brief DoNotCompute is a class handling cells not to be computed.*/
 class DoNotCompute : public SysBoundaryCondition {
 public:
-   DoNotCompute();
-   ~DoNotCompute() override;
+   DoNotCompute() = default;
 
    static void addParameters();
    void getParameters() override;

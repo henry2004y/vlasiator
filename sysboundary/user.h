@@ -36,8 +36,7 @@ namespace SBC {
  */
 class User : public SysBoundaryCondition {
 public:
-   User();
-   ~User() override;
+   User() = default;
 
    static void addParameters();
    void getParameters() override;

@@ -57,8 +57,7 @@ struct ConductingsphereSpeciesParameters {
  */
 class Conductingsphere : public SysBoundaryCondition {
 public:
-   Conductingsphere();
-   ~Conductingsphere() override;
+   Conductingsphere() = default;
 
    static void addParameters();
    void getParameters() override;

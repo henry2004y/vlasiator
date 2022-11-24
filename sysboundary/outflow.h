@@ -55,8 +55,7 @@ struct OutflowSpeciesParameters {
  */
 class Outflow : public SysBoundaryCondition {
 public:
-   Outflow();
-   ~Outflow() override;
+   Outflow() = default;
 
    static void addParameters();
    void getParameters() override;

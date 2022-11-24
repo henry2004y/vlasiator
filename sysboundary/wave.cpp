@@ -42,8 +42,6 @@
 #endif
 
 namespace SBC {
-Wave::Wave() : SysBoundaryCondition() {}
-Wave::~Wave() {}
 
 void Wave::addParameters() {
    typedef Readparameters RP;

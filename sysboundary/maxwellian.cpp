@@ -33,8 +33,6 @@
 #include "maxwellian.h"
 
 namespace SBC {
-Maxwellian::Maxwellian() : Inflow() {}
-Maxwellian::~Maxwellian() {}
 
 void Maxwellian::addParameters() {
    Readparameters::addComposing(
