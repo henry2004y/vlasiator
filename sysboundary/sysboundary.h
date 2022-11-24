@@ -55,7 +55,7 @@
  */
 class SysBoundary {
 public:
-   SysBoundary() = default;
+   SysBoundary();
    ~SysBoundary();
 
    void addParameters();

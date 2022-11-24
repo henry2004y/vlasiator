@@ -50,6 +50,8 @@ bool precedenceSort(const SBC::SysBoundaryCondition* first, const SBC::SysBounda
 // ***** DEFINITIONS FOR SYSBOUNDARY CLASS *****
 // ************************************************************
 
+SysBoundary::SysBoundary() {}
+
 SysBoundary::~SysBoundary() {   
    // Call delete for each SysBoundaryCondition
    for (std::list<SBC::SysBoundaryCondition*>::iterator it = sysBoundaries.begin(); it != sysBoundaries.end(); it++) {
