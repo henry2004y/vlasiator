@@ -103,7 +103,7 @@ void Conductingsphere::getParameters() {
    }
 
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
-      const std::string &pop = getObjectWrapper().particleSpecies[i].name;
+      const std::string& pop = getObjectWrapper().particleSpecies[i].name;
       ConductingsphereSpeciesParameters sP;
 
       Readparameters::get(pop + "_conductingsphere.rho", sP.rho);
@@ -119,7 +119,7 @@ void Conductingsphere::getParameters() {
    }
 }
 
-void Conductingsphere::initBoundary(creal t, Project &project) {
+void Conductingsphere::initBoundary(creal t, Project& project) {
    getParameters();
    dynamic = false;
 
@@ -156,14 +156,14 @@ Real getR(creal x, creal y, creal z, uint geometry, Real center[3]) {
    return r;
 }
 
-void Conductingsphere::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                                FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid) {
+void Conductingsphere::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
+                                      FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
    for (auto& cell : mpiGrid.get_cells()) {
       if (mpiGrid[cell]->sysBoundaryFlag == sysboundarytype::DO_NOT_COMPUTE) {
          continue;
       }
 
-      creal *const cellParams = &(mpiGrid[cell]->parameters[0]);
+      creal* const cellParams = &(mpiGrid[cell]->parameters[0]);
       creal dx = cellParams[CellParams::DX];
       creal dy = cellParams[CellParams::DY];
       creal dz = cellParams[CellParams::DZ];
@@ -181,7 +181,7 @@ void Conductingsphere::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian
    for (int k = 0; k < gridDims[2]; k++) {
       for (int j = 0; j < gridDims[1]; j++) {
          for (int i = 0; i < gridDims[0]; i++) {
-            const auto &coords = technicalGrid.getPhysicalCoords(i, j, k);
+            const auto& coords = technicalGrid.getPhysicalCoords(i, j, k);
 
             // Shift to the center of the fsgrid cell
             auto cellCenterCoords = coords;
@@ -198,12 +198,13 @@ void Conductingsphere::assignBoundary(dccrg::Dccrg<SpatialCell, dccrg::Cartesian
    }
 }
 
-void Conductingsphere::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                                   FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 2> &perBGrid, Project &project) {
+void Conductingsphere::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
+                                         FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 2>& perBGrid,
+                                         Project& project) {
    vector<CellID> cells = mpiGrid.get_cells();
 #pragma omp parallel for
    for (uint i = 0; i < cells.size(); ++i) {
-      SpatialCell *cell = mpiGrid[cells[i]];
+      SpatialCell* cell = mpiGrid[cells[i]];
       if (cell->sysBoundaryFlag != this->getIndex())
          continue;
 
@@ -212,12 +213,12 @@ void Conductingsphere::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::
    }
 }
 
-void Conductingsphere::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                             FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, 2> &perBGrid, creal t) {}
+void Conductingsphere::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
+                                   FsGrid<array<Real, fsgrids::bfield::N_BFIELD>, 2>& perBGrid, creal t) {}
 
 std::array<Real, 3>
-Conductingsphere::fieldSolverGetNormalDirection(FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j,
-                                          cint k) {
+Conductingsphere::fieldSolverGetNormalDirection(FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i,
+                                                cint j, cint k) {
    phiprof::start("Conductingsphere::fieldSolverGetNormalDirection");
    std::array<Real, 3> normalDirection{{0.0, 0.0, 0.0}};
 
@@ -485,8 +486,8 @@ Conductingsphere::fieldSolverGetNormalDirection(FsGrid<fsgrids::technical, FS_ST
  * -- Average perturbed face B from the nearest neighbours
  */
 Real Conductingsphere::fieldSolverBoundaryCondMagneticField(
-    FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &bGrid,
-    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k, cuint component) {
+    FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& bGrid,
+    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, cuint component) {
    if (technicalGrid.get(i, j, k)->sysBoundaryLayer == 1) {
       switch (component) {
       case 0:
@@ -628,7 +629,8 @@ Real Conductingsphere::fieldSolverBoundaryCondMagneticField(
             return retval / nCells;
          }
       default:
-         cerr << "ERROR: conductingsphere boundary tried to copy nonsensical magnetic field component " << component << endl;
+         cerr << "ERROR: conductingsphere boundary tried to copy nonsensical magnetic field component " << component
+              << endl;
          return 0.0;
       }
    } else { // L2 cells
@@ -657,8 +659,8 @@ Real Conductingsphere::fieldSolverBoundaryCondMagneticField(
  * -- Retain only the boundary-normal projection of perturbed face B
  */
 void Conductingsphere::fieldSolverBoundaryCondMagneticFieldProjection(
-    FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH> &bGrid,
-    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH> &technicalGrid, cint i, cint j, cint k) {
+    FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& bGrid,
+    FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k) {
    // Projection of B-field to normal direction
    Real BdotN = 0;
    std::array<Real, 3> normalDirection = fieldSolverGetNormalDirection(technicalGrid, i, j, k);
@@ -684,15 +686,15 @@ void Conductingsphere::fieldSolverBoundaryCondMagneticFieldProjection(
 }
 
 void Conductingsphere::fieldSolverBoundaryCondElectricField(
-    FsGrid<std::array<Real, fsgrids::efield::N_EFIELD>, FS_STENCIL_WIDTH> &EGrid, cint i, cint j, cint k,
+    FsGrid<std::array<Real, fsgrids::efield::N_EFIELD>, FS_STENCIL_WIDTH>& EGrid, cint i, cint j, cint k,
     cuint component) {
    EGrid.get(i, j, k)->at(fsgrids::efield::EX + component) = 0.0;
 }
 
 void Conductingsphere::fieldSolverBoundaryCondHallElectricField(
-    FsGrid<std::array<Real, fsgrids::ehall::N_EHALL>, FS_STENCIL_WIDTH> &EHallGrid, cint i, cint j, cint k,
+    FsGrid<std::array<Real, fsgrids::ehall::N_EHALL>, FS_STENCIL_WIDTH>& EHallGrid, cint i, cint j, cint k,
     cuint component) {
-   std::array<Real, fsgrids::ehall::N_EHALL> *cp = EHallGrid.get(i, j, k);
+   std::array<Real, fsgrids::ehall::N_EHALL>* cp = EHallGrid.get(i, j, k);
    switch (component) {
    case 0:
       cp->at(fsgrids::ehall::EXHALL_000_100) = 0.0;
@@ -719,28 +721,29 @@ void Conductingsphere::fieldSolverBoundaryCondHallElectricField(
 }
 
 void Conductingsphere::fieldSolverBoundaryCondGradPeElectricField(
-    FsGrid<std::array<Real, fsgrids::egradpe::N_EGRADPE>, 2> &EGradPeGrid, cint i, cint j, cint k, cuint component) {
+    FsGrid<std::array<Real, fsgrids::egradpe::N_EGRADPE>, 2>& EGradPeGrid, cint i, cint j, cint k, cuint component) {
    EGradPeGrid.get(i, j, k)->at(fsgrids::egradpe::EXGRADPE + component) = 0.0;
 }
 
 void Conductingsphere::fieldSolverBoundaryCondDerivatives(
-    FsGrid<std::array<Real, fsgrids::dperb::N_DPERB>, FS_STENCIL_WIDTH> &dPerBGrid,
-    FsGrid<std::array<Real, fsgrids::dmoments::N_DMOMENTS>, FS_STENCIL_WIDTH> &dMomentsGrid, cint i, cint j, cint k,
+    FsGrid<std::array<Real, fsgrids::dperb::N_DPERB>, FS_STENCIL_WIDTH>& dPerBGrid,
+    FsGrid<std::array<Real, fsgrids::dmoments::N_DMOMENTS>, FS_STENCIL_WIDTH>& dMomentsGrid, cint i, cint j, cint k,
     cuint RKCase, cuint component) {
    this->setCellDerivativesToZero(dPerBGrid, dMomentsGrid, i, j, k, component);
    return;
 }
 
 void Conductingsphere::fieldSolverBoundaryCondBVOLDerivatives(
-    FsGrid<std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH> &volGrid, cint i, cint j, cint k,
+    FsGrid<std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH>& volGrid, cint i, cint j, cint k,
     cuint component) {
    // FIXME This should be OK as the BVOL derivatives are only used for Lorentz force JXB, which is not applied on the
    // conductingsphere cells.
    this->setCellBVOLDerivativesToZero(volGrid, i, j, k, component);
 }
 
-void Conductingsphere::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry> &mpiGrid,
-                                         const CellID &cellID, const uint popID, creal t, const bool doCalcMomentsV) {
+void Conductingsphere::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
+                                               const CellID& cellID, const uint popID, creal t,
+                                               const bool doCalcMomentsV) {
    phiprof::start("vlasovBoundaryCondition (Conductingsphere)");
    this->vlasovBoundaryFluffyCopyFromAllCloseNbrs(mpiGrid, cellID, popID, doCalcMomentsV,
                                                   this->speciesParams[popID].fluffiness);
@@ -751,7 +754,7 @@ void Conductingsphere::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, d
  * NOTE: This function must initialize all particle species!
  * @param project
  */
-void Conductingsphere::generateTemplateCell(Project &project) {
+void Conductingsphere::generateTemplateCell(Project& project) {
    // WARNING not 0.0 here or the dipole() function fails miserably.
    templateCell.sysBoundaryFlag = this->getIndex();
    templateCell.sysBoundaryLayer = 1;
@@ -764,14 +767,14 @@ void Conductingsphere::generateTemplateCell(Project &project) {
 
    // Loop over particle species
    for (uint popID = 0; popID < getObjectWrapper().particleSpecies.size(); ++popID) {
-      const ConductingsphereSpeciesParameters &sP = this->speciesParams[popID];
+      const ConductingsphereSpeciesParameters& sP = this->speciesParams[popID];
       const vector<vmesh::GlobalID> blocksToInitialize = findBlocksToInitialize(templateCell, popID);
-      Realf *data = templateCell.get_data(popID);
+      Realf* data = templateCell.get_data(popID);
 
       for (size_t i = 0; i < blocksToInitialize.size(); i++) {
          const vmesh::GlobalID blockGID = blocksToInitialize.at(i);
          const vmesh::LocalID blockLID = templateCell.get_velocity_block_local_id(blockGID, popID);
-         const Real *block_parameters = templateCell.get_block_parameters(blockLID, popID);
+         const Real* block_parameters = templateCell.get_block_parameters(blockLID, popID);
          creal vxBlock = block_parameters[BlockParams::VXCRD];
          creal vyBlock = block_parameters[BlockParams::VYCRD];
          creal vzBlock = block_parameters[BlockParams::VZCRD];
@@ -841,10 +844,10 @@ void Conductingsphere::generateTemplateCell(Project &project) {
    templateCell.parameters[CellParams::P_33_V] = templateCell.parameters[CellParams::P_33];
 }
 
-Real Conductingsphere::shiftedMaxwellianDistribution(const uint popID, creal &vx, creal &vy, creal &vz) {
+Real Conductingsphere::shiftedMaxwellianDistribution(const uint popID, creal& vx, creal& vy, creal& vz) {
 
    const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
-   const ConductingsphereSpeciesParameters &sP = this->speciesParams[popID];
+   const ConductingsphereSpeciesParameters& sP = this->speciesParams[popID];
 
    return sP.rho * pow(MASS / (2.0 * M_PI * physicalconstants::K_B * sP.T), 1.5) *
           exp(-MASS *
@@ -853,13 +856,14 @@ Real Conductingsphere::shiftedMaxwellianDistribution(const uint popID, creal &vx
               (2.0 * physicalconstants::K_B * sP.T));
 }
 
-std::vector<vmesh::GlobalID> Conductingsphere::findBlocksToInitialize(spatial_cell::SpatialCell &cell, const uint popID) {
+std::vector<vmesh::GlobalID> Conductingsphere::findBlocksToInitialize(spatial_cell::SpatialCell& cell,
+                                                                      const uint popID) {
    vector<vmesh::GlobalID> blocksToInitialize;
    bool search = true;
    uint counter = 0;
    const uint8_t refLevel = 0;
 
-   const vmesh::LocalID *vblocks_ini = cell.get_velocity_grid_length(popID, refLevel);
+   const vmesh::LocalID* vblocks_ini = cell.get_velocity_grid_length(popID, refLevel);
 
    while (search) {
 #warning TODO: add SpatialCell::getVelocityBlockMinValue() in place of sparseMinValue ? (if applicable)
@@ -907,7 +911,7 @@ std::vector<vmesh::GlobalID> Conductingsphere::findBlocksToInitialize(spatial_ce
    return blocksToInitialize;
 }
 
-void Conductingsphere::setCellFromTemplate(SpatialCell *cell, const uint popID) {
+void Conductingsphere::setCellFromTemplate(SpatialCell* cell, const uint popID) {
    copyCellData(&templateCell, cell, false, popID, true); // copy also vdf, _V
    copyCellData(&templateCell, cell, true, popID, false); // don't copy vdf again but copy _R now
 }
