@@ -214,6 +214,8 @@ void Slab::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 
                             FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
    setBackgroundFieldToZero(BgBGrid);
 
+   const Real xmid = 0.5 * (P::xmax + P::xmin);
+
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
 
@@ -238,7 +240,7 @@ void Slab::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 
                   PB = Pi + Pe + sqr(this->b0L[2]) / (2 * MU_0) - n * KB * sP.TL * (1 + this->Tratio);
 
                   Bz = std::sqrt(PB * 2 * MU_0);
-
+                  // hyzhou: currently limited to Bz only!
                   cell->at(fsgrids::bfield::PERBX) = 0.0;
                   cell->at(fsgrids::bfield::PERBY) = 0.0;
                   cell->at(fsgrids::bfield::PERBZ) = Bz;
@@ -253,7 +255,7 @@ void Slab::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 
                   const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
                   std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
 
-                  if (x[0] < 0.0) {
+                  if (x[0] < xmid) {
                      cell->at(fsgrids::bfield::PERBX) = this->b0L[0];
                      cell->at(fsgrids::bfield::PERBY) = this->b0L[1];
                      cell->at(fsgrids::bfield::PERBZ) = this->b0L[2];
