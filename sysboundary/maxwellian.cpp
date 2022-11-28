@@ -89,10 +89,8 @@ void Maxwellian::getParameters() {
    uint reapply;
    Readparameters::get("maxwellian.reapplyUponRestart", reapply);
    Readparameters::get("maxwellian.t_interval", tInterval);
-   this->applyUponRestart = false;
-   if (reapply == 1) {
-      this->applyUponRestart = true;
-   }
+
+   this->applyUponRestart = (reapply == 1) ? true : false;
 
    // Per-population parameters
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {

@@ -108,10 +108,8 @@ void Wave::getParameters() {
    RP::get("wave.precedence", precedence);
    uint reapply;
    RP::get("wave.reapplyUponRestart", reapply);
-   this->applyUponRestart = false;
-   if (reapply == 1) {
-      this->applyUponRestart = true;
-   }
+
+   this->applyUponRestart = (reapply == 1) ? true : false; 
 
    RP::get("wave.Bx0", B0[0]);
    RP::get("wave.By0", B0[1]);
