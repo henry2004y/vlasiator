@@ -86,6 +86,7 @@ protected:
    std::vector<std::string> faceList;
 
    static constexpr Real PI = 3.1415926;
+   std::string wavetype;
    /*! Wave vector.*/
    std::array<Real, 3> waveVector;
    /*! Wave frequency.*/
@@ -98,6 +99,7 @@ protected:
    Real maxwellian(const uint popID, creal rho, creal T, creal Vx, creal Vy, creal Vz);
    std::vector<vmesh::GlobalID> findBlocksToInit(const uint popID, SpatialCell* cell, creal rho, creal T, creal Vx,
                                                  creal Vy, creal Vz);
+   void updateVDF(spatial_cell::SpatialCell* cell, const uint popID, creal rho, creal T, creal Vx, creal Vy, creal Vz);
 };
 } // namespace SBC
 

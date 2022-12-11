@@ -28,6 +28,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 
 #include "../fieldsolver/fs_common.h"
 #include "../object_wrapper.h"
@@ -45,6 +46,7 @@ namespace SBC {
 
 void Wave::addParameters() {
    typedef Readparameters RP;
+   RP::add("wave.type", "Prescribed wave type given velocity perturbations (\"Alfven\", \"Fast\", \"None\")", "None");
    RP::add("wave.precedence", "Precedence value of the wave boundary condition (integer), the higher the stronger.", 4);
    RP::add("wave.reapplyUponRestart",
            "If 0 (default), keep going with the state existing in the restart file. If 1, calls again "
@@ -105,6 +107,11 @@ void Wave::initBoundary(creal t, Project& project) {
 
 void Wave::getParameters() {
    typedef Readparameters RP;
+   RP::get("wave.type", wavetype);
+   if (wavetype != "None" && wavetype != "Alfven" && wavetype != "Fast") {
+      abort_mpi("Unknown boundary wave type " + wavetype);
+   }
+
    RP::get("wave.precedence", precedence);
    uint reapply;
    RP::get("wave.reapplyUponRestart", reapply);
@@ -336,63 +343,105 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   for (uint iface = 0; iface < 6; iface++) {
-      if (facesToProcess[iface] && isCellOnFace[iface]) {
-         Real rho, T, Vx, Vy, Vz, tmp;
-         tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
-         rho = n0 + n1 * tmp;
-         T = T0 + T1 * tmp;
-         Vx = V0[0] + V1[0] * tmp;
-         Vy = V0[1] + V1[1] * tmp;
-         Vz = V0[2] + V1[2] * tmp;
+   if (wavetype == "None") {
+      for (uint iface = 0; iface < 6; iface++) {
+         if (facesToProcess[iface] && isCellOnFace[iface]) {
+            Real rho, T, Vx, Vy, Vz, tmp;
+            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            rho = n0 + n1 * tmp;
+            T = T0 + T1 * tmp;
+            Vx = V0[0] + V1[0] * tmp;
+            Vy = V0[1] + V1[1] * tmp;
+            Vz = V0[2] + V1[2] * tmp;
 
-         std::vector<vmesh::GlobalID> blocksToInit = findBlocksToInit(popID, cell, rho, T, Vx, Vy, Vz);
-         Realf* f = cell->get_data(popID);
+            updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
 
-         for (vmesh::GlobalID i = 0; i < blocksToInit.size(); ++i) {
-            const vmesh::GlobalID blockGID = blocksToInit[i];
-            const vmesh::LocalID blockLID = cell->get_velocity_block_local_id(blockGID, popID);
-            const Real* block_parameters = cell->get_block_parameters(blockLID, popID);
-            creal vxBlock = block_parameters[BlockParams::VXCRD];
-            creal vyBlock = block_parameters[BlockParams::VYCRD];
-            creal vzBlock = block_parameters[BlockParams::VZCRD];
-            creal dvx = block_parameters[BlockParams::DVX];
-            creal dvy = block_parameters[BlockParams::DVY];
-            creal dvz = block_parameters[BlockParams::DVZ];
-
-            // Calculate volume-averaged distribution function for each cell in the block.
-            for (uint kc = 0; kc < WID; ++kc) {
-               creal vzC = vzBlock + kc * dvz;
-               for (uint jc = 0; jc < WID; ++jc) {
-                  creal vyC = vyBlock + jc * dvy;
-                  for (uint ic = 0; ic < WID; ++ic) {
-                     creal vxC = vxBlock + ic * dvx;
-                     // hyzhou: most values are very close to 0!
-                     f[blockLID * WID3 + cellIndex(ic, jc, kc)] =
-                         maxwellian(popID, rho, T, vxC + 0.5 * dvx - Vx, vyC + 0.5 * dvy - Vy, vzC + 0.5 * dvz - Vz);
-                  }
-               }
-            } // loop over cells in velocity block
-         }    // loop over velocity blocks
-
-         // For all species
-         calculateCellMoments(cell, true);
-
-         cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
-         cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
-         for (int idim = 0; idim < 3; idim++) {
-            cell->get_population(popID).V_R[idim] = cell->get_population(popID).V[idim];
-            cell->get_population(popID).V_V[idim] = cell->get_population(popID).V[idim];
-            cell->get_population(popID).P_R[idim] = cell->get_population(popID).P[idim];
-            cell->get_population(popID).P_V[idim] = cell->get_population(popID).P[idim];
+            break; // Effectively sets the precedence of faces through the order of faces.
          }
+      }
+   } else if (wavetype == "Alfven") {
+      for (uint iface = 0; iface < 6; iface++) {
+         if (facesToProcess[iface] && isCellOnFace[iface]) {
+            Real rho, T, Vx, Vy, Vz, tmp;
+            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            rho = n0;
+            T = T0;
+            Vx = V0[0] + V1[0] * tmp;
+            Vy = V0[1] + V1[1] * tmp;
+            Vz = V0[2] + V1[2] * tmp;
 
-         // Store blocks according to the sparsity threshold
-         cell->adjustSingleCellVelocityBlocks(popID);
+            updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
 
-         break; // Effectively sets the precedence of faces through the order of faces.
+            break; // Effectively sets the precedence of faces through the order of faces.
+         }
+      }
+   } else if (wavetype == "Fast") {
+      for (uint iface = 0; iface < 6; iface++) {
+         if (facesToProcess[iface] && isCellOnFace[iface]) {
+            const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
+            Real rho, T, Vx, Vy, Vz, tmp, kdotv, omega;
+            omega = 2 * PI * freq;
+            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            kdotv = std::inner_product(std::begin(waveVector), std::end(waveVector), std::begin(V1), 0.0);
+            rho = n0 / omega * kdotv;
+            T = T0 * (P::electronPTindex - 1) * kdotv / (MASS * (omega + kdotv));
+            Vx = V0[0] + V1[0] * tmp;
+            Vy = V0[1] + V1[1] * tmp;
+            Vz = V0[2] + V1[2] * tmp;
+
+            updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
+
+            break; // Effectively sets the precedence of faces through the order of faces.
+         }
       }
    }
+}
+
+inline void Wave::updateVDF(spatial_cell::SpatialCell* cell, const uint popID, creal rho, creal T, creal Vx, creal Vy,
+                            creal Vz) {
+   std::vector<vmesh::GlobalID> blocksToInit = findBlocksToInit(popID, cell, rho, T, Vx, Vy, Vz);
+   Realf* f = cell->get_data(popID);
+
+   for (vmesh::GlobalID i = 0; i < blocksToInit.size(); ++i) {
+      const vmesh::GlobalID blockGID = blocksToInit[i];
+      const vmesh::LocalID blockLID = cell->get_velocity_block_local_id(blockGID, popID);
+      const Real* block_parameters = cell->get_block_parameters(blockLID, popID);
+      creal vxBlock = block_parameters[BlockParams::VXCRD];
+      creal vyBlock = block_parameters[BlockParams::VYCRD];
+      creal vzBlock = block_parameters[BlockParams::VZCRD];
+      creal dvx = block_parameters[BlockParams::DVX];
+      creal dvy = block_parameters[BlockParams::DVY];
+      creal dvz = block_parameters[BlockParams::DVZ];
+
+      // Calculate volume-averaged distribution function for each cell in the block.
+      for (uint kc = 0; kc < WID; ++kc) {
+         creal vzC = vzBlock + kc * dvz;
+         for (uint jc = 0; jc < WID; ++jc) {
+            creal vyC = vyBlock + jc * dvy;
+            for (uint ic = 0; ic < WID; ++ic) {
+               creal vxC = vxBlock + ic * dvx;
+               // hyzhou: most values are very close to 0!
+               f[blockLID * WID3 + cellIndex(ic, jc, kc)] =
+                   maxwellian(popID, rho, T, vxC + 0.5 * dvx - Vx, vyC + 0.5 * dvy - Vy, vzC + 0.5 * dvz - Vz);
+            }
+         }
+      } // loop over cells in velocity block
+   }    // loop over velocity blocks
+
+   // For all species
+   calculateCellMoments(cell, true);
+
+   cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
+   cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
+   for (int idim = 0; idim < 3; idim++) {
+      cell->get_population(popID).V_R[idim] = cell->get_population(popID).V[idim];
+      cell->get_population(popID).V_V[idim] = cell->get_population(popID).V[idim];
+      cell->get_population(popID).P_R[idim] = cell->get_population(popID).P[idim];
+      cell->get_population(popID).P_V[idim] = cell->get_population(popID).P[idim];
+   }
+
+   // Store blocks according to the sparsity threshold
+   cell->adjustSingleCellVelocityBlocks(popID);
 }
 
 // Find velocity blocks to initialize.
@@ -451,7 +500,7 @@ std::vector<vmesh::GlobalID> Wave::findBlocksToInit(const uint popID, spatial_ce
    return blocksToInit;
 }
 
-// Set the perturbed magnetic field boundary condition.
+// Set the non-dipole magnetic field boundary condition.
 Real Wave::fieldSolverBoundaryCondMagneticField(
     FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& bGrid,
     FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, cuint component) {
@@ -473,15 +522,35 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   for (uint iface = 0; iface < 6; iface++) {
-      if (isCellOnFace[iface]) {
-         Real tmp, t;
-         t = P::t + 0.5 * P::dt;
-         tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
-         dB = B0[component] + B1[component] * tmp;
-         break; // This effectively sets the precedence of faces through the order of faces.
+   if (wavetype == "None") {
+      for (uint iface = 0; iface < 6; iface++) {
+         if (isCellOnFace[iface]) {
+            Real tmp, t;
+            t = P::t + 0.5 * P::dt;
+            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            dB = B0[component] + B1[component] * tmp;
+            break; // This effectively sets the precedence of faces through the order of faces.
+         }
+      }
+   } else if (wavetype == "Alfven" || wavetype == "Fast") {
+      for (uint iface = 0; iface < 6; iface++) {
+         if (isCellOnFace[iface]) {
+            Real E[3], omega;
+            // E = B0 x v
+            E[0] = B0[1] * V1[2] - B0[2] * V1[1];
+            E[1] = -(B0[0] * V1[2] - B0[2] * V1[0]);
+            E[2] = B0[0] * V1[1] - B0[1] * V1[0];
+            // B1 = k x E / omega
+            omega = 2 * PI * freq;
+            B1[0] = (waveVector[1] * E[2] - waveVector[2] * E[1]) / omega;
+            B1[1] = -(waveVector[0] * E[2] - waveVector[2] * E[0]) / omega;
+            B1[2] = (waveVector[0] * E[1] - waveVector[1] * E[0]) / omega;
+            dB = B0[component] + B1[component];
+            break; // This effectively sets the precedence of faces through the order of faces.
+         }
       }
    }
+
    return dB;
 }
 
