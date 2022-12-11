@@ -46,7 +46,7 @@ namespace SBC {
 
 void Wave::addParameters() {
    typedef Readparameters RP;
-   RP::add("wave.type", "Prescribed wave type given velocity perturbations (\"Alfven\", \"Fast\", \"None\")", "None");
+   RP::add("wave.type", "Prescribed wave type given velocity perturbations (\"Alfven\", \"Fast\", \"Sinc\")", "Sinc");
    RP::add("wave.precedence", "Precedence value of the wave boundary condition (integer), the higher the stronger.", 4);
    RP::add("wave.reapplyUponRestart",
            "If 0 (default), keep going with the state existing in the restart file. If 1, calls again "
@@ -108,7 +108,7 @@ void Wave::initBoundary(creal t, Project& project) {
 void Wave::getParameters() {
    typedef Readparameters RP;
    RP::get("wave.type", wavetype);
-   if (wavetype != "None" && wavetype != "Alfven" && wavetype != "Fast") {
+   if (wavetype != "Sinc" && wavetype != "Alfven" && wavetype != "Fast") {
       abort_mpi("Unknown boundary wave type " + wavetype);
    }
 
@@ -343,7 +343,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   if (wavetype == "None") {
+   if (wavetype == "Sinc") {
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
             Real rho, T, Vx, Vy, Vz, tmp;
@@ -384,7 +384,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
             tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
             kdotv = std::inner_product(std::begin(waveVector), std::end(waveVector), std::begin(V1), 0.0);
             rho = n0 / omega * kdotv;
-            T = T0 * (P::electronPTindex - 1) * kdotv / (MASS * (omega + kdotv));
+            T = T0 * (1 + (P::electronPTindex - 1) * kdotv / (MASS * (omega + kdotv)));
             Vx = V0[0] + V1[0] * tmp;
             Vy = V0[1] + V1[1] * tmp;
             Vz = V0[2] + V1[2] * tmp;
@@ -522,7 +522,7 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   if (wavetype == "None") {
+   if (wavetype == "Sinc") {
       for (uint iface = 0; iface < 6; iface++) {
          if (isCellOnFace[iface]) {
             Real tmp, t;
