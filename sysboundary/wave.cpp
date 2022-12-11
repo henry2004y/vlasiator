@@ -109,7 +109,7 @@ void Wave::getParameters() {
    uint reapply;
    RP::get("wave.reapplyUponRestart", reapply);
 
-   this->applyUponRestart = (reapply == 1) ? true : false; 
+   this->applyUponRestart = (reapply == 1) ? true : false;
 
    RP::get("wave.Bx0", B0[0]);
    RP::get("wave.By0", B0[1]);
@@ -374,6 +374,9 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
                }
             } // loop over cells in velocity block
          }    // loop over velocity blocks
+
+         // For all species
+         calculateCellMoments(cell, true);
 
          cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
          cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
