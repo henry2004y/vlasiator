@@ -346,13 +346,13 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
    if (wavetype == "Sinc") {
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
-            Real rho, T, Vx, Vy, Vz, tmp;
-            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
-            rho = n0 + n1 * tmp;
-            T = T0 + T1 * tmp;
-            Vx = V0[0] + V1[0] * tmp;
-            Vy = V0[1] + V1[1] * tmp;
-            Vz = V0[2] + V1[2] * tmp;
+            Real rho, T, Vx, Vy, Vz, amp;
+            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            rho = n0 + n1 * amp;
+            T = T0 + T1 * amp;
+            Vx = V0[0] + V1[0] * amp;
+            Vy = V0[1] + V1[1] * amp;
+            Vz = V0[2] + V1[2] * amp;
 
             updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
 
@@ -362,13 +362,13 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
    } else if (wavetype == "Alfven") {
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
-            Real rho, T, Vx, Vy, Vz, tmp;
-            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            Real rho, T, Vx, Vy, Vz, amp;
+            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
             rho = n0;
             T = T0;
-            Vx = V0[0] + V1[0] * tmp;
-            Vy = V0[1] + V1[1] * tmp;
-            Vz = V0[2] + V1[2] * tmp;
+            Vx = V0[0] + V1[0] * amp;
+            Vy = V0[1] + V1[1] * amp;
+            Vz = V0[2] + V1[2] * amp;
 
             updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
 
@@ -379,15 +379,15 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
             const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
-            Real rho, T, Vx, Vy, Vz, tmp, kdotv, omega;
+            Real rho, T, Vx, Vy, Vz, amp, kdotv, omega;
             omega = 2 * PI * freq;
-            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
-            kdotv = std::inner_product(std::begin(waveVector), std::end(waveVector), std::begin(V1), 0.0);
+            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            kdotv = std::inner_product(std::begin(waveVector), std::end(waveVector), std::begin(V1), 0.0) * amp;
             rho = n0 / omega * kdotv;
+            Vx = V0[0] + V1[0] * amp;
+            Vy = V0[1] + V1[1] * amp;
+            Vz = V0[2] + V1[2] * amp;
             T = T0 * (1 + (P::electronPTindex - 1) * kdotv / (MASS * (omega + kdotv)));
-            Vx = V0[0] + V1[0] * tmp;
-            Vy = V0[1] + V1[1] * tmp;
-            Vz = V0[2] + V1[2] * tmp;
 
             updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
 
@@ -525,10 +525,10 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
    if (wavetype == "Sinc") {
       for (uint iface = 0; iface < 6; iface++) {
          if (isCellOnFace[iface]) {
-            Real tmp, t;
+            Real amp, t;
             t = P::t + 0.5 * P::dt;
-            tmp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
-            dB = B0[component] + B1[component] * tmp;
+            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            dB = B0[component] + B1[component] * amp;
             break; // This effectively sets the precedence of faces through the order of faces.
          }
       }
