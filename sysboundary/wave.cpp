@@ -383,7 +383,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
             omega = 2 * PI * freq;
             amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
             kdotv = std::inner_product(std::begin(waveVector), std::end(waveVector), std::begin(V1), 0.0) * amp;
-            rho = n0 / omega * kdotv;
+            rho = n0 * (1 + kdotv / omega);
             Vx = V0[0] + V1[0] * amp;
             Vy = V0[1] + V1[1] * amp;
             Vz = V0[2] + V1[2] * amp;
