@@ -156,7 +156,7 @@ Real Slab::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, c
 
    Real f, n, T;
    const Real xmid = 0.5 * (P::xmax + P::xmin);
-   creal(&v0)[3] = x < 0 ? sP.v0L : sP.v0R;
+   creal(&v0)[3] = x < xmid ? sP.v0L : sP.v0R;
    if (x < xmid) {
       n = sP.nL;
       T = sP.TL;
