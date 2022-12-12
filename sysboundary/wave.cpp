@@ -381,7 +381,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
             const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
             Real rho, T, Vx, Vy, Vz, amp, kdotv, omega;
             omega = 2 * PI * freq;
-            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            amp = std::sin(omega * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
             kdotv = std::inner_product(std::begin(waveVector), std::end(waveVector), std::begin(V1), 0.0) * amp;
             rho = n0 * (1 + kdotv / omega);
             Vx = V0[0] + V1[0] * amp;
