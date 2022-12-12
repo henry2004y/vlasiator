@@ -129,9 +129,9 @@ std::vector<std::array<Real, 3>> Slab::getV0(creal x, creal y, creal z, const ui
    Real mass = getObjectWrapper().particleSpecies[popID].mass;
    Real mu0 = physicalconstants::MU_0;
    const SlabSpeciesParameters& sP = this->speciesParams[popID];
-
+   const Real xmid = 0.5 * (P::xmax + P::xmin);
    Real vx, vy, vz;
-   if (x < 0) {
+   if (x < xmid) {
       vx = sP.v0L[0];
       vy = sP.v0L[1];
       vz = sP.v0L[2];
@@ -155,8 +155,9 @@ Real Slab::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, c
    const SlabSpeciesParameters& sP = this->speciesParams[popID];
 
    Real f, n, T;
+   const Real xmid = 0.5 * (P::xmax + P::xmin);
    creal(&v0)[3] = x < 0 ? sP.v0L : sP.v0R;
-   if (x < 0) {
+   if (x < xmid) {
       n = sP.nL;
       T = sP.TL;
    } else {
