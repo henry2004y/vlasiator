@@ -165,7 +165,7 @@ Real Slab::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, c
       T = sP.TR;
    }
    if (halfWidth != 0) {
-      n = 0.5 * ((sP.nL + sP.nR) + (sP.nR - sP.nL) * tanh(x / halfWidth));
+      n = 0.5 * ((sP.nL + sP.nR) + (sP.nR - sP.nL) * tanh((x - xmid) / halfWidth));
    }
 
    f = n * std::pow(mass / (2.0 * M_PI * KB * T), 1.5) *
@@ -234,7 +234,7 @@ void Slab::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 
                   Real MU_0 = physicalconstants::MU_0;
                   Real n, Pi, Pe, PB, Bz;
 
-                  n = 0.5 * ((sP.nL + sP.nR) + (sP.nR - sP.nL) * tanh(x[0] / halfWidth));
+                  n = 0.5 * ((sP.nL + sP.nR) + (sP.nR - sP.nL) * tanh((x[0] - xmid) / halfWidth));
 
                   Pi = sP.nL * KB * sP.TL;
                   Pe = sP.nL * KB * sP.TL * this->Tratio;
