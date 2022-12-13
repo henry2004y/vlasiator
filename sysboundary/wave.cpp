@@ -289,13 +289,11 @@ void Wave::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Ge
          calculateCellMoments(cell, true, true);
 
          for (uint popID = 0; popID < getObjectWrapper().particleSpecies.size(); ++popID) {
-            cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
-            cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
+            Population& pop = cell->get_population(popID);
+            pop.RHO_R = pop.RHO_V = pop.RHO;
             for (int i = 0; i < 3; i++) {
-               cell->get_population(popID).V_R[i] = cell->get_population(popID).V[i];
-               cell->get_population(popID).V_V[i] = cell->get_population(popID).V[i];
-               cell->get_population(popID).P_R[i] = cell->get_population(popID).P[i];
-               cell->get_population(popID).P_V[i] = cell->get_population(popID).P[i];
+               pop.V_R[i] = pop.V_V[i] = pop.V[i];
+               pop.P_R[i] = pop.P_V[i] = pop.P[i];
             }
          }
 
@@ -428,16 +426,19 @@ inline void Wave::updateVDF(spatial_cell::SpatialCell* cell, const uint popID, c
       } // loop over cells in velocity block
    }    // loop over velocity blocks
 
+   Population& pop = cell->get_population(popID);
+   // hyzhou: no need to calculate moments from VDF!
    // For all species
-   calculateCellMoments(cell, true);
-
-   cell->get_population(popID).RHO_R = cell->get_population(popID).RHO;
-   cell->get_population(popID).RHO_V = cell->get_population(popID).RHO;
+   // calculateCellMoments(cell, true);
+   pop.RHO = rho;
+   pop.V[0] = Vx;
+   pop.V[1] = Vy;
+   pop.V[2] = Vz;
+   pop.P[0] = pop.P[1] = pop.P[2] = rho * physicalconstants::K_B * T;
+   pop.RHO_R = pop.RHO_V = pop.RHO;
    for (int idim = 0; idim < 3; idim++) {
-      cell->get_population(popID).V_R[idim] = cell->get_population(popID).V[idim];
-      cell->get_population(popID).V_V[idim] = cell->get_population(popID).V[idim];
-      cell->get_population(popID).P_R[idim] = cell->get_population(popID).P[idim];
-      cell->get_population(popID).P_V[idim] = cell->get_population(popID).P[idim];
+      pop.V_R[idim] = pop.V_V[idim] = pop.V[idim];
+      pop.P_R[idim] = pop.P_V[idim] = pop.P[idim];
    }
 
    // Store blocks according to the sparsity threshold
@@ -513,6 +514,7 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
    creal x = (convert<Real>(globalIndices[0]) + 0.5) * technicalGrid.DX + P::xmin;
    creal y = (convert<Real>(globalIndices[1]) + 0.5) * technicalGrid.DY + P::ymin;
    creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + P::zmin;
+   creal t = P::t + 0.5 * P::dt;
 
    auto coords = bGrid.getPhysicalCoords(i, j, k);
    coords[0] += 0.5 * bGrid.DX;
@@ -525,28 +527,28 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
    if (wavetype == "Sinc") {
       for (uint iface = 0; iface < 6; iface++) {
          if (isCellOnFace[iface]) {
-            Real amp, t;
-            t = P::t + 0.5 * P::dt;
+            Real amp;
             amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
             dB = B0[component] + B1[component] * amp;
-            break; // This effectively sets the precedence of faces through the order of faces.
+            break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
    } else if (wavetype == "Alfven" || wavetype == "Fast") {
       for (uint iface = 0; iface < 6; iface++) {
          if (isCellOnFace[iface]) {
-            Real E[3], omega;
-            // E = B0 x v
-            E[0] = B0[1] * V1[2] - B0[2] * V1[1];
-            E[1] = -(B0[0] * V1[2] - B0[2] * V1[0]);
-            E[2] = B0[0] * V1[1] - B0[1] * V1[0];
-            // B1 = k x E / omega
+            Real E[3], omega, amp;
             omega = 2 * PI * freq;
+            amp = std::sin(omega * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            // E = B0 x v
+            E[0] = (B0[1] * V1[2] - B0[2] * V1[1]) * amp;
+            E[1] = -(B0[0] * V1[2] - B0[2] * V1[0]) * amp;
+            E[2] = (B0[0] * V1[1] - B0[1] * V1[0]) * amp;
+            // B1 = k x E / omega
             B1[0] = (waveVector[1] * E[2] - waveVector[2] * E[1]) / omega;
             B1[1] = -(waveVector[0] * E[2] - waveVector[2] * E[0]) / omega;
             B1[2] = (waveVector[0] * E[1] - waveVector[1] * E[0]) / omega;
             dB = B0[component] + B1[component];
-            break; // This effectively sets the precedence of faces through the order of faces.
+            break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
    }
