@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * File:   mesh_data_container.cpp
  * Author: sandroos
  *
@@ -33,7 +33,7 @@ using namespace std;
 namespace mesh {
 
    MeshDataContainer::MeshDataContainer(): initialized(false) { }
-   
+
    bool MeshDataContainer::initialize(const std::string& name) {
       vmesh::MeshParameters meshParams;
       meshParams.name = name;
@@ -51,25 +51,25 @@ namespace mesh {
       meshParams.blockLength[1] = 1;
       meshParams.blockLength[2] = 1;
       meshParams.refLevelMaxAllowed = 0;
-      
+
       meshID = getObjectWrapper().velocityMeshes.size();
       getObjectWrapper().velocityMeshes.push_back(meshParams);
       mesh.initialize(meshID,getObjectWrapper().velocityMeshes);
       initialized = true;
       return initialized;
    }
-   
+
    void MeshDataContainer::reallocate() {
       if (initialized == false) {
          cerr << "(MeshDataContainer) ERROR: Class has not been initialized, exiting at ";
          cerr << __FILE__ << ":" << __LINE__ << endl;
          exit(1);
       }
-      
+
       // Recalculate local IDs
       mesh.setGrid(getLocalCells());
 
-      // Reallocate memory 
+      // Reallocate memory
       for (size_t i=0; i<meshData.size(); ++i) {
          meshData[i].setMeshSize(mesh.size());
          meshData[i].reallocate();
