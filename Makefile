@@ -39,14 +39,14 @@ COMPFLAGS += -DNDEBUG
 # CXXFLAGS += -DDEBUG_IONOSPHERE
 
 #Set order of semilag solver in velocity space acceleration
-#  ACC_SEMILAG_PLM 	2nd order	
-#  ACC_SEMILAG_PPM	3rd order 
+#  ACC_SEMILAG_PLM 	2nd order
+#  ACC_SEMILAG_PPM	3rd order
 #  ACC_SEMILAG_PQM      5th order (use this one unless you are testing)
 #Set order of semilag solver in spatial translation
-#  TRANS_SEMILAG_PLM 	2nd order	
+#  TRANS_SEMILAG_PLM 	2nd order
 #  TRANS_SEMILAG_PPM	3rd order (for production use, use unless testing)
 #  TRANS_SEMILAG_PQM	5th order (significantly slower due to larger stencil)
-COMPFLAGS += -DACC_SEMILAG_PQM -DTRANS_SEMILAG_PPM 
+COMPFLAGS += -DACC_SEMILAG_PQM -DTRANS_SEMILAG_PPM
 
 #Add -DCATCH_FPE to catch floating point exceptions and stop execution
 #May cause problems
@@ -60,13 +60,13 @@ COMPFLAGS += -DACC_SEMILAG_PQM -DTRANS_SEMILAG_PPM
 #//////////////////////////////////////////////////////
 
 #will need profiler in most places..
-COMPFLAGS += ${INC_PROFILE} 
+COMPFLAGS += ${INC_PROFILE}
 
 #use jemalloc
-COMPFLAGS += ${INC_JEMALLOC} 
+COMPFLAGS += ${INC_JEMALLOC}
 
 #define precision
-COMPFLAGS += -D${FP_PRECISION} 
+COMPFLAGS += -D${FP_PRECISION}
 
 #define precision for the distribution function
 COMPFLAGS += -D${DISTRIBUTION_FP_PRECISION}
@@ -95,7 +95,7 @@ testpackage: vlasiator
 
 FORCE:
 # On FERMI one has to use the front-end compiler (e.g. g++) to compile this tool.
-# This target here defines a flag which removes the mpi headers from the code with 
+# This target here defines a flag which removes the mpi headers from the code with
 # #ifdef pragmas such that one can compile this tool to be used on the login nodes.
 # To ensure this works one also needs to change the compiler at the top of Makefile.fermi*.
 not_parallel_tools: fluxfunction
@@ -114,7 +114,7 @@ LIBS += ${LIB_ZOLTAN}
 LIBS += ${LIB_MPI}
 LIBS += ${LIB_PROFILE}
 LIBS += ${LIB_VLSV}
-LIBS += ${LIB_JEMALLOC} 
+LIBS += ${LIB_JEMALLOC}
 LIBS += ${LIB_PAPI}
 
 # Define common dependencies
@@ -140,6 +140,7 @@ DEPS_PROJECTS =	projects/project.h projects/project.cpp \
 		projects/Harris/Harris.h projects/Harris/Harris.cpp \
 		projects/KHB/KHB.h projects/KHB/KHB.cpp \
 		projects/Larmor/Larmor.h projects/Larmor/Larmor.cpp \
+		projects/LinearWave/LinearWave.h projects/LinearWave/LinearWave.cpp \
 		projects/Magnetosphere/Magnetosphere.h projects/Magnetosphere/Magnetosphere.cpp\
 		projects/MultiPeak/MultiPeak.h projects/MultiPeak/MultiPeak.cpp \
 		projects/VelocityBox/VelocityBox.h projects/VelocityBox/VelocityBox.cpp \
@@ -157,7 +158,7 @@ DEPS_PROJECTS =	projects/project.h projects/project.cpp \
 
 DEPS_CPU_ACC_INTERSECTS = ${DEPS_COMMON} ${DEPS_CELL} vlasovsolver/cpu_acc_intersections.hpp vlasovsolver/cpu_acc_intersections.cpp
 
-DEPS_CPU_ACC_MAP = ${DEPS_COMMON} ${DEPS_CELL} vlasovsolver/vec.h vlasovsolver/cpu_acc_map.hpp vlasovsolver/cpu_acc_map.cpp 
+DEPS_CPU_ACC_MAP = ${DEPS_COMMON} ${DEPS_CELL} vlasovsolver/vec.h vlasovsolver/cpu_acc_map.hpp vlasovsolver/cpu_acc_map.cpp
 
 DEPS_CPU_ACC_SEMILAG = ${DEPS_COMMON} ${DEPS_CELL} vlasovsolver/cpu_acc_intersections.hpp vlasovsolver/cpu_acc_transform.hpp \
 	vlasovsolver/cpu_acc_map.hpp vlasovsolver/cpu_acc_semilag.hpp vlasovsolver/cpu_acc_semilag.cpp
@@ -193,7 +194,7 @@ OBJS = 	version.o memoryallocation.o backgroundfield.o quadr.o dipole.o linedipo
 	Alfven.o Diffusion.o Dispersion.o Distributions.o Firehose.o\
 	Flowthrough.o Fluctuations.o Harris.o KHB.o Larmor.o Magnetosphere.o MultiPeak.o\
 	VelocityBox.o Riemann1.o Shock.o Template.o test_fp.o testAmr.o testHall.o test_trans.o\
-	IPShock.o Slab.o object_wrapper.o\
+	IPShock.o Slab.o LinearWave.o object_wrapper.o\
 	verificationLarmor.o Shocktest.o grid.o ioread.o iowrite.o vlasiator.o logger.o\
 	common.o parameters.o readparameters.o spatial_cell.o mesh_data_container.o\
 	vlasovmover.o $(FIELDSOLVER).o fs_common.o fs_limiters.o gridGlue.o
@@ -226,24 +227,24 @@ c: clean
 clean: data
 	rm -rf *.o *~ */*~ */*/*~ ${EXE} particle_post_pusher check_projects_compil_logs/ check_projects_cfg_logs/ particles/*.o
 cleantools:
-	rm -rf vlsv2silo_${FP_PRECISION} vlsvextract_${FP_PRECISION}  vlsvdiff_${FP_PRECISION} 
+	rm -rf vlsv2silo_${FP_PRECISION} vlsvextract_${FP_PRECISION}  vlsvdiff_${FP_PRECISION}
 
 # Rules for making each object file needed by the executable
 
 version.cpp: FORCE
 	./generate_version.sh "${CMP}" "${CXXFLAGS}" "${FLAGS}" "${INC_MPI}" "${INC_DCCRG}" "${INC_FSGRID}" "${INC_ZOLTAN}" "${INC_BOOST}"
 
-version.o: version.cpp 
+version.o: version.cpp
 	 ${CMP} ${CXXFLAGS} ${FLAGS} -c version.cpp
 
 amr_refinement_criteria.o: ${DEPS_COMMON} velocity_blocks.h amr_refinement_criteria.h amr_refinement_criteria.cpp object_factory.h
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c amr_refinement_criteria.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_FSGRID}
 
-memoryallocation.o: memoryallocation.cpp 
+memoryallocation.o: memoryallocation.cpp
 	 ${CMP} ${CXXFLAGS} ${FLAGS} -c memoryallocation.cpp ${INC_PAPI}
 
 dipole.o: backgroundfield/dipole.cpp backgroundfield/dipole.hpp backgroundfield/fieldfunction.hpp backgroundfield/functions.hpp
-	${CMP} ${CXXFLAGS} ${FLAGS} -c backgroundfield/dipole.cpp 
+	${CMP} ${CXXFLAGS} ${FLAGS} -c backgroundfield/dipole.cpp
 
 linedipole.o: backgroundfield/linedipole.cpp backgroundfield/linedipole.hpp backgroundfield/fieldfunction.hpp backgroundfield/functions.hpp
 	${CMP} ${CXXFLAGS} ${FLAGS} -c backgroundfield/linedipole.cpp
@@ -252,7 +253,7 @@ vectordipole.o: backgroundfield/vectordipole.cpp backgroundfield/vectordipole.hp
 	${CMP} ${CXXFLAGS} ${FLAGS} -c backgroundfield/vectordipole.cpp
 
 constantfield.o: backgroundfield/constantfield.cpp backgroundfield/constantfield.hpp backgroundfield/fieldfunction.hpp backgroundfield/functions.hpp
-	${CMP} ${CXXFLAGS} ${FLAGS} -c backgroundfield/constantfield.cpp 
+	${CMP} ${CXXFLAGS} ${FLAGS} -c backgroundfield/constantfield.cpp
 
 quadr.o: backgroundfield/quadr.cpp backgroundfield/quadr.hpp
 	${CMP} ${CXXFLAGS} ${FLAGS} -c backgroundfield/quadr.cpp
@@ -299,8 +300,8 @@ wave.o: ${DEPS_COMMON} sysboundary/wave.h sysboundary/wave.cpp projects/project.
 user.o: ${DEPS_SYSBOUND} sysboundary/user.h sysboundary/user.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c sysboundary/user.cpp ${INC_DCCRG} ${INC_FSGRID} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN}
 
-sysboundary.o: ${DEPS_COMMON} sysboundary/sysboundary.h sysboundary/sysboundary.cpp sysboundary/sysboundarycondition.h sysboundary/sysboundarycondition.cpp sysboundary/donotcompute.h sysboundary/donotcompute.cpp sysboundary/ionosphere.h sysboundary/ionosphere.cpp sysboundary/conductingsphere.h sysboundary/conductingsphere.cpp sysboundary/outflow.h sysboundary/outflow.cpp sysboundary/maxwellian.h sysboundary/maxwellian.cpp sysboundary/user.h sysboundary/user.cpp 
-	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c sysboundary/sysboundary.cpp ${INC_DCCRG} ${INC_FSGRID} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} 
+sysboundary.o: ${DEPS_COMMON} sysboundary/sysboundary.h sysboundary/sysboundary.cpp sysboundary/sysboundarycondition.h sysboundary/sysboundarycondition.cpp sysboundary/donotcompute.h sysboundary/donotcompute.cpp sysboundary/ionosphere.h sysboundary/ionosphere.cpp sysboundary/conductingsphere.h sysboundary/conductingsphere.cpp sysboundary/outflow.h sysboundary/outflow.cpp sysboundary/maxwellian.h sysboundary/maxwellian.cpp sysboundary/user.h sysboundary/user.cpp
+	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c sysboundary/sysboundary.cpp ${INC_DCCRG} ${INC_FSGRID} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN}
 
 sysboundarycondition.o: ${DEPS_COMMON} sysboundary/sysboundarycondition.h sysboundary/sysboundarycondition.cpp sysboundary/donotcompute.h sysboundary/donotcompute.cpp sysboundary/ionosphere.h sysboundary/ionosphere.cpp sysboundary/conductingsphere.h sysboundary/conductingsphere.cpp sysboundary/outflow.h sysboundary/outflow.cpp sysboundary/inflow.h sysboundary/inflow.cpp sysboundary/maxwellian.h sysboundary/maxwellian.cpp sysboundary/wave.h sysboundary/wave.cpp sysboundary/user.h sysboundary/user.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c sysboundary/sysboundarycondition.cpp ${INC_DCCRG} ${INC_FSGRID} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN}
@@ -354,10 +355,13 @@ Shock.o: ${DEPS_COMMON} projects/Shock/Shock.h projects/Shock/Shock.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/Shock/Shock.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
 
 IPShock.o: ${DEPS_COMMON} projects/IPShock/IPShock.h projects/IPShock/IPShock.cpp
-	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/IPShock/IPShock.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID} 
+	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/IPShock/IPShock.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
 
 Slab.o: ${DEPS_COMMON} projects/Slab/Slab.h projects/Slab/Slab.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/Slab/Slab.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
+
+LinearWave.o: ${DEPS_COMMON} projects/LinearWave/LinearWave.h projects/LinearWave/LinearWave.cpp
+	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/LinearWave/LinearWave.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
 
 Template.o: ${DEPS_COMMON} projects/Template/Template.h projects/Template/Template.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/Template/Template.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
@@ -462,10 +466,10 @@ vlasiator.o: ${DEPS_COMMON} readparameters.h parameters.h ${DEPS_PROJECTS} grid.
 grid.o:  ${DEPS_COMMON} parameters.h ${DEPS_PROJECTS} ${DEPS_CELL} grid.cpp grid.h  sysboundary/sysboundary.h
 	${CMP} ${CXXFLAGS} ${FLAG_OPENMP} ${FLAGS} -c grid.cpp ${INC_MPI} ${INC_DCCRG} ${INC_FSGRID} ${INC_BOOST} ${INC_EIGEN} ${INC_ZOLTAN} ${INC_PROFILE} ${INC_VLSV} ${INC_PAPI} ${INC_VECTORCLASS}
 
-ioread.o:  ${DEPS_COMMON} parameters.h  ${DEPS_CELL} ioread.cpp ioread.h 
+ioread.o:  ${DEPS_COMMON} parameters.h  ${DEPS_CELL} ioread.cpp ioread.h
 	${CMP} ${CXXFLAGS} ${FLAG_OPENMP} ${FLAGS} -c ioread.cpp ${INC_MPI} ${INC_DCCRG} ${INC_BOOST} ${INC_EIGEN} ${INC_ZOLTAN} ${INC_PROFILE} ${INC_VLSV} ${INC_FSGRID}
 
-iowrite.o:  ${DEPS_COMMON} parameters.h ${DEPS_CELL} iowrite.cpp iowrite.h  
+iowrite.o:  ${DEPS_COMMON} parameters.h ${DEPS_CELL} iowrite.cpp iowrite.h
 	${CMP} ${CXXFLAGS} ${FLAG_OPENMP} ${FLAGS} -c iowrite.cpp ${INC_MPI} ${INC_DCCRG} ${INC_FSGRID} ${INC_BOOST} ${INC_EIGEN} ${INC_ZOLTAN} ${INC_PROFILE} ${INC_VLSV}
 
 logger.o: logger.h logger.cpp
@@ -506,19 +510,19 @@ DEPS_PARTICLES = particles/particles.h particles/particles.cpp particles/field.h
 OBJS_PARTICLES = particles/physconst.o particles/particles.o particles/readfields.o particles/particleparameters.o particles/distribution.o readparameters.o version.o particles/scenario.o particles/histogram.o
 
 vlsvextract: ${DEPS_VLSVREADER} ${DEPS_VLSVREADERINTERFACE} tools/vlsvextract.h tools/vlsvextract.cpp ${OBJS_VLSVREADER} ${OBJS_VLSVREADERINTERFACE}
-	${CMP} ${CXXFLAGS} ${FLAGS} -c tools/vlsvextract.cpp ${INC_BOOST} ${INC_DCCRG} ${INC_EIGEN} ${INC_VLSV} -I$(CURDIR) 
+	${CMP} ${CXXFLAGS} ${FLAGS} -c tools/vlsvextract.cpp ${INC_BOOST} ${INC_DCCRG} ${INC_EIGEN} ${INC_VLSV} -I$(CURDIR)
 	${LNK} -o vlsvextract_${FP_PRECISION} vlsvextract.o  ${OBJS_VLSVREADERINTERFACE} ${LIB_BOOST} ${LIB_DCCRG}  ${LIB_VLSV} ${LDFLAGS}
 
 vlsv2silo:  ${DEPS_VLSVREADERINTERFACE} tools/vlsv2silo.cpp  ${OBJS_VLSVREADERINTERFACE}
-	${CMP} ${CXXFLAGS} ${FLAGS} -c tools/vlsv2silo.cpp ${INC_SILO} ${INC_VLSV} -I$(CURDIR) 
+	${CMP} ${CXXFLAGS} ${FLAGS} -c tools/vlsv2silo.cpp ${INC_SILO} ${INC_VLSV} -I$(CURDIR)
 	${LNK} -o vlsv2silo_${FP_PRECISION} vlsv2silo.o  ${OBJS_VLSVREADERINTERFACE} ${LIB_SILO} ${LIB_VLSV} ${LDFLAGS}
 
 vlsvdiff:  ${DEPS_VLSVREADERINTERFACE} tools/vlsvdiff.cpp ${OBJS_VLSVREADEREXTRA} ${OBJS_VLSVREADERINTERFACE}
 	${CMP} ${CXXEXTRAFLAGS} ${FLAGS} -c tools/vlsvdiff.cpp ${INC_VLSV} -I$(CURDIR)
 	${LNK} -o vlsvdiff_${FP_PRECISION} vlsvdiff.o  ${OBJS_VLSVREADERINTERFACE} ${LIB_VLSV} ${LDFLAGS}
 
-vlsvreaderinterface.o:  tools/vlsvreaderinterface.h tools/vlsvreaderinterface.cpp 
-	${CMP} ${CXXFLAGS} ${FLAGS} -c tools/vlsvreaderinterface.cpp ${INC_VLSV} -I$(CURDIR) 
+vlsvreaderinterface.o:  tools/vlsvreaderinterface.h tools/vlsvreaderinterface.cpp
+	${CMP} ${CXXFLAGS} ${FLAGS} -c tools/vlsvreaderinterface.cpp ${INC_VLSV} -I$(CURDIR)
 
 vlsv_util.o: tools/vlsv_util.h tools/vlsv_util.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} -c tools/vlsv_util.cpp
