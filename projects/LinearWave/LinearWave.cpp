@@ -56,15 +56,18 @@ bool LinearWave::initialize(void) {
    lRef = std::cbrt(nRef);
    uRef = BRef / sqrt(mu0 * m * nRef);
    tRef = lRef / uRef;
-   TRef = m * nRef * sqr(uRef) / (2 * kB * nRef);
+   PRef = m * nRef * sqr(uRef);
+   // In the hybrid model, electrons are massless so there is no contribution to pressure.
+   // Maybe I shouldn't include the factor 2 here?
+   TRef = PRef / (kB * nRef);
+   // TRef = PRef / (2 * kB * nRef);
    // TRef = sqr(BRef) / (2 * mu0 * kB * nRef);
    // lRef = P::xmax - P::xmin;
    // tRef = P::t_max;
 
    Real Vth = 0.0;
-
+   // Defined in dimensionless units
    if (wavetype == "fast") {
-      // Dimensionless
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
@@ -79,7 +82,6 @@ bool LinearWave::initialize(void) {
       By1 = 8.432740427115680e-1;
       Bz1 = 2.981423969999720e-1;
    } else if (wavetype == "alfven") {
-      // Dimensionless
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
@@ -94,7 +96,6 @@ bool LinearWave::initialize(void) {
       By1 = -3.333333333333333e-1;
       Bz1 = 9.428090415820634e-1;
    } else if (wavetype == "slow") {
-      // Dimensionless
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
@@ -109,12 +110,25 @@ bool LinearWave::initialize(void) {
       By1 = -4.216370213557841e-1;
       Bz1 = -1.490711984999860e-1;
    } else if (wavetype == "nowave"){
-      // Dimensionless
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
+      rho1 = 0.0;
+      rhoux1 = 0.0;
+      rhouy1 = 0.0;
+      rhouz1 = 0.0;
+      E1 = 0.0;
+      Bx1 = 0.0;
+      By1 = 0.0;
+      Bz1 = 0.0;
+   } else if (wavetype == "nobwave"){
+      rho0 = 1.0;
+      Bx0 = 0.0;
+      By0 = 0.0;
+      Bz0 = 0.0;
+      E0 = p0 / (gamma - 1);
       rho1 = 0.0;
       rhoux1 = 0.0;
       rhouy1 = 0.0;
@@ -137,6 +151,7 @@ bool LinearWave::initialize(void) {
          std::cout << "vRef: " << uRef << " [m/s]" << std::endl;
          std::cout << "nRef: " << nRef << " [#]" << std::endl;
          std::cout << "TRef: " << TRef << " [K]" << std::endl;
+         std::cout << "PRef: " << PRef << " [K]" << std::endl;
          std::cout << "BRef: " << BRef << " [T]" << std::endl;
          // Useful for setting the Vspace ~ 10*Vth width
          std::cout << "Vth: " << Vth << " [m/s]" << std::endl;
@@ -236,7 +251,7 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
    Real uz = perturb * rhouz1 / rho;
 
    creal p = (gamma - 1) * ((E0 + E1 * perturb) - 0.5 * rho * (sqr(ux) + sqr(uy) + sqr(uz)) -
-                            0.5 * (sqr(Bx0 + Bx1 * perturb) + sqr(By0 + By1 * perturb) + sqr(Bz1 + Bz1 * perturb)));
+                            0.5 * (sqr(Bx0 + Bx1 * perturb) + sqr(By0 + By1 * perturb) + sqr(Bz0 + Bz1 * perturb)));
    Real T = p / rho;
 
    // Convert to SI units
@@ -250,13 +265,6 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
    // Maxwellian f(v) = f(v;n,u,T)
    creal f = n * sqrt(coef) * coef * exp(-coef * M_PI * (sqr(vx - ux) + sqr(vy - uy) + sqr(vz - uz)));
 
-   // std::cout << "x = " << x << std::endl;
-   // std::cout << "n = " << n << std::endl;
-   // std::cout << "ux = " << ux << std::endl;
-   // std::cout << "vx = " << vx << std::endl;
-   // std::cout << "T = " << T << std::endl;
-   // std::cout << "VDF(x)= " << f << std::endl;
-   // MPI_Abort(MPI_COMM_WORLD, 1);
    return f;
 }
 

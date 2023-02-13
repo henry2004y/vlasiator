@@ -49,7 +49,7 @@ protected:
    virtual std::vector<std::array<Real, 3>> getV0(creal x, creal y, creal z, const uint popID) const;
 
    Real rho0, E0, Bx0, By0, Bz0, rho1, rhoux1, rhouy1, rhouz1, E1, Bx1, By1, Bz1;
-   Real A, nRef, BRef, lRef, tRef, uRef, TRef;
+   Real A, nRef, BRef, lRef, tRef, uRef, TRef, PRef;
    bool verbose;
    std::string wavetype;
 }; // class LinearWave
