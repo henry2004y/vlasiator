@@ -151,7 +151,7 @@ bool LinearWave::initialize(void) {
          std::cout << "vRef: " << uRef << " [m/s]" << std::endl;
          std::cout << "nRef: " << nRef << " [#]" << std::endl;
          std::cout << "TRef: " << TRef << " [K]" << std::endl;
-         std::cout << "PRef: " << PRef << " [K]" << std::endl;
+         std::cout << "PRef: " << PRef << " [Pa]" << std::endl;
          std::cout << "BRef: " << BRef << " [T]" << std::endl;
          // Useful for setting the Vspace ~ 10*Vth width
          std::cout << "Vth: " << Vth << " [m/s]" << std::endl;
