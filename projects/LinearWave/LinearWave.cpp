@@ -56,7 +56,7 @@ bool LinearWave::initialize(void) {
    lRef = std::cbrt(nRef);
    uRef = BRef / sqrt(mu0 * m * nRef);
    tRef = lRef / uRef;
-   PRef = m * nRef * sqr(uRef);
+   PRef = 0.5 * m * nRef * sqr(uRef);
    // In the hybrid model, electrons are massless so there is no contribution to pressure.
    // Maybe I shouldn't include the factor 2 here?
    TRef = PRef / (kB * nRef);
