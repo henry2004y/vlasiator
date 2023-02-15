@@ -109,6 +109,20 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = -4.216370213557841e-1;
       Bz1 = -1.490711984999860e-1;
+   } else if (wavetype == "alfvenx") {
+      rho0 = 1.0;
+      Bx0 = 1.0;
+      By0 = 0.0;
+      Bz0 = 0.0;
+      E0 = p0 / (gamma - 1) + 0.5 * sqr(Bx0);
+      rho1 = 0.0;
+      rhoux1 = 0.0;
+      rhouy1 = -3.333333333333333e-1;
+      rhouz1 = 0.0;
+      E1 = 0.0;
+      Bx1 = 0.0;
+      By1 = -3.333333333333333e-1;
+      Bz1 = 0.0;
    } else if (wavetype == "nowave"){
       rho0 = 1.0;
       Bx0 = 1.0;
