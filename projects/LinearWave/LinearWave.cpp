@@ -47,7 +47,7 @@ bool LinearWave::initialize(void) {
    creal gamma = 5.0 / 3.0;
    creal mu0 = physicalconstants::MU_0;
 
-   creal p0 = 1.0 / gamma;
+   p0 = 1.0 / gamma;
 
    // Three reference values: BRef, nRef, mRef=m
    BRef = 1e-9;
@@ -123,7 +123,22 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = -3.333333333333333e-1;
       Bz1 = 0.0;
-   } else if (wavetype == "nowave"){
+   } else if (wavetype == "fastipic3d") {
+      rho0 = 1.0;
+      Bx0 = 0.0;
+      By0 = 1.4142135623730951;
+      Bz0 = 0.0;
+      p0 = 1.0;
+      rho1 = 1.0;
+      rhoux1 = sqrt((sqr(By0) + 2 * p0) / rho0);
+      rhouy1 = 0.0;
+      rhouz1 = 0.0;
+      ppar1 = p0;
+      pperp1 = 0.5 * (3 * gamma * p0 - p0);
+      Bx1 = 0.0;
+      By1 = By0;
+      Bz1 = 0.0;
+   } else if (wavetype == "nowave") {
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
@@ -137,7 +152,7 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = 0.0;
       Bz1 = 0.0;
-   } else if (wavetype == "nobwave"){
+   } else if (wavetype == "nobwave") {
       rho0 = 1.0;
       Bx0 = 0.0;
       By0 = 0.0;
@@ -256,8 +271,7 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
    creal gamma = 5.0 / 3.0;
 
    creal perturb = A * sin(2 * M_PI * x / lRef);
-   creal drho = perturb * rho1;
-   creal rho = rho0 + drho;
+   creal rho = rho0 + perturb * rho1;
    Real n = rho;
    // Assume background velocity 0
    Real ux = perturb * rhoux1 / rho;
@@ -282,12 +296,50 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
    return f;
 }
 
+Real LinearWave::getBiMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
+                                 creal& dvz, const uint popID) const {
+   creal m = getObjectWrapper().particleSpecies[popID].mass;
+   creal kB = physicalconstants::K_B;
+   creal gamma = 5.0 / 3.0;
+
+   creal perturb = A * sin(2 * M_PI * x / lRef);
+   creal rho = rho0 + perturb * rho1;
+   Real n = rho;
+   // Assume background velocity 0
+   Real ux = perturb * rhoux1 / rho;
+   Real uy = perturb * rhouy1 / rho;
+   Real uz = perturb * rhouz1 / rho;
+
+   Real Tpar = (p0 + perturb * ppar1) / rho;
+   Real Tperp = (p0 + perturb * pperp1) / rho;
+
+   // Convert to SI units
+   n *= nRef;
+   ux *= uRef;
+   uy *= uRef;
+   uz *= uRef;
+   Tpar *= TRef;
+   Tperp *= TRef;
+
+   creal coef = m / (2 * M_PI * kB);
+   // BiMaxwellian f(v) = f(v;n,u,Tpar, Tperp) with B0 in the y-direction
+   creal f = n * sqrt(coef) * coef / (Tperp * sqrt(Tpar)) *
+             exp(-coef * M_PI / Tperp * (sqr(vx - ux) + sqr(vz - uz)) - coef * M_PI / Tpar * sqr(vy - uy));
+
+   return f;
+}
+
 Real LinearWave::calcPhaseSpaceDensity(creal& x, creal& y, creal& z, creal& dx, creal& dy, creal& dz, creal& vx,
                                        creal& vy, creal& vz, creal& dvx, creal& dvy, creal& dvz,
                                        const uint popID) const {
    Real f = 0.0;
-   f = getMaxwellian(x + 0.5 * dx, y + 0.5 * dy, z + 0.5 * dz, vx + 0.5 * dvx, vy + 0.5 * dvy, vz + 0.5 * dvz, dvx, dvy,
-                     dvz, popID);
+   if (wavetype != "fastipic3d") {
+      f = getMaxwellian(x + 0.5 * dx, y + 0.5 * dy, z + 0.5 * dz, vx + 0.5 * dvx, vy + 0.5 * dvy, vz + 0.5 * dvz, dvx,
+                        dvy, dvz, popID);
+   } else {
+      f = getBiMaxwellian(x + 0.5 * dx, y + 0.5 * dy, z + 0.5 * dz, vx + 0.5 * dvx, vy + 0.5 * dvy, vz + 0.5 * dvz, dvx,
+                          dvy, dvz, popID);
+   }
 
    return f;
 }

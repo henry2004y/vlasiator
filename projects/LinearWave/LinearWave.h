@@ -45,10 +45,12 @@ public:
 protected:
    Real getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy, creal& dvz,
                       const uint popID) const;
+   Real getBiMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
+                        creal& dvz, const uint popID) const;
    virtual void calcCellParameters(spatial_cell::SpatialCell* cell, creal& t);
    virtual std::vector<std::array<Real, 3>> getV0(creal x, creal y, creal z, const uint popID) const;
 
-   Real rho0, E0, Bx0, By0, Bz0, rho1, rhoux1, rhouy1, rhouz1, E1, Bx1, By1, Bz1;
+   Real rho0, E0, p0, Bx0, By0, Bz0, rho1, rhoux1, rhouy1, rhouz1, E1, ppar1, pperp1, Bx1, By1, Bz1;
    Real A, nRef, BRef, lRef, tRef, uRef, TRef, PRef;
    bool verbose;
    std::string wavetype;
