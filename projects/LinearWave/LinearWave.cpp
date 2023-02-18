@@ -53,7 +53,8 @@ bool LinearWave::initialize(void) {
    BRef = 1e-9;
    nRef = 1e6;
    // All other reference values can be derived.
-   lRef = std::cbrt(nRef);
+   //lRef = std::cbrt(nRef);
+   lRef = sqrt(m / (mu0*nRef)) / e;
    uRef = BRef / sqrt(mu0 * m * nRef);
    tRef = lRef / uRef;
    PRef = 0.5 * m * nRef * sqr(uRef);
