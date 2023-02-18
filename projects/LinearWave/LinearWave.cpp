@@ -110,6 +110,21 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = -3.333333333333333e-1;
       Bz1 = 9.428090415820634e-1;
+   } else if (wavetype == "alfven_round5") {
+      rho0 = 1.0;
+      Bx0 = 1.0;
+      By0 = 1.4142135623730951;
+      Bz0 = 0.5;
+      p0 = 0.039;
+      E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
+      rho1 = 0.0;
+      rhoux1 = 0.0;
+      rhouy1 = -3.333333333333333e-1;
+      rhouz1 = 9.428090415820634e-1;
+      E1 = 0.0;
+      Bx1 = 0.0;
+      By1 = -3.333333333333333e-1;
+      Bz1 = 9.428090415820634e-1;
    } else if (wavetype == "slow") {
       rho0 = 1.0;
       Bx0 = 1.0;
