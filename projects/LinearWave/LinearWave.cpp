@@ -173,21 +173,18 @@ bool LinearWave::initialize(void) {
    } else if (wavetype == "fastipic3d") {
       rho0 = 1.0;
       Bx0 = 0.0;
-      By0 = 1.4142135623730951;
+      By0 = 0.04;
       Bz0 = 0.0;
       p0 = 1.0;
-      rho1 = 1.0;
-      rhoux1 = sqrt((sqr(By0) + 2 * p0) / rho0);
-      rhouy1 = 0.0;
-      rhouz1 = 0.0;
-      ppar1 = p0;
-      pperp1 = 0.5 * (3 * gamma * p0 - p0);
+      rho1 = A * rho0;
+      ux1 = sqrt((sqr(By0) + 2 * p0) / rho0);
+      uy1 = 0.0;
+      uz1 = 0.0;
+      ppar1 = A * p0;
+      pperp1 = A * 0.5 * (3 * gamma - 1) * p0;
       Bx1 = 0.0;
-      By1 = By0;
+      By1 = A * By0;
       Bz1 = 0.0;
-
-      lambda = 32.0;
-      kwave = 2 * M_PI / lambda;
    } else if (wavetype == "nowave") {
       rho0 = 1.0;
       Bx0 = 1.0;
@@ -369,13 +366,14 @@ Real LinearWave::getBiMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal&
    creal kB = physicalconstants::K_B;
    creal gamma = 5.0 / 3.0;
 
-   creal perturb = A * sin(2 * M_PI * x / lRef);
+   creal Lx = P::xmax - P::xmin;
+   creal perturb = sin(2 * M_PI * x / Lx);
    creal rho = rho0 + perturb * rho1;
    Real n = rho;
    // Assume background velocity 0
-   Real ux = perturb * rhoux1 / rho;
-   Real uy = perturb * rhouy1 / rho;
-   Real uz = perturb * rhouz1 / rho;
+   Real ux = ux1;
+   Real uy = uy1;
+   Real uz = uz1;
 
    Real Tpar = (p0 + perturb * ppar1) / rho;
    Real Tperp = (p0 + perturb * pperp1) / rho;
@@ -431,7 +429,36 @@ void LinearWave::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
 
-      if (wavetype != "alfvenipic3d") {
+      if (wavetype == "fastipic3d") {
+         creal Lx = P::xmax - P::xmin;
+#pragma omp parallel for collapse(3)
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
+                  creal perturb = sin(2 * M_PI * x[0] / Lx);
+                  cell->at(fsgrids::bfield::PERBX) = 0.0;
+                  cell->at(fsgrids::bfield::PERBY) = perturb * By1 * BRef;
+                  cell->at(fsgrids::bfield::PERBZ) = 0.0;
+               }
+            }
+         }
+      } else if (wavetype == "alfvenpic3d") {
+         creal Lx = P::xmax - P::xmin;
+#pragma omp parallel for collapse(3)
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
+                  cell->at(fsgrids::bfield::PERBX) = 0.0;
+                  cell->at(fsgrids::bfield::PERBY) = By1 * cos(2 * M_PI * x[0] / Lx) * BRef;
+                  cell->at(fsgrids::bfield::PERBZ) = -Bz1 * sin(2 * M_PI * x[0] / Lx) * BRef;
+               }
+            }
+         }
+      } else {
 #pragma omp parallel for collapse(3)
          for (int i = 0; i < localSize[0]; ++i) {
             for (int j = 0; j < localSize[1]; ++j) {
@@ -442,20 +469,6 @@ void LinearWave::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
                   cell->at(fsgrids::bfield::PERBX) = perturb * Bx1 * BRef;
                   cell->at(fsgrids::bfield::PERBY) = perturb * By1 * BRef;
                   cell->at(fsgrids::bfield::PERBZ) = perturb * Bz1 * BRef;
-               }
-            }
-         }
-      } else {
-         const Real Lx = P::xmax - P::xmin;
-#pragma omp parallel for collapse(3)
-         for (int i = 0; i < localSize[0]; ++i) {
-            for (int j = 0; j < localSize[1]; ++j) {
-               for (int k = 0; k < localSize[2]; ++k) {
-                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
-                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
-                  cell->at(fsgrids::bfield::PERBX) = 0.0;
-                  cell->at(fsgrids::bfield::PERBY) = By1 * cos(2 * M_PI * x[0] / Lx) * BRef;
-                  cell->at(fsgrids::bfield::PERBZ) = -Bz1 * sin(2 * M_PI * x[0] / Lx) * BRef;
                }
             }
          }
