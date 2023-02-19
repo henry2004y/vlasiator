@@ -175,9 +175,9 @@ bool LinearWave::initialize(void) {
       Bx0 = 0.0;
       By0 = 0.04;
       Bz0 = 0.0;
-      p0 = 1.0;
+      p0 = 4.5e-4;
       rho1 = A * rho0;
-      ux1 = sqrt((sqr(By0) + 2 * p0) / rho0);
+      ux1 = A * sqrt((sqr(By0) + 2 * p0) / rho0);
       uy1 = 0.0;
       uz1 = 0.0;
       ppar1 = A * p0;
@@ -371,9 +371,9 @@ Real LinearWave::getBiMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal&
    creal rho = rho0 + perturb * rho1;
    Real n = rho;
    // Assume background velocity 0
-   Real ux = ux1;
-   Real uy = uy1;
-   Real uz = uz1;
+   Real ux = ux1 * perturb;
+   Real uy = uy1 * perturb;
+   Real uz = uz1 * perturb;
 
    Real Tpar = (p0 + perturb * ppar1) / rho;
    Real Tperp = (p0 + perturb * pperp1) / rho;
