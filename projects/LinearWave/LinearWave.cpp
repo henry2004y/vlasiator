@@ -164,12 +164,12 @@ bool LinearWave::initialize(void) {
       p0 = 5.12e-4;
       rho1 = 0.0;
       ux1 = 0.0;
-      uy1 = 0.02 * Bx0;
-      uz1 = 0.02 * Bx0;
+      uy1 = A * Bx0;
+      uz1 = A * Bx0;
       E1 = 0.0;
       Bx1 = 0.0;
-      By1 = 0.02 * Bx0;
-      Bz1 = 0.02 * Bx0;
+      By1 = A * Bx0;
+      Bz1 = A * Bx0;
    } else if (wavetype == "fastipic3d") {
       rho0 = 1.0;
       Bx0 = 0.0;
@@ -227,6 +227,7 @@ bool LinearWave::initialize(void) {
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
       if (myRank == MASTER_RANK) {
          std::cout << "wavetype = " << wavetype << std::endl;
+         std::cout << "amplitude = " << A << std::endl;
          std::cout << "Unit conversion factors from dimensionless to SI:" << std::endl;
          std::cout << "lRef: " << lRef << " [m]" << std::endl;
          std::cout << "tRef: " << tRef << " [s]" << std::endl;
@@ -242,8 +243,7 @@ bool LinearWave::initialize(void) {
          Real dvx = (mp.meshLimits[1] - mp.meshLimits[0]) / (mp.gridLength[0] * mp.blockLength[0]);
          std::cout << "Vmax:" << mp.meshLimits[1] << std::endl;
          std::cout << "Vmin:" << mp.meshLimits[0] << std::endl;
-         std::cout << "nvblocks:" << mp.gridLength[0] << std::endl;
-         std::cout << "nvcells:" << mp.blockLength[0] << std::endl;
+         std::cout << "nvcells:" << mp.gridLength[0]*mp.blockLength[0] << std::endl;
          std::cout << "Vth/dvx = " << Vth / dvx << std::endl;
          std::cout << "Vmax/Vth = " << mp.meshLimits[1] / Vth << std::endl;
          if (dvx > Vth) {
