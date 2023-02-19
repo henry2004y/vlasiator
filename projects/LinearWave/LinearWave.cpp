@@ -47,14 +47,12 @@ bool LinearWave::initialize(void) {
    creal gamma = 5.0 / 3.0;
    creal mu0 = physicalconstants::MU_0;
 
-   p0 = 1.0 / gamma;
-
    // Three reference values: BRef, nRef, mRef=m
    BRef = 1e-9;
    nRef = 1e6;
    // All other reference values can be derived.
-   //lRef = std::cbrt(nRef);
-   lRef = sqrt(m / (mu0*nRef)) / e;
+   // lRef = std::cbrt(nRef);
+   lRef = sqrt(m / (mu0 * nRef)) / e;
    uRef = BRef / sqrt(mu0 * m * nRef);
    tRef = lRef / uRef;
    PRef = 0.5 * m * nRef * sqr(uRef);
@@ -73,6 +71,7 @@ bool LinearWave::initialize(void) {
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
+      p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
       rho1 = 4.472135954999580e-1;
       rhoux1 = -8.944271909999160e-1;
@@ -87,6 +86,7 @@ bool LinearWave::initialize(void) {
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
+      p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
       rho1 = 4.472135954999580e-1;
       rhoux1 = 8.944271909999160e-1;
@@ -101,6 +101,7 @@ bool LinearWave::initialize(void) {
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
+      p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
       rho1 = 0.0;
       rhoux1 = 0.0;
@@ -125,11 +126,27 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = -3.333333333333333e-1;
       Bz1 = 9.428090415820634e-1;
+   } else if (wavetype == "alfven_round6") {
+      rho0 = 1.0;
+      Bx0 = 1.0;
+      By0 = 1.4142135623730951;
+      Bz0 = 0.5;
+      p0 = 0.01;
+      E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
+      rho1 = 0.0;
+      rhoux1 = 0.0;
+      rhouy1 = -3.333333333333333e-1;
+      rhouz1 = 9.428090415820634e-1;
+      E1 = 0.0;
+      Bx1 = 0.0;
+      By1 = -3.333333333333333e-1;
+      Bz1 = 9.428090415820634e-1;
    } else if (wavetype == "slow") {
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
+      p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
       rho1 = 8.944271909999159e-1;
       rhoux1 = -4.472135954999579e-1;
@@ -139,20 +156,20 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = -4.216370213557841e-1;
       Bz1 = -1.490711984999860e-1;
-   } else if (wavetype == "alfvenx") {
+   } else if (wavetype == "alfvenipic3d") {
       rho0 = 1.0;
-      Bx0 = 1.0;
+      Bx0 = 0.2;
       By0 = 0.0;
       Bz0 = 0.0;
-      E0 = p0 / (gamma - 1) + 0.5 * sqr(Bx0);
+      p0 = 5.12e-4;
       rho1 = 0.0;
-      rhoux1 = 0.0;
-      rhouy1 = -3.333333333333333e-1;
-      rhouz1 = 0.0;
+      ux1 = 0.0;
+      uy1 = 0.02 * Bx0;
+      uz1 = 0.02 * Bx0;
       E1 = 0.0;
       Bx1 = 0.0;
-      By1 = -3.333333333333333e-1;
-      Bz1 = 0.0;
+      By1 = 0.02 * Bx0;
+      Bz1 = 0.02 * Bx0;
    } else if (wavetype == "fastipic3d") {
       rho0 = 1.0;
       Bx0 = 0.0;
@@ -168,11 +185,15 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = By0;
       Bz1 = 0.0;
+
+      lambda = 32.0;
+      kwave = 2 * M_PI / lambda;
    } else if (wavetype == "nowave") {
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
+      p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
       rho1 = 0.0;
       rhoux1 = 0.0;
@@ -187,6 +208,7 @@ bool LinearWave::initialize(void) {
       Bx0 = 0.0;
       By0 = 0.0;
       Bz0 = 0.0;
+      p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1);
       rho1 = 0.0;
       rhoux1 = 0.0;
@@ -204,6 +226,7 @@ bool LinearWave::initialize(void) {
       int myRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
       if (myRank == MASTER_RANK) {
+         std::cout << "wavetype = " << wavetype << std::endl;
          std::cout << "Unit conversion factors from dimensionless to SI:" << std::endl;
          std::cout << "lRef: " << lRef << " [m]" << std::endl;
          std::cout << "tRef: " << tRef << " [s]" << std::endl;
@@ -213,11 +236,16 @@ bool LinearWave::initialize(void) {
          std::cout << "PRef: " << PRef << " [Pa]" << std::endl;
          std::cout << "BRef: " << BRef << " [T]" << std::endl;
          // Useful for setting the Vspace ~ 10*Vth width
+         std::cout << "Vth: " << sqrt(gamma * p0 / rho0) << std::endl;
          std::cout << "Vth: " << Vth << " [m/s]" << std::endl;
          const vmesh::MeshParameters& mp = getObjectWrapper().velocityMeshes[0];
          Real dvx = (mp.meshLimits[1] - mp.meshLimits[0]) / (mp.gridLength[0] * mp.blockLength[0]);
+         std::cout << "Vmax:" << mp.meshLimits[1] << std::endl;
+         std::cout << "Vmin:" << mp.meshLimits[0] << std::endl;
+         std::cout << "nvblocks:" << mp.gridLength[0] << std::endl;
+         std::cout << "nvcells:" << mp.blockLength[0] << std::endl;
          std::cout << "Vth/dvx = " << Vth / dvx << std::endl;
-         std::cout << "Vth/Vmax = " << Vth / mp.meshLimits[1] << std::endl;
+         std::cout << "Vmax/Vth = " << mp.meshLimits[1] / Vth << std::endl;
          if (dvx > Vth) {
             std::cout << "vmesh maybe too coarse!" << dvx << std::endl;
          }
@@ -312,6 +340,15 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
                             0.5 * (sqr(Bx0 + Bx1 * perturb) + sqr(By0 + By1 * perturb) + sqr(Bz0 + Bz1 * perturb)));
    Real T = p / rho;
 
+   if (wavetype == "alfvenipic3d") {
+      const Real Lx = P::xmax - P::xmin;
+      n = rho0;
+      ux = 0.0;
+      uy = -uy1 * cos(2 * M_PI * x / Lx);
+      uz = uz1 * sin(2 * M_PI * x / Lx);
+      T = p0 / rho0;
+   }
+
    // Convert to SI units
    n *= nRef;
    ux *= uRef;
@@ -394,16 +431,32 @@ void LinearWave::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
 
+      if (wavetype != "alfvenipic3d") {
 #pragma omp parallel for collapse(3)
-      for (int i = 0; i < localSize[0]; ++i) {
-         for (int j = 0; j < localSize[1]; ++j) {
-            for (int k = 0; k < localSize[2]; ++k) {
-               const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
-               std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
-               creal perturb = A * sin(2 * M_PI * x[0] / lRef);
-               cell->at(fsgrids::bfield::PERBX) = perturb * Bx1 * BRef;
-               cell->at(fsgrids::bfield::PERBY) = perturb * By1 * BRef;
-               cell->at(fsgrids::bfield::PERBZ) = perturb * Bz1 * BRef;
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
+                  creal perturb = A * sin(2 * M_PI * x[0] / lRef);
+                  cell->at(fsgrids::bfield::PERBX) = perturb * Bx1 * BRef;
+                  cell->at(fsgrids::bfield::PERBY) = perturb * By1 * BRef;
+                  cell->at(fsgrids::bfield::PERBZ) = perturb * Bz1 * BRef;
+               }
+            }
+         }
+      } else {
+         const Real Lx = P::xmax - P::xmin;
+#pragma omp parallel for collapse(3)
+         for (int i = 0; i < localSize[0]; ++i) {
+            for (int j = 0; j < localSize[1]; ++j) {
+               for (int k = 0; k < localSize[2]; ++k) {
+                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
+                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
+                  cell->at(fsgrids::bfield::PERBX) = 0.0;
+                  cell->at(fsgrids::bfield::PERBY) = By1 * cos(2 * M_PI * x[0] / Lx) * BRef;
+                  cell->at(fsgrids::bfield::PERBZ) = -Bz1 * sin(2 * M_PI * x[0] / Lx) * BRef;
+               }
             }
          }
       }
