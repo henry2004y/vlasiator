@@ -136,10 +136,12 @@ bool LinearWave::initialize(void) {
       isPrimitive = true;
 
       rho0 = 1.0;
-      Bx0 = 0.2;
+      //Bx0 = 0.2;
+      Bx0 = 1.0;
       By0 = 0.0;
       Bz0 = 0.0;
-      p0 = 5.12e-4;
+      //p0 = 5.12e-4;
+      p0 = 0.6;
       rho1 = 0.0;
       ux1 = 0.0;
       uy1 = A * Bx0;
