@@ -265,6 +265,7 @@ void LinearWave::addParameters() {
       RP::add(pop + "_LinearWave.rhoux1", "Perturbation x-momentum", 0.0);
       RP::add(pop + "_LinearWave.rhouy1", "Perturbation y-momentum", 0.0);
       RP::add(pop + "_LinearWave.rhouz1", "Perturbation z-momentum", 0.0);
+      RP::add(pop + "_LinearWave.p1", "Perturbation scalar pressure", 0.0);
       RP::add(pop + "_LinearWave.ppar1", "Perturbation parallel pressure", 0.0);
       RP::add(pop + "_LinearWave.pperp1", "Perturbation perpendicular pressure", 0.0);
       RP::add(pop + "_LinearWave.E1", "Perturbation energy density", 0.0);
