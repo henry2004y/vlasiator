@@ -223,7 +223,7 @@ bool LinearWave::initialize(void) {
          if (10 * dvx > Vth) {
             std::cout << "vmesh maybe too coarse!" << dvx << std::endl;
          }
-         if (Vth < 5 * mp.meshLimits[1]) {
+         if (5 * Vth > mp.meshLimits[1]) {
             std::cout << "vmesh extent maybe too small!" << dvx << std::endl;
          }
       }
