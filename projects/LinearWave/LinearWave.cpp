@@ -210,6 +210,8 @@ bool LinearWave::initialize(void) {
          std::cout << "-------------------------------------------------\n";
          creal Lx = P::xmax - P::xmin;
          std::cout << "wavelength / di = " << Lx / lRef << std::endl;
+         std::cout << "rho0 = " << rho0 << std::endl;
+         std::cout << "p0 = " << p0 << std::endl;
          // Useful for setting the Vspace ~ 10*Vth width
          Real Vth = sqrt(gamma * p0 / rho0);
          std::cout << "Vth: " << Vth << " [m/s]" << std::endl;
@@ -304,6 +306,7 @@ void LinearWave::getParameters() {
       }
 
       RP::get(pop + "_LinearWave.rho0", rho0);
+      RP::get(pop + "_LinearWave.p0", p0);
       RP::get(pop + "_LinearWave.E0", E0);
       RP::get(pop + "_LinearWave.rho1", rho1);
       RP::get(pop + "_LinearWave.ux1", ux1);
