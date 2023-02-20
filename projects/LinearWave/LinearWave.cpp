@@ -144,7 +144,7 @@ bool LinearWave::initialize(void) {
       ux1 = 0.0;
       uy1 = A * Bx0;
       uz1 = A * Bx0;
-      E1 = 0.0;
+      p1 = 0.0;
       Bx1 = 0.0;
       By1 = A * Bx0;
       Bz1 = A * Bx0;
@@ -183,6 +183,7 @@ bool LinearWave::initialize(void) {
    rhoux1 *= nRef * m * uRef;
    rhouy1 *= nRef * m * uRef;
    rhouz1 *= nRef * m * uRef;
+   p1 *= pRef;
    ppar1 *= pRef;
    pperp1 *= pRef;
    E1 *= pRef;
@@ -350,8 +351,6 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
          uz = uz1 * sin(kwave * x);
          T = p0 / (n * kB);
       } else {
-         creal gamma = 5.0 / 3.0;
-         creal mu0 = physicalconstants::MU_0;
          creal perturb = sin(kwave * x);
          creal rho = rho0 + perturb * rho1;
 
@@ -361,9 +360,7 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
          uy = perturb * uy1;
          uz = perturb * uz1;
 
-         creal p = (gamma - 1) *
-                   ((E0 + E1 * perturb) - 0.5 * rho * (sqr(ux) + sqr(uy) + sqr(uz)) -
-                    0.5 / mu0 * (sqr(Bx0 + Bx1 * perturb) + sqr(By0 + By1 * perturb) + sqr(Bz0 + Bz1 * perturb)));
+         creal p = p0 + perturb * p1;
          T = p / (n * kB);
       }
    }
