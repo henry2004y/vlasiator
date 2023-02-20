@@ -48,100 +48,75 @@ bool LinearWave::initialize(void) {
    creal mu0 = physicalconstants::MU_0;
 
    // Three reference values: BRef, nRef, mRef=m
-   BRef = 1e-9;
-   nRef = 1e6;
    // All other reference values can be derived.
-   // lRef = std::cbrt(nRef);
    lRef = sqrt(m / (mu0 * nRef)) / e;
    uRef = BRef / sqrt(mu0 * m * nRef);
    tRef = lRef / uRef;
-   PRef = 0.5 * m * nRef * sqr(uRef);
-   // In the hybrid model, electrons are massless so there is no contribution to pressure.
-   // Maybe I shouldn't include the factor 2 here?
-   TRef = PRef / (kB * nRef);
-   // TRef = PRef / (2 * kB * nRef);
-   // TRef = sqr(BRef) / (2 * mu0 * kB * nRef);
-   // lRef = P::xmax - P::xmin;
-   // tRef = P::t_max;
+   pRef = 0.5 * m * nRef * sqr(uRef);
+   TRef = pRef / (kB * nRef);
 
-   Real Vth = 0.0;
    // Defined in dimensionless units
    if (wavetype == "fast") {
+      isBiMaxwellian = false;
+      isPrimitive = false;
+
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
       p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
-      rho1 = 4.472135954999580e-1;
-      rhoux1 = -8.944271909999160e-1;
-      rhouy1 = 4.216370213557840e-1;
-      rhouz1 = 1.490711984999860e-1;
-      E1 = 2.012457825664615e+0;
-      Bx1 = 0.0;
-      By1 = 8.432740427115680e-1;
-      Bz1 = 2.981423969999720e-1;
+
+      rho1 = A * 4.472135954999580e-1;
+      rhoux1 = A * -8.944271909999160e-1;
+      rhouy1 = A * 4.216370213557840e-1;
+      rhouz1 = A * 1.490711984999860e-1;
+      E1 = A * 2.012457825664615e+0;
+      Bx1 = A * 0.0;
+      By1 = A * 8.432740427115680e-1;
+      Bz1 = A * 2.981423969999720e-1;
    } else if (wavetype == "fastr") {
+      isBiMaxwellian = false;
+      isPrimitive = false;
+
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
       p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
-      rho1 = 4.472135954999580e-1;
-      rhoux1 = 8.944271909999160e-1;
-      rhouy1 = -4.216370213557840e-1;
-      rhouz1 = -1.490711984999860e-1;
-      E1 = 2.012457825664615e+0;
-      Bx1 = 0.0;
-      By1 = 8.432740427115680e-1;
-      Bz1 = 2.981423969999720e-1;
+
+      rho1 = A * 4.472135954999580e-1;
+      rhoux1 = A * 8.944271909999160e-1;
+      rhouy1 = A * -4.216370213557840e-1;
+      rhouz1 = A * -1.490711984999860e-1;
+      E1 = A * 2.012457825664615e+0;
+      Bx1 = A * 0.0;
+      By1 = A * 8.432740427115680e-1;
+      Bz1 = A * 2.981423969999720e-1;
    } else if (wavetype == "alfven") {
+      isBiMaxwellian = false;
+      isPrimitive = false;
+
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
       Bz0 = 0.5;
       p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
-      rho1 = 0.0;
-      rhoux1 = 0.0;
-      rhouy1 = -3.333333333333333e-1;
-      rhouz1 = 9.428090415820634e-1;
-      E1 = 0.0;
-      Bx1 = 0.0;
-      By1 = -3.333333333333333e-1;
-      Bz1 = 9.428090415820634e-1;
-   } else if (wavetype == "alfven_round5") {
-      rho0 = 1.0;
-      Bx0 = 1.0;
-      By0 = 1.4142135623730951;
-      Bz0 = 0.5;
-      p0 = 0.039;
-      E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
-      rho1 = 0.0;
-      rhoux1 = 0.0;
-      rhouy1 = -3.333333333333333e-1;
-      rhouz1 = 9.428090415820634e-1;
-      E1 = 0.0;
-      Bx1 = 0.0;
-      By1 = -3.333333333333333e-1;
-      Bz1 = 9.428090415820634e-1;
-   } else if (wavetype == "alfven_round6") {
-      rho0 = 1.0;
-      Bx0 = 1.0;
-      By0 = 1.4142135623730951;
-      Bz0 = 0.5;
-      p0 = 0.01;
-      E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
-      rho1 = 0.0;
-      rhoux1 = 0.0;
-      rhouy1 = -3.333333333333333e-1;
-      rhouz1 = 9.428090415820634e-1;
-      E1 = 0.0;
-      Bx1 = 0.0;
-      By1 = -3.333333333333333e-1;
-      Bz1 = 9.428090415820634e-1;
+
+      rho1 = A * 0.0;
+      rhoux1 = A * 0.0;
+      rhouy1 = A * -3.333333333333333e-1;
+      rhouz1 = A * 9.428090415820634e-1;
+      E1 = A * 0.0;
+      Bx1 = A * 0.0;
+      By1 = A * -3.333333333333333e-1;
+      Bz1 = A * 9.428090415820634e-1;
    } else if (wavetype == "slow") {
+      isBiMaxwellian = false;
+      isPrimitive = false;
+
       rho0 = 1.0;
       Bx0 = 1.0;
       By0 = 1.4142135623730951;
@@ -156,7 +131,10 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = -4.216370213557841e-1;
       Bz1 = -1.490711984999860e-1;
-   } else if (wavetype == "alfvenipic3d") {
+   } else if (wavetype == "alfven_ipic3d") {
+      isBiMaxwellian = false;
+      isPrimitive = true;
+
       rho0 = 1.0;
       Bx0 = 0.2;
       By0 = 0.0;
@@ -170,7 +148,10 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = A * Bx0;
       Bz1 = A * Bx0;
-   } else if (wavetype == "fastipic3d") {
+   } else if (wavetype == "fast_ipic3d") {
+      isBiMaxwellian = false;
+      isPrimitive = true;
+
       rho0 = 1.0;
       Bx0 = 0.0;
       By0 = 0.04;
@@ -185,39 +166,30 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = A * By0;
       Bz1 = 0.0;
-   } else if (wavetype == "nowave") {
-      rho0 = 1.0;
-      Bx0 = 1.0;
-      By0 = 1.4142135623730951;
-      Bz0 = 0.5;
-      p0 = 1.0 / gamma;
-      E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
-      rho1 = 0.0;
-      rhoux1 = 0.0;
-      rhouy1 = 0.0;
-      rhouz1 = 0.0;
-      E1 = 0.0;
-      Bx1 = 0.0;
-      By1 = 0.0;
-      Bz1 = 0.0;
-   } else if (wavetype == "nobwave") {
-      rho0 = 1.0;
-      Bx0 = 0.0;
-      By0 = 0.0;
-      Bz0 = 0.0;
-      p0 = 1.0 / gamma;
-      E0 = p0 / (gamma - 1);
-      rho1 = 0.0;
-      rhoux1 = 0.0;
-      rhouy1 = 0.0;
-      rhouz1 = 0.0;
-      E1 = 0.0;
-      Bx1 = 0.0;
-      By1 = 0.0;
-      Bz1 = 0.0;
    }
 
-   Vth = sqrt(gamma * p0 / rho0) * uRef;
+   // Convert to SI units
+   rho0 *= nRef * m;
+   p0 *= pRef;
+   E0 *= pRef;
+   Bx0 *= BRef;
+   By0 *= BRef;
+   Bz0 *= BRef;
+
+   rho1 *= nRef * m;
+   ux1 *= uRef;
+   uy1 *= uRef;
+   uz1 *= uRef;
+   rhoux1 *= nRef * m * uRef;
+   rhouy1 *= nRef * m * uRef;
+   rhouz1 *= nRef * m * uRef;
+   ppar1 *= pRef;
+   pperp1 *= pRef;
+   E1 *= pRef;
+
+   Bx1 *= BRef;
+   By1 *= BRef;
+   Bz1 *= BRef;
 
    if (verbose) {
       int myRank;
@@ -225,29 +197,34 @@ bool LinearWave::initialize(void) {
       if (myRank == MASTER_RANK) {
          std::cout << "wavetype = " << wavetype << std::endl;
          std::cout << "amplitude = " << A << std::endl;
+         std::cout << "-------------------------------------------------\n";
          std::cout << "Unit conversion factors from dimensionless to SI:" << std::endl;
          std::cout << "lRef: " << lRef << " [m]" << std::endl;
          std::cout << "tRef: " << tRef << " [s]" << std::endl;
          std::cout << "vRef: " << uRef << " [m/s]" << std::endl;
          std::cout << "nRef: " << nRef << " [#]" << std::endl;
          std::cout << "TRef: " << TRef << " [K]" << std::endl;
-         std::cout << "PRef: " << PRef << " [Pa]" << std::endl;
+         std::cout << "pRef: " << pRef << " [Pa]" << std::endl;
          std::cout << "BRef: " << BRef << " [T]" << std::endl;
+         std::cout << "-------------------------------------------------\n";
+         creal Lx = P::xmax - P::xmin;
+         std::cout << "wavelength / di = " << Lx / lRef << std::endl;
          // Useful for setting the Vspace ~ 10*Vth width
-         std::cout << "Vth: " << sqrt(gamma * p0 / rho0) << std::endl;
+         Real Vth = sqrt(gamma * p0 / rho0);
          std::cout << "Vth: " << Vth << " [m/s]" << std::endl;
          const vmesh::MeshParameters& mp = getObjectWrapper().velocityMeshes[0];
          Real dvx = (mp.meshLimits[1] - mp.meshLimits[0]) / (mp.gridLength[0] * mp.blockLength[0]);
          std::cout << "Vmax:" << mp.meshLimits[1] << std::endl;
          std::cout << "Vmin:" << mp.meshLimits[0] << std::endl;
-         std::cout << "nvcells:" << mp.gridLength[0]*mp.blockLength[0] << std::endl;
+         std::cout << "nvcells:" << mp.gridLength[0] * mp.blockLength[0] << std::endl;
+         std::cout << "dvx = " << dvx << std::endl;
          std::cout << "Vth/dvx = " << Vth / dvx << std::endl;
          std::cout << "Vmax/Vth = " << mp.meshLimits[1] / Vth << std::endl;
-         if (dvx > Vth) {
+         if (10 * dvx > Vth) {
             std::cout << "vmesh maybe too coarse!" << dvx << std::endl;
          }
-         if (Vth > mp.meshLimits[1]) {
-            std::cout << "vmesh maybe too small!" << dvx << std::endl;
+         if (Vth < 5 * mp.meshLimits[1]) {
+            std::cout << "vmesh extent maybe too small!" << dvx << std::endl;
          }
       }
    }
@@ -265,19 +242,30 @@ void LinearWave::addParameters() {
    RP::add("LinearWave.By1", "Perturbation y-magnetic field", 0.0);
    RP::add("LinearWave.Bz1", "Perturbation z-magnetic field", 0.0);
    RP::add("LinearWave.Amplitude", "Amplitude of perturbations", 1e-6);
+   RP::add("LinearWave.isPrimitive", "Use primitive variable inputs", 1);
+   RP::add("LinearWave.isBiMaxwellian", "Use BiMaxwellian distribution", 0);
    RP::add("LinearWave.verbose", "Turn on/off detailed information", 0);
    RP::add("LinearWave.wavetype", "Type of MHD waves with preset parameters (\"fast\", \"alfven\", \"slow\", \"none\")",
            "none");
+   // SI units inputs
+   RP::add("LinearWave.BRef", "Reference magnetic field strength", 1e-8);
+   RP::add("LinearWave.nRef", "Reference number density", 1e6);
    // Per-population parameters
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
       const std::string& pop = getObjectWrapper().particleSpecies[i].name;
       RP::add(pop + "_LinearWave.rho0", "Background mass density", 1.0);
-      RP::add(pop + "_LinearWave.E0", "Background energy density", 0.6);
+      RP::add(pop + "_LinearWave.p0", "Background pressure", 0.0);
+      RP::add(pop + "_LinearWave.E0", "Background energy density", 0.0);
       // Perturbation right-eigenvectors
       RP::add(pop + "_LinearWave.rho1", "Perturbation mass density", 0.0);
-      RP::add(pop + "_LinearWave.rhoux1", "Perturbation x-velocity", 0.0);
-      RP::add(pop + "_LinearWave.rhouy1", "Perturbation y-velocity", 0.0);
-      RP::add(pop + "_LinearWave.rhouz1", "Perturbation z-velocity", 0.0);
+      RP::add(pop + "_LinearWave.ux1", "Perturbation x-velocity", 0.0);
+      RP::add(pop + "_LinearWave.uy1", "Perturbation y-velocity", 0.0);
+      RP::add(pop + "_LinearWave.uz1", "Perturbation z-velocity", 0.0);
+      RP::add(pop + "_LinearWave.rhoux1", "Perturbation x-momentum", 0.0);
+      RP::add(pop + "_LinearWave.rhouy1", "Perturbation y-momentum", 0.0);
+      RP::add(pop + "_LinearWave.rhouz1", "Perturbation z-momentum", 0.0);
+      RP::add(pop + "_LinearWave.ppar1", "Perturbation parallel pressure", 0.0);
+      RP::add(pop + "_LinearWave.pperp1", "Perturbation perpendicular pressure", 0.0);
       RP::add(pop + "_LinearWave.E1", "Perturbation energy density", 0.0);
    }
 }
@@ -294,7 +282,11 @@ void LinearWave::getParameters() {
    RP::get("LinearWave.Bz1", Bz1);
    RP::get("LinearWave.Amplitude", A);
    RP::get("LinearWave.verbose", verbose);
+   RP::get("LinearWave.isPrimitive", isPrimitive);
+   RP::get("LinearWave.isBiMaxwellian", isBiMaxwellian);
    RP::get("LinearWave.wavetype", wavetype);
+   RP::get("LinearWave.BRef", BRef);
+   RP::get("LinearWave.nRef", nRef);
 
    // Per-population parameters
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
@@ -312,9 +304,14 @@ void LinearWave::getParameters() {
       RP::get(pop + "_LinearWave.rho0", rho0);
       RP::get(pop + "_LinearWave.E0", E0);
       RP::get(pop + "_LinearWave.rho1", rho1);
+      RP::get(pop + "_LinearWave.ux1", ux1);
+      RP::get(pop + "_LinearWave.uy1", uy1);
+      RP::get(pop + "_LinearWave.uz1", uz1);
       RP::get(pop + "_LinearWave.rhoux1", rhoux1);
       RP::get(pop + "_LinearWave.rhouy1", rhouy1);
       RP::get(pop + "_LinearWave.rhouz1", rhouz1);
+      RP::get(pop + "_LinearWave.ppar1", ppar1);
+      RP::get(pop + "_LinearWave.pperp1", pperp1);
       RP::get(pop + "_LinearWave.E1", E1);
    }
 }
@@ -323,35 +320,53 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
                                creal& dvz, const uint popID) const {
    creal m = getObjectWrapper().particleSpecies[popID].mass;
    creal kB = physicalconstants::K_B;
-   creal gamma = 5.0 / 3.0;
+   creal Lx = P::xmax - P::xmin;
+   creal kwave = 2 * M_PI / Lx;
 
-   creal perturb = A * sin(2 * M_PI * x / lRef);
-   creal rho = rho0 + perturb * rho1;
-   Real n = rho;
-   // Assume background velocity 0
-   Real ux = perturb * rhoux1 / rho;
-   Real uy = perturb * rhouy1 / rho;
-   Real uz = perturb * rhouz1 / rho;
+   Real n, ux, uy, uz, T;
 
-   creal p = (gamma - 1) * ((E0 + E1 * perturb) - 0.5 * rho * (sqr(ux) + sqr(uy) + sqr(uz)) -
-                            0.5 * (sqr(Bx0 + Bx1 * perturb) + sqr(By0 + By1 * perturb) + sqr(Bz0 + Bz1 * perturb)));
-   Real T = p / rho;
+   if (!isPrimitive) {
+      creal gamma = 5.0 / 3.0;
+      creal mu0 = physicalconstants::MU_0;
+      creal perturb = sin(kwave * x);
+      creal rho = rho0 + perturb * rho1;
 
-   if (wavetype == "alfvenipic3d") {
-      const Real Lx = P::xmax - P::xmin;
-      n = rho0;
-      ux = 0.0;
-      uy = -uy1 * cos(2 * M_PI * x / Lx);
-      uz = uz1 * sin(2 * M_PI * x / Lx);
-      T = p0 / rho0;
+      n = rho / m;
+      // Assume background velocity 0
+      ux = perturb * rhoux1 / rho;
+      uy = perturb * rhouy1 / rho;
+      uz = perturb * rhouz1 / rho;
+
+      creal p =
+          (gamma - 1) * ((E0 + E1 * perturb) - 0.5 * rho * (sqr(ux) + sqr(uy) + sqr(uz)) -
+                         0.5 / mu0 * (sqr(Bx0 + Bx1 * perturb) + sqr(By0 + By1 * perturb) + sqr(Bz0 + Bz1 * perturb)));
+
+      T = p / (n * kB);
+   } else {
+      if (wavetype == "alfven_ipic3d") {
+         n = rho0 / m;
+         ux = 0.0;
+         uy = -uy1 * cos(kwave * x);
+         uz = uz1 * sin(kwave * x);
+         T = p0 / (n * kB);
+      } else {
+         creal gamma = 5.0 / 3.0;
+         creal mu0 = physicalconstants::MU_0;
+         creal perturb = sin(kwave * x);
+         creal rho = rho0 + perturb * rho1;
+
+         n = rho / m;
+         // Assume background velocity 0
+         ux = perturb * ux1;
+         uy = perturb * uy1;
+         uz = perturb * uz1;
+
+         creal p = (gamma - 1) *
+                   ((E0 + E1 * perturb) - 0.5 * rho * (sqr(ux) + sqr(uy) + sqr(uz)) -
+                    0.5 / mu0 * (sqr(Bx0 + Bx1 * perturb) + sqr(By0 + By1 * perturb) + sqr(Bz0 + Bz1 * perturb)));
+         T = p / (n * kB);
+      }
    }
-
-   // Convert to SI units
-   n *= nRef;
-   ux *= uRef;
-   uy *= uRef;
-   uz *= uRef;
-   T *= TRef;
 
    creal coef = m / (2 * M_PI * kB * T);
    // Maxwellian f(v) = f(v;n,u,T)
@@ -365,26 +380,21 @@ Real LinearWave::getBiMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal&
    creal m = getObjectWrapper().particleSpecies[popID].mass;
    creal kB = physicalconstants::K_B;
    creal gamma = 5.0 / 3.0;
-
    creal Lx = P::xmax - P::xmin;
-   creal perturb = sin(2 * M_PI * x / Lx);
+   creal kwave = 2 * M_PI / Lx;
+   creal perturb = sin(kwave * x);
    creal rho = rho0 + perturb * rho1;
-   Real n = rho;
+
+   Real n, ux, uy, uz, Tpar, Tperp;
+
+   n = rho / m;
    // Assume background velocity 0
-   Real ux = ux1 * perturb;
-   Real uy = uy1 * perturb;
-   Real uz = uz1 * perturb;
+   ux = ux1 * perturb;
+   uy = uy1 * perturb;
+   uz = uz1 * perturb;
 
-   Real Tpar = (p0 + perturb * ppar1) / rho;
-   Real Tperp = (p0 + perturb * pperp1) / rho;
-
-   // Convert to SI units
-   n *= nRef;
-   ux *= uRef;
-   uy *= uRef;
-   uz *= uRef;
-   Tpar *= TRef;
-   Tperp *= TRef;
+   Tpar = (p0 + perturb * ppar1) / (n * kB);
+   Tperp = (p0 + perturb * pperp1) / (n * kB);
 
    creal coef = m / (2 * M_PI * kB);
    // BiMaxwellian f(v) = f(v;n,u,Tpar, Tperp) with B0 in the y-direction
@@ -398,7 +408,7 @@ Real LinearWave::calcPhaseSpaceDensity(creal& x, creal& y, creal& z, creal& dx, 
                                        creal& vy, creal& vz, creal& dvx, creal& dvy, creal& dvz,
                                        const uint popID) const {
    Real f = 0.0;
-   if (wavetype != "fastipic3d") {
+   if (!isBiMaxwellian) {
       f = getMaxwellian(x + 0.5 * dx, y + 0.5 * dy, z + 0.5 * dz, vx + 0.5 * dvx, vy + 0.5 * dvy, vz + 0.5 * dvz, dvx,
                         dvy, dvz, popID);
    } else {
@@ -423,29 +433,15 @@ void LinearWave::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
                                   FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
    // Background field
    ConstantField bgField;
-   bgField.initialize(Bx0 * BRef, By0 * BRef, Bz0 * BRef);
+   bgField.initialize(Bx0, By0, Bz0);
    setBackgroundField(bgField, BgBGrid);
 
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
+      creal Lx = P::xmax - P::xmin;
+      creal kwave = 2 * M_PI / Lx;
 
-      if (wavetype == "fastipic3d") {
-         creal Lx = P::xmax - P::xmin;
-#pragma omp parallel for collapse(3)
-         for (int i = 0; i < localSize[0]; ++i) {
-            for (int j = 0; j < localSize[1]; ++j) {
-               for (int k = 0; k < localSize[2]; ++k) {
-                  const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
-                  std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
-                  creal perturb = sin(2 * M_PI * x[0] / Lx);
-                  cell->at(fsgrids::bfield::PERBX) = 0.0;
-                  cell->at(fsgrids::bfield::PERBY) = perturb * By1 * BRef;
-                  cell->at(fsgrids::bfield::PERBZ) = 0.0;
-               }
-            }
-         }
-      } else if (wavetype == "alfvenpic3d") {
-         creal Lx = P::xmax - P::xmin;
+      if (wavetype == "alfven_ipic3d") {
 #pragma omp parallel for collapse(3)
          for (int i = 0; i < localSize[0]; ++i) {
             for (int j = 0; j < localSize[1]; ++j) {
@@ -453,8 +449,8 @@ void LinearWave::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
                   const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
                   std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
                   cell->at(fsgrids::bfield::PERBX) = 0.0;
-                  cell->at(fsgrids::bfield::PERBY) = By1 * cos(2 * M_PI * x[0] / Lx) * BRef;
-                  cell->at(fsgrids::bfield::PERBZ) = -Bz1 * sin(2 * M_PI * x[0] / Lx) * BRef;
+                  cell->at(fsgrids::bfield::PERBY) = By1 * cos(kwave * x[0]);
+                  cell->at(fsgrids::bfield::PERBZ) = -Bz1 * sin(kwave * x[0]);
                }
             }
          }
@@ -465,10 +461,10 @@ void LinearWave::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
                for (int k = 0; k < localSize[2]; ++k) {
                   const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
                   std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
-                  creal perturb = A * sin(2 * M_PI * x[0] / lRef);
-                  cell->at(fsgrids::bfield::PERBX) = perturb * Bx1 * BRef;
-                  cell->at(fsgrids::bfield::PERBY) = perturb * By1 * BRef;
-                  cell->at(fsgrids::bfield::PERBZ) = perturb * Bz1 * BRef;
+                  creal perturb = sin(kwave * x[0]);
+                  cell->at(fsgrids::bfield::PERBX) = perturb * Bx1;
+                  cell->at(fsgrids::bfield::PERBY) = perturb * By1;
+                  cell->at(fsgrids::bfield::PERBZ) = perturb * Bz1;
                }
             }
          }
