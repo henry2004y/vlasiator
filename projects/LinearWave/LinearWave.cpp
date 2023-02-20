@@ -311,6 +311,7 @@ void LinearWave::getParameters() {
       RP::get(pop + "_LinearWave.rhoux1", rhoux1);
       RP::get(pop + "_LinearWave.rhouy1", rhouy1);
       RP::get(pop + "_LinearWave.rhouz1", rhouz1);
+      RP::get(pop + "_LinearWave.p1", p1);
       RP::get(pop + "_LinearWave.ppar1", ppar1);
       RP::get(pop + "_LinearWave.pperp1", pperp1);
       RP::get(pop + "_LinearWave.E1", E1);
