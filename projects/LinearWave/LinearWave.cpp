@@ -170,6 +170,24 @@ bool LinearWave::initialize(void) {
       Bx1 = 0.0;
       By1 = A * By0;
       Bz1 = 0.0;
+   } else if (wavetype == "slow_ipic3d") {
+      isBiMaxwellian = true;
+      isPrimitive = true;
+
+      rho0 = 1.0;
+      Bx0 = 0.0;
+      By0 = 0.04;
+      Bz0 = 0.0;
+      p0 = 4.5e-4;
+      rho1 = A * rho0;
+      ux1 = A * sqrt(abs(sqr(By0) - 2 * p0) / rho0);
+      uy1 = 0.0;
+      uz1 = 0.0;
+      ppar1 = A * p0;
+      pperp1 = A * 0.5 * (3 * gamma - 1) * p0;
+      Bx1 = 0.0;
+      By1 = A * By0;
+      Bz1 = 0.0;
    }
 
    // Convert to SI units
