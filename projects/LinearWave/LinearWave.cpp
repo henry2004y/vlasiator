@@ -151,7 +151,7 @@ bool LinearWave::initialize(void) {
       By1 = A * Bx0;
       Bz1 = A * Bx0;
    } else if (wavetype == "fast_ipic3d") {
-      isBiMaxwellian = false;
+      isBiMaxwellian = true;
       isPrimitive = true;
 
       rho0 = 1.0;
@@ -383,14 +383,13 @@ Real LinearWave::getBiMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal&
                                  creal& dvz, const uint popID) const {
    creal m = getObjectWrapper().particleSpecies[popID].mass;
    creal kB = physicalconstants::K_B;
-   creal gamma = 5.0 / 3.0;
    creal Lx = P::xmax - P::xmin;
    creal kwave = 2 * M_PI / Lx;
    creal perturb = sin(kwave * x);
-   creal rho = rho0 + perturb * rho1;
 
    Real n, ux, uy, uz, Tpar, Tperp;
 
+   creal rho = rho0 + perturb * rho1;
    n = rho / m;
    // Assume background velocity 0
    ux = ux1 * perturb;
