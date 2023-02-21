@@ -156,11 +156,11 @@ bool LinearWave::initialize(void) {
 
       rho0 = 1.0;
       Bx0 = 0.0;
-      //By0 = 0.04;
-      By0 = 1.0;
+      By0 = 0.04;
+      //By0 = 1.0;
       Bz0 = 0.0;
-      //p0 = 4.5e-4;
-      p0 = 0.6;
+      p0 = 4.5e-4;
+      //p0 = 0.6;
       rho1 = A * rho0;
       ux1 = A * sqrt((sqr(By0) + 2 * p0) / rho0);
       uy1 = 0.0;
