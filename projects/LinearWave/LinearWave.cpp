@@ -52,7 +52,7 @@ bool LinearWave::initialize(void) {
    lRef = sqrt(m / (mu0 * nRef)) / e;
    uRef = BRef / sqrt(mu0 * m * nRef);
    tRef = lRef / uRef;
-   pRef = 0.5 * m * nRef * sqr(uRef);
+   pRef = m * nRef * sqr(uRef);
    TRef = pRef / (kB * nRef);
 
    // Defined in dimensionless units
@@ -123,6 +123,7 @@ bool LinearWave::initialize(void) {
       Bz0 = 0.5;
       p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
+
       rho1 = A * 8.944271909999159e-1;
       rhoux1 = A * -4.472135954999579e-1;
       rhouy1 = A * -8.432740427115680e-1;
