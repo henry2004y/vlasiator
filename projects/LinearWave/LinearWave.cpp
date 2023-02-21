@@ -156,9 +156,11 @@ bool LinearWave::initialize(void) {
 
       rho0 = 1.0;
       Bx0 = 0.0;
-      By0 = 0.04;
+      //By0 = 0.04;
+      By0 = 1.0;
       Bz0 = 0.0;
-      p0 = 4.5e-4;
+      //p0 = 4.5e-4;
+      p0 = 0.6;
       rho1 = A * rho0;
       ux1 = A * sqrt((sqr(By0) + 2 * p0) / rho0);
       uy1 = 0.0;
@@ -198,22 +200,20 @@ bool LinearWave::initialize(void) {
       int myRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
       if (myRank == MASTER_RANK) {
-         std::cout << "wavetype = " << wavetype << std::endl;
-         std::cout << "amplitude = " << A << std::endl;
+         std::cout << "wavetype = " << wavetype << "\n";
+         std::cout << "amplitude = " << A << "\n";
          std::cout << "-------------------------------------------------\n";
-         std::cout << "Unit conversion factors from dimensionless to SI:" << std::endl;
-         std::cout << "lRef: " << lRef << " [m]" << std::endl;
-         std::cout << "tRef: " << tRef << " [s]" << std::endl;
-         std::cout << "vRef: " << uRef << " [m/s]" << std::endl;
-         std::cout << "nRef: " << nRef << " [#]" << std::endl;
-         std::cout << "TRef: " << TRef << " [K]" << std::endl;
-         std::cout << "pRef: " << pRef << " [Pa]" << std::endl;
-         std::cout << "BRef: " << BRef << " [T]" << std::endl;
+         std::cout << "Unit conversion factors from dimensionless to SI:\n";
+         std::cout << "lRef: " << lRef << " [m]\n";
+         std::cout << "tRef: " << tRef << " [s]\n";
+         std::cout << "vRef: " << uRef << " [m/s]\n";
+         std::cout << "nRef: " << nRef << " [#]\n";
+         std::cout << "TRef: " << TRef << " [K]\n";
+         std::cout << "pRef: " << pRef << " [Pa]\n";
+         std::cout << "BRef: " << BRef << " [T]\n";
          std::cout << "-------------------------------------------------\n";
          creal Lx = P::xmax - P::xmin;
          std::cout << "wavelength / di = " << Lx / lRef << std::endl;
-         std::cout << "rho0 = " << rho0 << std::endl;
-         std::cout << "p0 = " << p0 << std::endl;
          // Useful for setting the Vspace ~ 10*Vth width
          Real Vth = sqrt(gamma * p0 / rho0);
          std::cout << "Vth: " << Vth << " [m/s]" << std::endl;
