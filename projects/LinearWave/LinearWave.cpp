@@ -123,14 +123,14 @@ bool LinearWave::initialize(void) {
       Bz0 = 0.5;
       p0 = 1.0 / gamma;
       E0 = p0 / (gamma - 1) + 0.5 * (sqr(Bx0) + sqr(By0) + sqr(Bz0));
-      rho1 = 8.944271909999159e-1;
-      rhoux1 = -4.472135954999579e-1;
-      rhouy1 = -8.432740427115680e-1;
-      rhouz1 = -2.981423969999720e-1;
-      E1 = 6.708136850795449e-01;
-      Bx1 = 0.0;
-      By1 = -4.216370213557841e-1;
-      Bz1 = -1.490711984999860e-1;
+      rho1 = A * 8.944271909999159e-1;
+      rhoux1 = A * -4.472135954999579e-1;
+      rhouy1 = A * -8.432740427115680e-1;
+      rhouz1 = A * -2.981423969999720e-1;
+      E1 = A * 6.708136850795449e-01;
+      Bx1 = A * 0.0;
+      By1 = A * -4.216370213557841e-1;
+      Bz1 = A * -1.490711984999860e-1;
    } else if (wavetype == "alfven_ipic3d") {
       isBiMaxwellian = false;
       isPrimitive = true;
@@ -186,7 +186,7 @@ bool LinearWave::initialize(void) {
       ppar1 = A * p0;
       pperp1 = A * 0.5 * (3 * gamma - 1) * p0;
       Bx1 = 0.0;
-      By1 = A * By0;
+      By1 = -A * By0;
       Bz1 = 0.0;
    }
 
