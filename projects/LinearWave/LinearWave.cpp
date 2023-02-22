@@ -181,7 +181,7 @@ bool LinearWave::initialize(void) {
       Bz0 = 0.0;
       p0 = 4.5e-4;
       rho1 = A * rho0;
-      ux1 = A * sqrt(abs(sqr(By0) - 2 * p0) / rho0);
+      ux1 = 0.0;
       uy1 = 0.0;
       uz1 = 0.0;
       ppar1 = A * p0;
