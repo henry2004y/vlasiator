@@ -58,9 +58,6 @@ bool CircularAlfven::initialize(void) {
    cosalpha = cos(alpha);
    sinalpha = sin(alpha);
 
-   rho0 = 1.0;
-   Bkpar0 = 1.0;
-   p0 = 0.1;
    // Convert to SI units
    rho0 *= nRef * m;
    p0 *= pRef;
@@ -73,6 +70,7 @@ bool CircularAlfven::initialize(void) {
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
       if (myRank == MASTER_RANK) {
          std::cout << "wavelength = " << lambda << "\n";
+         std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
          std::cout << "amplitude = " << amp << "\n";
          std::cout << "angle = " << alpha / 3.1415926 * 180 << " [degree]\n";
          std::cout << "-------------------------------------------------\n";
@@ -116,6 +114,9 @@ void CircularAlfven::addParameters() {
 
    RP::add("CircularAlfven.amplitude", "Perturbation amplitude", 0.1);
    RP::add("CircularAlfven.lambda", "Dimensionless wavelength", 32.0);
+   RP::add("CircularAlfven.rho0", "Dimensionless density", 1.0);
+   RP::add("CircularAlfven.p0", "Dimensionless pressure", 0.1);
+   RP::add("CircularAlfven.Bkpar0", "Dimensionless parallel magnetic field to wave vector", 1.0);
    RP::add("CircularAlfven.alpha", "In-plane tilted angle in radian", 0.4636476090008061);
    // SI units inputs
    RP::add("CircularAlfven.BRef", "Reference magnetic field strength", 1e-8);
@@ -130,6 +131,9 @@ void CircularAlfven::getParameters() {
    RP::get("CircularAlfven.amplitude", amp);
    RP::get("CircularAlfven.lambda", lambda);
    RP::get("CircularAlfven.alpha", alpha);
+   RP::get("CircularAlfven.rho0", rho0);
+   RP::get("CircularAlfven.p0", p0);
+   RP::get("CircularAlfven.Bkpar0", Bkpar0);
    RP::get("CircularAlfven.BRef", BRef);
    RP::get("CircularAlfven.nRef", nRef);
    RP::get("CircularAlfven.verbose", verbose);
