@@ -131,6 +131,7 @@ DEPS_FSOLVER = ${DEPS_COMMON} ${DEPS_CELL} fieldsolver/fs_common.h fieldsolver/f
 DEPS_PROJECTS =	projects/project.h projects/project.cpp \
 		projects/projectTriAxisSearch.h projects/projectTriAxisSearch.cpp \
 		projects/Alfven/Alfven.h projects/Alfven/Alfven.cpp \
+		projects/CircularAlfven/CircularAlfven.h projects/CircularAlfven/CircularAlfven.cpp \
 		projects/Diffusion/Diffusion.h projects/Diffusion/Diffusion.cpp \
 		projects/Dispersion/Dispersion.h projects/Dispersion/Dispersion.cpp \
 		projects/Distributions/Distributions.h projects/Distributions/Distributions.cpp \
@@ -194,7 +195,7 @@ OBJS = 	version.o memoryallocation.o backgroundfield.o quadr.o dipole.o linedipo
 	Alfven.o Diffusion.o Dispersion.o Distributions.o Firehose.o\
 	Flowthrough.o Fluctuations.o Harris.o KHB.o Larmor.o Magnetosphere.o MultiPeak.o\
 	VelocityBox.o Riemann1.o Shock.o Template.o test_fp.o testAmr.o testHall.o test_trans.o\
-	IPShock.o Slab.o LinearWave.o object_wrapper.o\
+	IPShock.o Slab.o LinearWave.o CircularAlfven.o object_wrapper.o\
 	verificationLarmor.o Shocktest.o grid.o ioread.o iowrite.o vlasiator.o logger.o\
 	common.o parameters.o readparameters.o spatial_cell.o mesh_data_container.o\
 	vlasovmover.o $(FIELDSOLVER).o fs_common.o fs_limiters.o gridGlue.o
@@ -362,6 +363,9 @@ Slab.o: ${DEPS_COMMON} projects/Slab/Slab.h projects/Slab/Slab.cpp
 
 LinearWave.o: ${DEPS_COMMON} projects/LinearWave/LinearWave.h projects/LinearWave/LinearWave.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/LinearWave/LinearWave.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
+
+CircularAlfven.o: ${DEPS_COMMON} projects/CircularAlfven/CircularAlfven.h projects/CircularAlfven/CircularAlfven.cpp
+	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/CircularAlfven/CircularAlfven.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
 
 Template.o: ${DEPS_COMMON} projects/Template/Template.h projects/Template/Template.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/Template/Template.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}

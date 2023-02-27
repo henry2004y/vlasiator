@@ -215,6 +215,8 @@ bool LinearWave::initialize(void) {
    By1 *= BRef;
    Bz1 *= BRef;
 
+   kwave = 2 * M_PI / (P::xmax - P::xmin);
+
    if (verbose) {
       int myRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -347,8 +349,6 @@ Real LinearWave::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& v
                                creal& dvz, const uint popID) const {
    creal m = getObjectWrapper().particleSpecies[popID].mass;
    creal kB = physicalconstants::K_B;
-   creal Lx = P::xmax - P::xmin;
-   creal kwave = 2 * M_PI / Lx;
 
    Real n, ux, uy, uz, T;
 
@@ -402,8 +402,6 @@ Real LinearWave::getBiMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal&
                                  creal& dvz, const uint popID) const {
    creal m = getObjectWrapper().particleSpecies[popID].mass;
    creal kB = physicalconstants::K_B;
-   creal Lx = P::xmax - P::xmin;
-   creal kwave = 2 * M_PI / Lx;
    creal perturb = sin(kwave * x);
 
    Real n, ux, uy, uz, Tpar, Tperp;
@@ -460,8 +458,6 @@ void LinearWave::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFI
 
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
-      creal Lx = P::xmax - P::xmin;
-      creal kwave = 2 * M_PI / Lx;
 
       if (wavetype == "alfven_ipic3d") {
 #pragma omp parallel for collapse(3)
