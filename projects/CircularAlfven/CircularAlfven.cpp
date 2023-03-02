@@ -57,13 +57,17 @@ bool CircularAlfven::initialize(void) {
 
    cosalpha = cos(alpha);
    sinalpha = sin(alpha);
-
    // Convert to SI units
    rho0 *= nRef * m;
    p0 *= pRef;
    Bkpar0 *= BRef;
-
+   v1 *= uRef;
+   // wave vector
    kwave = 2 * M_PI / (lambda * lRef);
+   // Alfven speed
+   creal VA = Bkpar0 / sqrt(rho0);
+   // Magnetic field perturbation amplitude
+   B1 = v1 * Bkpar0 / VA * BRef;
 
    if (verbose) {
       int myRank;
@@ -71,7 +75,7 @@ bool CircularAlfven::initialize(void) {
       if (myRank == MASTER_RANK) {
          std::cout << "wavelength = " << lambda << "\n";
          std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
-         std::cout << "amplitude = " << amp << "\n";
+         std::cout << "velocity amplitude = " << v1 << "\n";
          std::cout << "angle = " << alpha / 3.1415926 * 180 << " [degree]\n";
          std::cout << "-------------------------------------------------\n";
          std::cout << "Unit conversion factors from dimensionless to SI:\n";
@@ -87,7 +91,7 @@ bool CircularAlfven::initialize(void) {
          std::cout << "wavelength / di = " << Lx / lRef << "\n";
          // Useful for setting the Vspace ~ 10*Vth width
          Real Vth = sqrt(gamma * p0 / rho0);
-         std::cout << "Vth: " << Vth << " [m/s]" << "\n";
+         std::cout << "Vth: " << Vth << " [m/s]\n";
          const vmesh::MeshParameters& mp = getObjectWrapper().velocityMeshes[0];
          Real dvx = (mp.meshLimits[1] - mp.meshLimits[0]) / (mp.gridLength[0] * mp.blockLength[0]);
          std::cout << "Vmax:" << mp.meshLimits[1] << "\n";
@@ -112,7 +116,7 @@ bool CircularAlfven::initialize(void) {
 void CircularAlfven::addParameters() {
    typedef Readparameters RP;
 
-   RP::add("CircularAlfven.amplitude", "Perturbation amplitude", 0.1);
+   RP::add("CircularAlfven.v1", "Perturbation velocity amplitude", 0.1);
    RP::add("CircularAlfven.lambda", "Dimensionless wavelength", 32.0);
    RP::add("CircularAlfven.rho0", "Dimensionless density", 1.0);
    RP::add("CircularAlfven.p0", "Dimensionless pressure", 0.1);
@@ -128,7 +132,7 @@ void CircularAlfven::getParameters() {
    Project::getParameters();
 
    typedef Readparameters RP;
-   RP::get("CircularAlfven.amplitude", amp);
+   RP::get("CircularAlfven.amplitude", v1);
    RP::get("CircularAlfven.lambda", lambda);
    RP::get("CircularAlfven.alpha", alpha);
    RP::get("CircularAlfven.rho0", rho0);
@@ -145,13 +149,13 @@ Real CircularAlfven::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, crea
    creal kB = physicalconstants::K_B;
 
    Real xpar = x * cosalpha + y * sinalpha;
-   Real uperp = amp * uRef * sin(kwave * xpar);
+   Real uperp = v1 * sin(kwave * xpar);
    Real n, ux, uy, uz, T;
 
    n = rho0 / m;
    ux = -uperp * sinalpha;
    uy = uperp * cosalpha;
-   uz = amp * uRef * cos(kwave * xpar);
+   uz = v1 * cos(kwave * xpar);
    T = p0 / (n * kB);
 
    creal coef = m / (2 * M_PI * kB * T);
@@ -198,10 +202,10 @@ void CircularAlfven::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N
                const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
                std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
                Real xpar = x[0] * cosalpha + x[1] * sinalpha;
-               Real Bperp = amp * BRef * sin(kwave * xpar);
+               Real Bperp = B1 * sin(kwave * xpar);
                cell->at(fsgrids::bfield::PERBX) = -Bperp * sinalpha;
                cell->at(fsgrids::bfield::PERBY) = Bperp * cosalpha;
-               cell->at(fsgrids::bfield::PERBZ) = amp * BRef * cos(kwave * xpar);
+               cell->at(fsgrids::bfield::PERBZ) = B1 * cos(kwave * xpar);
             }
          }
       }
