@@ -82,6 +82,7 @@ bool CircularWhistler::initialize(void) {
          std::cout << "wavelength = " << lambda << "\n";
          std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
          std::cout << "v1 = " << v1 << "\n";
+         std::cout << "B1 = " << B1 << "\n";
          std::cout << "angle = " << alpha / 3.1415926 * 180 << " [degree]\n";
          std::cout << "-------------------------------------------------\n";
          std::cout << "Unit conversion factors from dimensionless to SI:\n";

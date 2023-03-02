@@ -67,7 +67,7 @@ bool CircularAlfven::initialize(void) {
    // Alfven speed
    creal VA = Bkpar0 / sqrt(rho0);
    // Magnetic field perturbation amplitude
-   B1 = v1 * Bkpar0 / VA * BRef;
+   B1 = v1 * Bkpar0 / VA;
 
    if (verbose) {
       int myRank;
@@ -75,7 +75,8 @@ bool CircularAlfven::initialize(void) {
       if (myRank == MASTER_RANK) {
          std::cout << "wavelength = " << lambda << "\n";
          std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
-         std::cout << "velocity amplitude = " << v1 << "\n";
+         std::cout << "velocity perturbation amplitude = " << v1 << "\n";
+         std::cout << "magnetic perturbation amplitude = " << B1 << "\n";
          std::cout << "angle = " << alpha / 3.1415926 * 180 << " [degree]\n";
          std::cout << "-------------------------------------------------\n";
          std::cout << "Unit conversion factors from dimensionless to SI:\n";
