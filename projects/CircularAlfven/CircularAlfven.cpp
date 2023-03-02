@@ -132,7 +132,7 @@ void CircularAlfven::getParameters() {
    Project::getParameters();
 
    typedef Readparameters RP;
-   RP::get("CircularAlfven.amplitude", v1);
+   RP::get("CircularAlfven.v1", v1);
    RP::get("CircularAlfven.lambda", lambda);
    RP::get("CircularAlfven.alpha", alpha);
    RP::get("CircularAlfven.rho0", rho0);
