@@ -69,7 +69,7 @@ bool CircularWhistler::initialize(void) {
    creal W = m / e * kwave * Bkpar0 / (mu0 * rho0);
    creal VW = 0.5 * W + sqrt(sqr(Bkpar0) / (mu0 *rho0) + 0.25 * sqr(W));
    // Magnetic field perturbation amplitude
-   B1 = v1 * VW * rho0 / Bkpar0;
+   B1 = v1 * VW * mu0 * rho0 / Bkpar0;
 
    if (verbose) {
       int myRank;
@@ -81,9 +81,9 @@ bool CircularWhistler::initialize(void) {
          }
          std::cout << "wavelength = " << lambda << "\n";
          std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
-         std::cout << "vW = " << VW << "\n";
-         std::cout << "v1 = " << v1 << "\n";
-         std::cout << "B1 = " << B1 << "\n";
+         std::cout << "vW = " << VW << " [m/s]\n";
+         std::cout << "v1 = " << v1 << " [m/s]\n";
+         std::cout << "B1 = " << B1 << " [T]\n";
          std::cout << "angle = " << alpha / 3.1415926 * 180 << " [degree]\n";
          std::cout << "-------------------------------------------------\n";
          std::cout << "Unit conversion factors from dimensionless to SI:\n";
