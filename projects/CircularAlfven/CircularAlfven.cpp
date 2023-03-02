@@ -65,7 +65,7 @@ bool CircularAlfven::initialize(void) {
    // wave vector
    kwave = 2 * M_PI / (lambda * lRef);
    // Alfven speed
-   creal VA = Bkpar0 / sqrt(rho0);
+   creal VA = Bkpar0 / sqrt(mu0 * rho0);
    // Magnetic field perturbation amplitude
    B1 = v1 * Bkpar0 / VA;
 
@@ -75,6 +75,7 @@ bool CircularAlfven::initialize(void) {
       if (myRank == MASTER_RANK) {
          std::cout << "wavelength = " << lambda << "\n";
          std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
+         std::cout << "VA = " << VA << "\n";
          std::cout << "velocity perturbation amplitude = " << v1 << "\n";
          std::cout << "magnetic perturbation amplitude = " << B1 << "\n";
          std::cout << "angle = " << alpha / 3.1415926 * 180 << " [degree]\n";

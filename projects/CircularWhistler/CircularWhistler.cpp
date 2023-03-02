@@ -66,8 +66,8 @@ bool CircularWhistler::initialize(void) {
    // wave vector
    kwave = 2 * M_PI / (lambda * lRef);
    // Whistler speed
-   creal W = m / e * kwave * Bkpar0 / rho0;
-   creal VW = 0.5 * W + sqrt(sqr(Bkpar0) / rho0 + 0.25 * sqr(W));
+   creal W = m / e * kwave * Bkpar0 / (mu0 * rho0);
+   creal VW = 0.5 * W + sqrt(sqr(Bkpar0) / (mu0 *rho0) + 0.25 * sqr(W));
    // Magnetic field perturbation amplitude
    B1 = v1 * VW * rho0 / Bkpar0;
 
@@ -81,6 +81,7 @@ bool CircularWhistler::initialize(void) {
          }
          std::cout << "wavelength = " << lambda << "\n";
          std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
+         std::cout << "vW = " << VW << "\n";
          std::cout << "v1 = " << v1 << "\n";
          std::cout << "B1 = " << B1 << "\n";
          std::cout << "angle = " << alpha / 3.1415926 * 180 << " [degree]\n";
