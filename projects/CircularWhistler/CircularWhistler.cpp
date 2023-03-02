@@ -62,14 +62,14 @@ bool CircularWhistler::initialize(void) {
    rho0 *= nRef * m;
    p0 *= pRef;
    Bkpar0 *= BRef;
-   v1 *= uRef;
+   B1 *= BRef;
    // wave vector
    kwave = 2 * M_PI / (lambda * lRef);
    // Whistler speed
    creal W = m / e * kwave * Bkpar0 / (mu0 * rho0);
    creal VW = 0.5 * W + sqrt(sqr(Bkpar0) / (mu0 *rho0) + 0.25 * sqr(W));
-   // Magnetic field perturbation amplitude
-   B1 = v1 * VW * mu0 * rho0 / Bkpar0;
+   // Velocity field perturbation amplitude
+   v1 = B1 * Bkpar0 / (VW * mu0 * rho0);
 
    if (verbose) {
       int myRank;
@@ -124,7 +124,7 @@ bool CircularWhistler::initialize(void) {
 void CircularWhistler::addParameters() {
    typedef Readparameters RP;
 
-   RP::add("CircularWhistler.v1", "Perturbation velocity amplitude", 0.1);
+   RP::add("CircularWhistler.B1", "Perturbation magnetic field amplitude", 0.01);
    RP::add("CircularWhistler.lambda", "Dimensionless wavelength", 32.0);
    RP::add("CircularWhistler.rho0", "Dimensionless density", 1.0);
    RP::add("CircularWhistler.p0", "Dimensionless pressure", 5.12e-4);
@@ -140,7 +140,7 @@ void CircularWhistler::getParameters() {
    Project::getParameters();
 
    typedef Readparameters RP;
-   RP::get("CircularWhistler.v1", v1);
+   RP::get("CircularWhistler.B1", B1);
    RP::get("CircularWhistler.lambda", lambda);
    RP::get("CircularWhistler.alpha", alpha);
    RP::get("CircularWhistler.rho0", rho0);
