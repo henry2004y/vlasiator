@@ -77,7 +77,7 @@ bool CircularWhistler::initialize(void) {
       if (myRank == MASTER_RANK) {
          if (P::ohmHallTerm == 0){
             std::cerr << "Whistler wave requires the Hall term!";
-            MPI_Abort(MPI_COMM_WORLD, 1);
+            //MPI_Abort(MPI_COMM_WORLD, 1);
          }
          std::cout << "wavelength = " << lambda << "\n";
          std::cout << "Lx / lRef = " << (P::xmax - P::xmin) / lRef << "\n";
