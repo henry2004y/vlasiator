@@ -151,13 +151,15 @@ Real CircularAlfven::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, crea
    creal kB = physicalconstants::K_B;
 
    Real xpar = x * cosalpha + y * sinalpha;
-   Real uperp = v1 * sin(kwave * xpar);
+   //Real uperp = v1 * sin(kwave * xpar);
+   Real uperp = -v1 * cos(kwave * xpar);
    Real n, ux, uy, uz, T;
 
    n = rho0 / m;
    ux = -uperp * sinalpha;
    uy = uperp * cosalpha;
-   uz = v1 * cos(kwave * xpar);
+   //uz = v1 * cos(kwave * xpar);
+   uz = v1 * sin(kwave * xpar);
    T = p0 / (n * kB);
 
    creal coef = m / (2 * M_PI * kB * T);
@@ -204,10 +206,12 @@ void CircularAlfven::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N
                const std::array<Real, 3> x = perBGrid.getPhysicalCoords(i, j, k);
                std::array<Real, fsgrids::bfield::N_BFIELD>* cell = perBGrid.get(i, j, k);
                Real xpar = x[0] * cosalpha + x[1] * sinalpha;
-               Real Bperp = B1 * sin(kwave * xpar);
+               //Real Bperp = B1 * sin(kwave * xpar);
+               Real Bperp = B1 * cos(kwave * xpar);
                cell->at(fsgrids::bfield::PERBX) = -Bperp * sinalpha;
                cell->at(fsgrids::bfield::PERBY) = Bperp * cosalpha;
-               cell->at(fsgrids::bfield::PERBZ) = B1 * cos(kwave * xpar);
+               //cell->at(fsgrids::bfield::PERBZ) = B1 * cos(kwave * xpar);
+               cell->at(fsgrids::bfield::PERBZ) = -B1 * sin(kwave * xpar);
             }
          }
       }
