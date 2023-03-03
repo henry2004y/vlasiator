@@ -142,7 +142,7 @@ DEPS_PROJECTS =	projects/project.h projects/project.cpp \
 		projects/Harris/Harris.h projects/Harris/Harris.cpp \
 		projects/KHB/KHB.h projects/KHB/KHB.cpp \
 		projects/Larmor/Larmor.h projects/Larmor/Larmor.cpp \
-		projects/LinearWave/LinearWave.h projects/LinearWave/LinearWave.cpp \
+		projects/FastWave/FastWave.h projects/FastWave/FastWave.cpp \
 		projects/Magnetosphere/Magnetosphere.h projects/Magnetosphere/Magnetosphere.cpp\
 		projects/MultiPeak/MultiPeak.h projects/MultiPeak/MultiPeak.cpp \
 		projects/VelocityBox/VelocityBox.h projects/VelocityBox/VelocityBox.cpp \
@@ -196,7 +196,7 @@ OBJS = 	version.o memoryallocation.o backgroundfield.o quadr.o dipole.o linedipo
 	Alfven.o Diffusion.o Dispersion.o Distributions.o Firehose.o\
 	Flowthrough.o Fluctuations.o Harris.o KHB.o Larmor.o Magnetosphere.o MultiPeak.o\
 	VelocityBox.o Riemann1.o Shock.o Template.o test_fp.o testAmr.o testHall.o test_trans.o\
-	IPShock.o Slab.o LinearWave.o CircularAlfven.o CircularWhistler.o object_wrapper.o\
+	IPShock.o Slab.o FastWave.o CircularAlfven.o CircularWhistler.o object_wrapper.o\
 	verificationLarmor.o Shocktest.o grid.o ioread.o iowrite.o vlasiator.o logger.o\
 	common.o parameters.o readparameters.o spatial_cell.o mesh_data_container.o\
 	vlasovmover.o $(FIELDSOLVER).o fs_common.o fs_limiters.o gridGlue.o
@@ -362,8 +362,8 @@ IPShock.o: ${DEPS_COMMON} projects/IPShock/IPShock.h projects/IPShock/IPShock.cp
 Slab.o: ${DEPS_COMMON} projects/Slab/Slab.h projects/Slab/Slab.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/Slab/Slab.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
 
-LinearWave.o: ${DEPS_COMMON} projects/LinearWave/LinearWave.h projects/LinearWave/LinearWave.cpp
-	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/LinearWave/LinearWave.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
+FastWave.o: ${DEPS_COMMON} projects/FastWave/FastWave.h projects/FastWave/FastWave.cpp
+	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/FastWave/FastWave.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}
 
 CircularAlfven.o: ${DEPS_COMMON} projects/CircularAlfven/CircularAlfven.h projects/CircularAlfven/CircularAlfven.cpp
 	${CMP} ${CXXFLAGS} ${FLAGS} ${MATHFLAGS} -c projects/CircularAlfven/CircularAlfven.cpp ${INC_DCCRG} ${INC_ZOLTAN} ${INC_BOOST} ${INC_EIGEN} ${INC_FSGRID}

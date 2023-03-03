@@ -41,7 +41,7 @@
 #include "Harris/Harris.h"
 #include "KHB/KHB.h"
 #include "Larmor/Larmor.h"
-#include "LinearWave/LinearWave.h"
+#include "FastWave/FastWave.h"
 #include "Magnetosphere/Magnetosphere.h"
 #include "MultiPeak/MultiPeak.h"
 #include "VelocityBox/VelocityBox.h"
@@ -121,7 +121,7 @@ namespace projects {
       projects::Harris::addParameters();
       projects::KHB::addParameters();
       projects::Larmor::addParameters();
-      projects::LinearWave::addParameters();
+      projects::FastWave::addParameters();
       projects::Magnetosphere::addParameters();
       projects::MultiPeak::addParameters();
       projects::VelocityBox::addParameters();
@@ -648,8 +648,8 @@ Project* createProject() {
    if(Parameters::projectName == "Larmor") {
       rvalue = new projects::Larmor;
    }
-   if(Parameters::projectName == "LinearWave") {
-      rvalue = new projects::LinearWave;
+   if(Parameters::projectName == "FastWave") {
+      rvalue = new projects::FastWave;
    }
    if(Parameters::projectName == "Magnetosphere") {
       rvalue = new projects::Magnetosphere;

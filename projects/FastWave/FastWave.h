@@ -28,10 +28,10 @@
 
 namespace projects {
 
-class LinearWave : public TriAxisSearch {
+class FastWave : public TriAxisSearch {
 public:
-   LinearWave();
-   virtual ~LinearWave();
+   FastWave();
+   virtual ~FastWave();
 
    virtual bool initialize(void);
    static void addParameters(void);
@@ -50,14 +50,12 @@ protected:
    virtual void calcCellParameters(spatial_cell::SpatialCell* cell, creal& t);
    virtual std::vector<std::array<Real, 3>> getV0(creal x, creal y, creal z, const uint popID) const;
 
-   Real rho0, E0, p0, Bx0, By0, Bz0, rho1, rhoux1, rhouy1, rhouz1, ux1, uy1, uz1, E1, p1, ppar1, pperp1, Bx1, By1, Bz1;
+   Real rho0, p0, B0, rho1, u1, p1, ppar1, pperp1;
    Real A, nRef, BRef, lRef, tRef, uRef, TRef, pRef;
-   Real lambda, kwave;
+   Real lambda, kwave, alpha, cosalpha, sinalpha;
    bool verbose;
-   bool isPrimitive;
    bool isBiMaxwellian;
-   std::string wavetype;
-}; // class LinearWave
+}; // class FastWave
 } // namespace projects
 
 #endif
