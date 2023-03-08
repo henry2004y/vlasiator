@@ -49,19 +49,14 @@ bool Slab::initialize() { return Project::initialize(); }
 void Slab::addParameters() {
    typedef Readparameters RP;
 
-   RP::add("Slab.bx0L", "Left domain B field value (T)", 0.0e-9);
-   RP::add("Slab.by0L", "Left domain B field value (T)", 0.0e-9);
-   RP::add("Slab.bz0L", "Left domain B field value (T)", 3.0e-9);
-   RP::add("Slab.bx0R", "Right domain B field value (T)", 0.0e-9);
-   RP::add("Slab.by0R", "Right domain B field value (T)", 0.0e-9);
-   RP::add("Slab.bz0R", "Right domain B field value (T)", 3.0e-9);
+   RP::add("Slab.bx0L", "Left domain B field value", 0.0);
+   RP::add("Slab.by0L", "Left domain B field value", 0.0);
+   RP::add("Slab.bz0L", "Left domain B field value", 1.0);
+   RP::add("Slab.bx0R", "Right domain B field value", 0.0);
+   RP::add("Slab.by0R", "Right domain B field value", 0.0);
+   RP::add("Slab.bz0R", "Right domain B field value", 1.0);
    RP::add("Slab.halfWidth", "Halfwidth of the current sheet (m)", 0.0);
    RP::add("Slab.Tratio", "Te/Ti for setting B field from pressure balance", 0.4);
-
-   RP::add("Slab.AMR_L1width", "L1 AMR region width (m)", 0);
-   RP::add("Slab.AMR_L2width", "L2 AMR region width (m)", 0);
-   RP::add("Slab.AMR_L3width", "L3 AMR region width (m)", 0);
-   RP::add("Slab.AMR_L4width", "L4 AMR region width (m)", 0);
 
    // Per-population parameters
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
@@ -69,13 +64,13 @@ void Slab::addParameters() {
       RP::add(pop + "_Slab.vx0L", "Left bulk velocity in x", 0.0);
       RP::add(pop + "_Slab.vy0L", "Left bulk velocity in y", 0.0);
       RP::add(pop + "_Slab.vz0L", "Left bulk velocuty in z", 0.0);
-      RP::add(pop + "_Slab.nL", "Left number density (m^-3)", 1.0e7);
+      RP::add(pop + "_Slab.nL", "Left number density", 10.0);
       RP::add(pop + "_Slab.TL", "Left temperature (K)", 2.0e6);
 
       RP::add(pop + "_Slab.vx0R", "Right bulk velocity in x", 0.0);
       RP::add(pop + "_Slab.vy0R", "Right bulk velocity in y", 0.0);
       RP::add(pop + "_Slab.vz0R", "Right bulk velocuty in z", 0.0);
-      RP::add(pop + "_Slab.nR", "Right number density (m^-3)", 1.0e7);
+      RP::add(pop + "_Slab.nR", "Right number density", 1.0);
       RP::add(pop + "_Slab.TR", "Right temperature (K)", 2.0e6);
 
       RP::add(pop + "_Slab.nSpaceSamples", "Number of sampling points per spatial dimension", 2);
@@ -95,11 +90,6 @@ void Slab::getParameters() {
    RP::get("Slab.bz0R", this->b0R[2]);
    RP::get("Slab.halfWidth", this->halfWidth);
    RP::get("Slab.Tratio", this->Tratio); // redundant in field solver!
-
-   RP::get("Slab.AMR_L1width", this->AMR_L1width);
-   RP::get("Slab.AMR_L2width", this->AMR_L2width);
-   RP::get("Slab.AMR_L3width", this->AMR_L3width);
-   RP::get("Slab.AMR_L4width", this->AMR_L4width);
 
    // Per-population parameters
    for (uint i = 0; i < getObjectWrapper().particleSpecies.size(); i++) {
@@ -150,12 +140,12 @@ std::vector<std::array<Real, 3>> Slab::getV0(creal x, creal y, creal z, const ui
 
 Real Slab::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
                            creal& dvz, const uint popID) const {
-   Real mass = getObjectWrapper().particleSpecies[popID].mass;
-   Real KB = physicalconstants::K_B;
+   creal mass = getObjectWrapper().particleSpecies[popID].mass;
+   creal KB = physicalconstants::K_B;
    const SlabSpeciesParameters& sP = this->speciesParams[popID];
 
    Real f, n, T;
-   const Real xmid = 0.5 * (P::xmax + P::xmin);
+   creal xmid = 0.5 * (P::xmax + P::xmin);
    creal(&v0)[3] = x < xmid ? sP.v0L : sP.v0R;
    if (x < xmid) {
       n = sP.nL;
@@ -168,8 +158,9 @@ Real Slab::getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, c
       n = 0.5 * ((sP.nL + sP.nR) + (sP.nR - sP.nL) * tanh((x - xmid) / halfWidth));
    }
 
-   f = n * std::pow(mass / (2.0 * M_PI * KB * T), 1.5) *
-       exp(-mass * (sqr(vx - v0[0]) + sqr(vy - v0[1]) + sqr(vz - v0[2])) / (2.0 * KB * T));
+   creal coef1 = 2.0 * KB * T;
+   creal coef2 = mass / (M_PI * coef1);
+   f = n * coef2 * sqrt(coef2) * exp(-mass * (sqr(vx - v0[0]) + sqr(vy - v0[1]) + sqr(vz - v0[2])) / coef1);
 
    return f;
 }
@@ -213,6 +204,7 @@ void Slab::calcCellParameters(spatial_cell::SpatialCell* cell, creal& t) {}
 void Slab::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, FS_STENCIL_WIDTH>& perBGrid,
                             FsGrid<std::array<Real, fsgrids::bgbfield::N_BGB>, FS_STENCIL_WIDTH>& BgBGrid,
                             FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid) {
+   // It would be better to put all B field into the perturbed term since it's not uniform at t = 0!
    setBackgroundFieldToZero(BgBGrid);
 
    const Real xmid = 0.5 * (P::xmax + P::xmin);
@@ -270,111 +262,6 @@ void Slab::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>, 
          }
       }
    }
-}
-
-bool Slab::refineSpatialCells(dccrg::Dccrg<spatial_cell::SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid) const {
-   int myRank;
-   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-
-   std::vector<CellID> refinedCells;
-
-   if (myRank == MASTER_RANK)
-      std::cout << "Maximum refinement level is " << mpiGrid.mapping.get_maximum_refinement_level() << std::endl;
-
-   // Calculate regions for refinement
-   if (P::amrMaxSpatialRefLevel > 0) {
-      // L1 refinement.
-      for (uint i = 0; i < P::xcells_ini; ++i) {
-         for (uint j = 0; j < P::ycells_ini; ++j) {
-            for (uint k = 0; k < P::zcells_ini; ++k) {
-               std::array<double, 3> x;
-               x[0] = P::xmin + (i + 0.5) * P::dx_ini;
-               x[1] = P::ymin + (j + 0.5) * P::dy_ini;
-               x[2] = P::zmin + (k + 0.5) * P::dz_ini;
-
-               if (abs(x[0]) < AMR_L1width) {
-                  CellID myCell = mpiGrid.get_existing_cell(x);
-                  mpiGrid.refine_completely(myCell);
-               }
-            }
-         }
-      }
-      refinedCells = mpiGrid.stop_refining(true);
-      if (myRank == MASTER_RANK)
-         std::cout << "Finished first level of refinement" << std::endl;
-      mpiGrid.balance_load();
-   }
-
-   if (P::amrMaxSpatialRefLevel > 1) {
-      // L2 refinement.
-      for (uint i = 0; i < 2 * P::xcells_ini; ++i) {
-         for (uint j = 0; j < 2 * P::ycells_ini; ++j) {
-            for (uint k = 0; k < 2 * P::zcells_ini; ++k) {
-               std::array<double, 3> x;
-               x[0] = P::xmin + (i + 0.5) * 0.5 * P::dx_ini;
-               x[1] = P::ymin + (j + 0.5) * 0.5 * P::dy_ini;
-               x[2] = P::zmin + (k + 0.5) * 0.5 * P::dz_ini;
-
-               if (abs(x[0]) < AMR_L2width) {
-                  CellID myCell = mpiGrid.get_existing_cell(x);
-                  mpiGrid.refine_completely(myCell);
-               }
-            }
-         }
-      }
-      refinedCells = mpiGrid.stop_refining(true);
-      if (myRank == MASTER_RANK)
-         std::cout << "Finished second level of refinement" << std::endl;
-      mpiGrid.balance_load();
-   }
-
-   if (P::amrMaxSpatialRefLevel > 2) {
-      // L3 refinement.
-      for (uint i = 0; i < 4 * P::xcells_ini; ++i) {
-         for (uint j = 0; j < 4 * P::ycells_ini; ++j) {
-            for (uint k = 0; k < 4 * P::zcells_ini; ++k) {
-               std::array<double, 3> x;
-               x[0] = P::xmin + (i + 0.5) * 0.25 * P::dx_ini;
-               x[1] = P::ymin + (j + 0.5) * 0.25 * P::dy_ini;
-               x[2] = P::zmin + (k + 0.5) * 0.25 * P::dz_ini;
-
-               if (abs(x[0]) < AMR_L3width) {
-                  CellID myCell = mpiGrid.get_existing_cell(x);
-                  mpiGrid.refine_completely(myCell);
-               }
-            }
-         }
-      }
-      refinedCells = mpiGrid.stop_refining(true);
-      if (myRank == MASTER_RANK)
-         std::cout << "Finished third level of refinement" << std::endl;
-      mpiGrid.balance_load();
-   }
-
-   if (P::amrMaxSpatialRefLevel > 3) {
-      // L4 refinement.
-      for (uint i = 0; i < 8 * P::xcells_ini; ++i) {
-         for (uint j = 0; j < 8 * P::ycells_ini; ++j) {
-            for (uint k = 0; k < 8 * P::zcells_ini; ++k) {
-               std::array<double, 3> x;
-               x[0] = P::xmin + (i + 0.5) * 0.125 * P::dx_ini;
-               x[1] = P::ymin + (j + 0.5) * 0.125 * P::dy_ini;
-               x[2] = P::zmin + (k + 0.5) * 0.125 * P::dz_ini;
-
-               if (abs(x[0]) < AMR_L4width) {
-                  CellID myCell = mpiGrid.get_existing_cell(x);
-                  mpiGrid.refine_completely(myCell);
-               }
-            }
-         }
-      }
-      refinedCells = mpiGrid.stop_refining(true);
-      if (myRank == MASTER_RANK)
-         std::cout << "Finished fourth level of refinement" << std::endl;
-      mpiGrid.balance_load();
-   }
-
-   return true;
 }
 
 } // namespace projects

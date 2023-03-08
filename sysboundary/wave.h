@@ -88,9 +88,9 @@ protected:
    static constexpr Real PI = 3.1415926;
    std::string wavetype;
    /*! Wave vector.*/
-   std::array<Real, 3> waveVector;
+   std::array<Real, 3> kwave;
    /*! Wave frequency.*/
-   Real freq, n0, T0, n1, T1;
+   Real omega, n0, T0, n1, T1;
    std::array<Real, 3> B0;
    std::array<Real, 3> V0;
    std::array<Real, 3> B1;

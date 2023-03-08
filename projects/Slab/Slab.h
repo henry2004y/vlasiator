@@ -62,18 +62,12 @@ protected:
    Real halfWidth;
    Real Tratio;
 
-   Real AMR_L1width;
-   Real AMR_L2width;
-   Real AMR_L3width;
-   Real AMR_L4width;
-
    std::vector<SlabSpeciesParameters> speciesParams;
 
    Real getDistribValue(creal& x, creal& y, creal& z, creal& vx, creal& vy, creal& vz, creal& dvx, creal& dvy,
                         creal& dvz, const uint popID) const;
    virtual std::vector<std::array<Real, 3>> getV0(creal x, creal y, creal z, const uint popID) const;
    virtual void calcCellParameters(spatial_cell::SpatialCell* cell, creal& t);
-   bool refineSpatialCells(dccrg::Dccrg<spatial_cell::SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid) const;
 
 }; // class Slab
 } // namespace projects

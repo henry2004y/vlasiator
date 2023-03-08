@@ -46,12 +46,16 @@ namespace SBC {
 
 void Wave::addParameters() {
    typedef Readparameters RP;
-   RP::add("wave.type", "Prescribed wave type given velocity perturbations (\"Alfven\", \"Fast\", \"Sinc\")", "Sinc");
+   RP::add("wave.type", "Prescribed wave type given velocity perturbations (\"alfven\", \"fast\", \"sin\")", "sin");
    RP::add("wave.precedence", "Precedence value of the wave boundary condition (integer), the higher the stronger.", 4);
    RP::add("wave.reapplyUponRestart",
            "If 0 (default), keep going with the state existing in the restart file. If 1, calls again "
            "applyInitialState. Can be used to change boundary condition behaviour during a run.",
            0);
+   RP::add("wave.kx", "Incoming wave vector x-component.", 1.0);
+   RP::add("wave.ky", "Incoming wave vector y-component.", 0.0);
+   RP::add("wave.kz", "Incoming wave vector z-component.", 0.0);
+   RP::add("wave.omega", "Incoming wave angular frequency.", 0.0);
    RP::add("wave.Bx0", "Wave background B field x", 0.0);
    RP::add("wave.By0", "Wave background B field y", 0.0);
    RP::add("wave.Bz0", "Wave background B field z", 0.0);
@@ -64,10 +68,6 @@ void Wave::addParameters() {
       const std::string& pop = getObjectWrapper().particleSpecies[i].name;
       RP::addComposing(pop + "_wave.face",
                        "List of faces on which outflow boundary conditions are to be applied ([xyz][+-]).");
-      RP::add(pop + "_wave.kx", "Incoming wave vector x-component.", 1.0);
-      RP::add(pop + "_wave.ky", "Incoming wave vector y-component.", 0.0);
-      RP::add(pop + "_wave.kz", "Incoming wave vector z-component.", 0.0);
-      RP::add(pop + "_wave.frequency", "Incoming wave frequency.", 0.0);
 
       RP::add(pop + "_wave.vx0", "Background bulk velocity in x", 0.0);
       RP::add(pop + "_wave.vy0", "Background bulk velocity in y", 0.0);
@@ -108,7 +108,7 @@ void Wave::initBoundary(creal t, Project& project) {
 void Wave::getParameters() {
    typedef Readparameters RP;
    RP::get("wave.type", wavetype);
-   if (wavetype != "Sinc" && wavetype != "Alfven" && wavetype != "Fast") {
+   if (wavetype != "sin" && wavetype != "alfven" && wavetype != "fast") {
       abort_mpi("Unknown boundary wave type " + wavetype);
    }
 
@@ -117,6 +117,11 @@ void Wave::getParameters() {
    RP::get("wave.reapplyUponRestart", reapply);
 
    this->applyUponRestart = (reapply == 1) ? true : false;
+
+   RP::get("wave.kx", kwave[0]);
+   RP::get("wave.ky", kwave[1]);
+   RP::get("wave.kz", kwave[2]);
+   RP::get("wave.omega", omega);
 
    RP::get("wave.Bx0", B0[0]);
    RP::get("wave.By0", B0[1]);
@@ -154,10 +159,6 @@ void Wave::getParameters() {
          }
       }
 
-      RP::get(pop + "_wave.kx", waveVector[0]);
-      RP::get(pop + "_wave.ky", waveVector[1]);
-      RP::get(pop + "_wave.kz", waveVector[2]);
-      RP::get(pop + "_wave.frequency", freq);
       RP::get(pop + "_wave.n0", n0);
       RP::get(pop + "_wave.T0", T0);
       RP::get(pop + "_wave.vx0", V0[0]);
@@ -267,15 +268,13 @@ void Wave::applyInitialState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Ge
 
                // Calculate volume-averaged distribution function for each cell in the block.
                for (uint kc = 0; kc < WID; ++kc) {
-                  creal vzC = vzBlock + kc * dvz;
+                  creal vzC = vzBlock + (kc + 0.5) * dvz;
                   for (uint jc = 0; jc < WID; ++jc) {
-                     creal vyC = vyBlock + jc * dvy;
+                     creal vyC = vyBlock + (jc + 0.5) * dvy;
                      for (uint ic = 0; ic < WID; ++ic) {
-                        creal vxC = vxBlock + ic * dvx;
-                        // hyzhou: most values are very close to 0!
+                        creal vxC = vxBlock + (ic + 0.5) * dvx;
                         f[blockLID * WID3 + cellIndex(ic, jc, kc)] = maxwellian(
-                            popID, n0, T0, vxC + 0.5 * dvx - V0[0], vyC + 0.5 * dvy - V0[1], vzC + 0.5 * dvz - V0[2]);
-                        ;
+                            popID, n0, T0, vxC - V0[0], vyC - V0[1], vzC - V0[2]);
                      }
                   }
                } // loop over cells in velocity block
@@ -322,9 +321,9 @@ void Wave::updateState(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry
 
 Real Wave::maxwellian(const uint popID, creal rho, creal T, creal vx, creal vy, creal vz) {
    const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
-   return rho * MASS / (2.0 * M_PI * physicalconstants::K_B * T) *
-          sqrt(MASS / (2.0 * M_PI * physicalconstants::K_B * T)) *
-          exp(-MASS * (vx * vx + vy * vy + vz * vz) / (2.0 * physicalconstants::K_B * T));
+   creal coef1 = 2.0 * physicalconstants::K_B * T;
+   creal coef2 = MASS / (M_PI * coef1);
+   return rho * coef2 * sqrt(coef2) * exp(-MASS * (vx * vx + vy * vy + vz * vz) / coef1);
 }
 
 void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartesian_Geometry>& mpiGrid,
@@ -341,11 +340,12 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   if (wavetype == "Sinc") {
+   creal amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
+
+   if (wavetype == "sin") {
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
-            Real rho, T, Vx, Vy, Vz, amp;
-            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            Real rho, T, Vx, Vy, Vz;
             rho = n0 + n1 * amp;
             T = T0 + T1 * amp;
             Vx = V0[0] + V1[0] * amp;
@@ -357,37 +357,49 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
             break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
-   } else if (wavetype == "Alfven") {
+   } else if (wavetype == "alfven") {
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
-            Real rho, T, Vx, Vy, Vz, amp;
-            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
-            rho = n0;
+            Real n, T, Vx, Vy, Vz;
+            n = n0;
             T = T0;
             Vx = V0[0] + V1[0] * amp;
             Vy = V0[1] + V1[1] * amp;
             Vz = V0[2] + V1[2] * amp;
 
-            updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
+            updateVDF(cell, popID, n, T, Vx, Vy, Vz);
 
             break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
-   } else if (wavetype == "Fast") {
+   } else if (wavetype == "fast") {
       for (uint iface = 0; iface < 6; iface++) {
          if (facesToProcess[iface] && isCellOnFace[iface]) {
             const Real MASS = getObjectWrapper().particleSpecies[popID].mass;
-            Real rho, T, Vx, Vy, Vz, amp, kdotv, omega;
-            omega = 2 * PI * freq;
-            amp = std::sin(omega * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
-            kdotv = std::inner_product(std::begin(waveVector), std::end(waveVector), std::begin(V1), 0.0) * amp;
-            rho = n0 * (1 + kdotv / omega);
+            Real n, T, Vx, Vy, Vz, kdotv;
+            creal gamma = 5.0 / 3.0;
+            kdotv = std::inner_product(std::begin(kwave), std::end(kwave), std::begin(V1), 0.0) * amp;
+            n = n0 * (1 + kdotv / omega);
             Vx = V0[0] + V1[0] * amp;
             Vy = V0[1] + V1[1] * amp;
             Vz = V0[2] + V1[2] * amp;
-            T = T0 * (1 + (P::electronPTindex - 1) * kdotv / (MASS * (omega + kdotv)));
+            T = T0 * (1 + (gamma - 1) * kdotv / (omega + kdotv));
+            //T = (p0 + perturb * p1) / (n * kB);
 
-            updateVDF(cell, popID, rho, T, Vx, Vy, Vz);
+            updateVDF(cell, popID, n, T, Vx, Vy, Vz);
+
+            // hyzhou
+            //if (cellID == 1){
+            //   std::cout << "CellID = " << cellID << "\n";
+            //   std::cout << "t = " << t << "\n";
+            //   std::cout << "x = " << x << "\n";
+            //   std::cout << "n = " << n << "\n";
+            //   std::cout << "T0 = " << T0 << "\n";
+            //   std::cout << "kdotv = " << kdotv << "\n";
+            //   std::cout << "omega = " << omega << "\n";
+            //   std::cout << "T = " << T << "\n";
+            //   std::cout << "amp = " << amp << "\n";
+            //}
 
             break; // Effectively sets the precedence of faces through the order of faces.
          }
@@ -418,7 +430,6 @@ inline void Wave::updateVDF(spatial_cell::SpatialCell* cell, const uint popID, c
             creal vyC = vyBlock + jc * dvy;
             for (uint ic = 0; ic < WID; ++ic) {
                creal vxC = vxBlock + ic * dvx;
-               // hyzhou: most values are very close to 0!
                f[blockLID * WID3 + cellIndex(ic, jc, kc)] =
                    maxwellian(popID, rho, T, vxC + 0.5 * dvx - Vx, vyC + 0.5 * dvy - Vy, vzC + 0.5 * dvz - Vz);
             }
@@ -524,29 +535,27 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   if (wavetype == "Sinc") {
+   creal amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
+
+   if (wavetype == "sin") {
       for (uint iface = 0; iface < 6; iface++) {
          if (isCellOnFace[iface]) {
-            Real amp;
-            amp = std::sin(2 * PI * freq * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
             dB = B0[component] + B1[component] * amp;
             break; // Effectively sets the precedence of faces through the order of faces.
          }
       }
-   } else if (wavetype == "Alfven" || wavetype == "Fast") {
+   } else if (wavetype == "alfven" || wavetype == "fast") {
       for (uint iface = 0; iface < 6; iface++) {
          if (isCellOnFace[iface]) {
-            Real E[3], omega, amp;
-            omega = 2 * PI * freq;
-            amp = std::sin(omega * t + waveVector[0] * x + waveVector[1] * y + waveVector[2] * z);
+            Real E[3];
             // E = B0 x v
             E[0] = (B0[1] * V1[2] - B0[2] * V1[1]) * amp;
             E[1] = -(B0[0] * V1[2] - B0[2] * V1[0]) * amp;
             E[2] = (B0[0] * V1[1] - B0[1] * V1[0]) * amp;
             // B1 = k x E / omega
-            B1[0] = (waveVector[1] * E[2] - waveVector[2] * E[1]) / omega;
-            B1[1] = -(waveVector[0] * E[2] - waveVector[2] * E[0]) / omega;
-            B1[2] = (waveVector[0] * E[1] - waveVector[1] * E[0]) / omega;
+            B1[0] = (kwave[1] * E[2] - kwave[2] * E[1]) / omega;
+            B1[1] = -(kwave[0] * E[2] - kwave[2] * E[0]) / omega;
+            B1[2] = (kwave[0] * E[1] - kwave[1] * E[0]) / omega;
             dB = B0[component] + B1[component];
             break; // Effectively sets the precedence of faces through the order of faces.
          }

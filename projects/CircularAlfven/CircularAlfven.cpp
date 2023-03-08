@@ -126,7 +126,7 @@ void CircularAlfven::addParameters() {
    RP::add("CircularAlfven.rho0", "Dimensionless density", 1.0);
    RP::add("CircularAlfven.p0", "Dimensionless pressure", 0.1);
    RP::add("CircularAlfven.Bkpar0", "Dimensionless parallel magnetic field to wave vector", 1.0);
-   RP::add("CircularAlfven.alpha", "In-plane tilted angle in radian", 0.4636476090008061);
+   RP::add("CircularAlfven.alpha", "In-plane wave vector tilted angle w.r.t. +x in radian", 0.4636476090008061);
    // SI units inputs
    RP::add("CircularAlfven.BRef", "Reference magnetic field strength", 1e-8);
    RP::add("CircularAlfven.nRef", "Reference number density", 1e6);
