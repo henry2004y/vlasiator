@@ -384,22 +384,8 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
             Vy = V0[1] + V1[1] * amp;
             Vz = V0[2] + V1[2] * amp;
             T = T0 * (1 + (gamma - 1) * kdotv / (omega + kdotv));
-            //T = (p0 + perturb * p1) / (n * kB);
 
             updateVDF(cell, popID, n, T, Vx, Vy, Vz);
-
-            // hyzhou
-            //if (cellID == 1){
-            //   std::cout << "CellID = " << cellID << "\n";
-            //   std::cout << "t = " << t << "\n";
-            //   std::cout << "x = " << x << "\n";
-            //   std::cout << "n = " << n << "\n";
-            //   std::cout << "T0 = " << T0 << "\n";
-            //   std::cout << "kdotv = " << kdotv << "\n";
-            //   std::cout << "omega = " << omega << "\n";
-            //   std::cout << "T = " << T << "\n";
-            //   std::cout << "amp = " << amp << "\n";
-            //}
 
             break; // Effectively sets the precedence of faces through the order of faces.
          }
@@ -612,15 +598,113 @@ void Wave::fieldSolverBoundaryCondDerivatives(
     FsGrid<std::array<Real, fsgrids::dperb::N_DPERB>, FS_STENCIL_WIDTH>& dPerBGrid,
     FsGrid<std::array<Real, fsgrids::dmoments::N_DMOMENTS>, FS_STENCIL_WIDTH>& dMomentsGrid, cint i, cint j, cint k,
     cuint RKCase, cuint component) {
-   // this->setCellDerivativesToZero(dPerBGrid, dMomentsGrid, i, j, k, component);
+   this->setCellDerivativesToZero(dPerBGrid, dMomentsGrid, i, j, k, component);
    // hyzhou: do I need to set the derivatives? What are they used for?
+   /*
+   std::array<Real, fsgrids::dperb::N_DPERB>* dPerBGrid0 = dPerBGrid.get(i, j, k);
+   std::array<Real, fsgrids::dmoments::N_DMOMENTS>* dMomentsGrid0 = dMomentsGrid.get(i, j, k);
+   // hyzhou: do dMomentsGrid and dPerBGrid have same coordinates?
+   creal t = P::t + 0.5 * P::dt;
+   const std::array<Real, 3> xyz = dMomentsGrid.getPhysicalCoords(i, j, k);
+   creal amp_sin = std::sin(kwave[0] * xyz[0] + kwave[1] * xyz[1] + kwave[2] * xyz[2] + omega * t);
+   creal amp_cos = std::cos(kwave[0] * xyz[0] + kwave[1] * xyz[1] + kwave[2] * xyz[2] + omega * t);
+   creal kdotv = std::inner_product(std::begin(kwave), std::end(kwave), std::begin(V1), 0.0);
+   creal kdotv_cos = kdotv * amp_cos;
+   creal delta = kdotv_cos / omega;
+
+   creal m = getObjectWrapper().particleSpecies[0].mass;
+   creal q = physicalconstants::CHARGE;
+
+   switch (component) {
+   case 0: // x, xx
+      dMomentsGrid0->at(fsgrids::dmoments::drhomdx) = m*n0*kwave[0]*delta;
+      dMomentsGrid0->at(fsgrids::dmoments::drhoqdx) = q*n0*kwave[0]*delta;
+      dMomentsGrid0->at(fsgrids::dmoments::dp11dx) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp22dx) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp33dx) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBydx) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBzdx) = kwave[0]*delta*B0[3];
+      dMomentsGrid0->at(fsgrids::dmoments::dVxdx) = V1[0]*kwave[0]*amp_cos;
+      dMomentsGrid0->at(fsgrids::dmoments::dVydx) = V1[1]*kwave[1]*amp_cos;
+      dMomentsGrid0->at(fsgrids::dmoments::dVzdx) = V1[2]*kwave[2]*amp_cos;
+      dPerBGrid0->at(fsgrids::dperb::dPERBydxx) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBzdxx) = -sqr(kwave[0])*amp_sin/omega*B0[3];
+      break;
+   case 1: // y, yy
+      dMomentsGrid0->at(fsgrids::dmoments::drhomdy) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::drhoqdy) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp11dy) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp22dy) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp33dy) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBxdy) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBzdy) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dVxdy) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dVydy) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dVzdy) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBxdyy) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBzdyy) = 0.0;
+      break;
+   case 2: // z, zz
+      dMomentsGrid0->at(fsgrids::dmoments::drhomdz) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::drhoqdz) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp11dz) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp22dz) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dp33dz) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBxdz) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBydz) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dVxdz) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dVydz) = 0.0;
+      dMomentsGrid0->at(fsgrids::dmoments::dVzdz) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBxdzz) = 0.0;
+      dPerBGrid0->at(fsgrids::dperb::dPERBydzz) = 0.0;
+      break;
+   case 3: // xy
+      dPerBGrid0->at(fsgrids::dperb::dPERBzdxy) = 0.0;
+      break;
+   case 4: // xz
+      dPerBGrid0->at(fsgrids::dperb::dPERBydxz) = 0.0;
+      break;
+   case 5: // yz
+      dPerBGrid0->at(fsgrids::dperb::dPERBxdyz) = 0.0;
+      break;
+   default:
+      abort_mpi("Invalid component", 1);
+   }
+   */
 }
 
 void Wave::fieldSolverBoundaryCondBVOLDerivatives(
     FsGrid<std::array<Real, fsgrids::volfields::N_VOL>, FS_STENCIL_WIDTH>& volGrid, cint i, cint j, cint k,
     cuint component) {
-   // this->setCellBVOLDerivativesToZero(volGrid, i, j, k, component);
+   this->setCellBVOLDerivativesToZero(volGrid, i, j, k, component);
    // hyzhou: do I need to set the derivatives? What are they used for?
+   std::array<Real, fsgrids::volfields::N_VOL>* volGrid0 = volGrid.get(i, j, k);
+   /*
+   creal t = P::t + 0.5 * P::dt;
+   const std::array<Real, 3> xyz = volGrid.getPhysicalCoords(i, j, k);
+   creal amp_sin = std::sin(kwave[0] * xyz[0] + kwave[1] * xyz[1] + kwave[2] * xyz[2] + omega * t);
+   creal amp_cos = std::cos(kwave[0] * xyz[0] + kwave[1] * xyz[1] + kwave[2] * xyz[2] + omega * t);
+   creal kdotv = std::inner_product(std::begin(kwave), std::end(kwave), std::begin(V1), 0.0);
+   creal kdotv_cos = kdotv * amp_cos;
+   creal delta = kdotv_cos / omega;
+
+   switch (component) {
+   case 0:
+      volGrid0->at(fsgrids::volfields::dPERBYVOLdx) = 0.0;
+      volGrid0->at(fsgrids::volfields::dPERBZVOLdx) = kwave[0]*delta*B0[3];
+      break;
+   case 1:
+      volGrid0->at(fsgrids::volfields::dPERBXVOLdy) = 0.0;
+      volGrid0->at(fsgrids::volfields::dPERBZVOLdy) = 0.0;
+      break;
+   case 2:
+      volGrid0->at(fsgrids::volfields::dPERBXVOLdz) = 0.0;
+      volGrid0->at(fsgrids::volfields::dPERBYVOLdz) = 0.0;
+      break;
+   default:
+      abort_mpi("Invalid component", 1);
+   }
+   */
 }
 
 void Wave::getFaces(std::array<bool, 6>& faces) { faces = facesToProcess; }
