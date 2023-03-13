@@ -504,48 +504,69 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
     FsGrid<fsgrids::technical, FS_STENCIL_WIDTH>& technicalGrid, cint i, cint j, cint k, cuint component) {
    typedef Parameters P;
    Real dB = 0.0;
-   creal dx = P::dx_ini;
-   creal dy = P::dy_ini;
-   creal dz = P::dz_ini;
-   const array<int, 3> globalIndices = technicalGrid.getGlobalIndices(i, j, k);
-   creal x = (convert<Real>(globalIndices[0]) + 0.5) * technicalGrid.DX + P::xmin;
-   creal y = (convert<Real>(globalIndices[1]) + 0.5) * technicalGrid.DY + P::ymin;
-   creal z = (convert<Real>(globalIndices[2]) + 0.5) * technicalGrid.DZ + P::zmin;
-   creal t = P::t + 0.5 * P::dt;
-
+   // 1st node coordinates
    auto coords = bGrid.getPhysicalCoords(i, j, k);
-   coords[0] += 0.5 * bGrid.DX;
-   coords[1] += 0.5 * bGrid.DY;
-   coords[2] += 0.5 * bGrid.DZ;
+   creal t = P::t + 0.5 * P::dt;
+   Real x = 0.0;
+   Real y = 0.0;
+   Real z = 0.0;
+   Real amp = 0.0;
 
-   bool isCellOnFace[6];
-   determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
-
-   creal amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
-
-   if (wavetype == "sin") {
-      for (uint iface = 0; iface < 6; iface++) {
-         if (isCellOnFace[iface]) {
-            dB = B0[component] + B1[component] * amp;
-            break; // Effectively sets the precedence of faces through the order of faces.
-         }
+   if (wavetype == "alfven" || wavetype == "fast") {
+      Real E[3];
+      switch (component) {
+         case 0:
+            x = coords[0];
+            y = coords[1] + 0.5 * bGrid.DY;
+            z = coords[2] + 0.5 * bGrid.DZ;
+            break;
+         case 1:
+            x = coords[0] + 0.5 * bGrid.DX;
+            y = coords[1];
+            z = coords[2] + 0.5 * bGrid.DZ;
+            break;
+         case 2:
+            x = coords[0] + 0.5 * bGrid.DX;
+            y = coords[1] + 0.5 * bGrid.DY;
+            z = coords[2];
+            break;
+         default:
+            cerr << "Unknown component " << component << "\n";
+            MPI_Abort(MPI_COMM_WORLD, 1);
       }
-   } else if (wavetype == "alfven" || wavetype == "fast") {
-      for (uint iface = 0; iface < 6; iface++) {
-         if (isCellOnFace[iface]) {
-            Real E[3];
-            // E = B0 x v
-            E[0] = (B0[1] * V1[2] - B0[2] * V1[1]) * amp;
-            E[1] = -(B0[0] * V1[2] - B0[2] * V1[0]) * amp;
-            E[2] = (B0[0] * V1[1] - B0[1] * V1[0]) * amp;
-            // B1 = k x E / omega
-            B1[0] = (kwave[1] * E[2] - kwave[2] * E[1]) / omega;
-            B1[1] = -(kwave[0] * E[2] - kwave[2] * E[0]) / omega;
-            B1[2] = (kwave[0] * E[1] - kwave[1] * E[0]) / omega;
-            dB = B0[component] + B1[component];
-            break; // Effectively sets the precedence of faces through the order of faces.
-         }
+      amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
+      // E = B0 x v
+      E[0] = (B0[1] * V1[2] - B0[2] * V1[1]) * amp;
+      E[1] = -(B0[0] * V1[2] - B0[2] * V1[0]) * amp;
+      E[2] = (B0[0] * V1[1] - B0[1] * V1[0]) * amp;
+      // B1 = k x E / omega
+      B1[0] = (kwave[1] * E[2] - kwave[2] * E[1]) / omega;
+      B1[1] = -(kwave[0] * E[2] - kwave[2] * E[0]) / omega;
+      B1[2] = (kwave[0] * E[1] - kwave[1] * E[0]) / omega;
+      dB = B0[component] + B1[component];
+   } else if (wavetype == "sin") {
+      switch (component) {
+         case 0:
+            x = coords[0];
+            y = coords[1] + 0.5 * bGrid.DY;
+            z = coords[2] + 0.5 * bGrid.DZ;
+            break;
+         case 1:
+            x = coords[0] + 0.5 * bGrid.DX;
+            y = coords[1];
+            z = coords[2] + 0.5 * bGrid.DZ;
+            break;
+         case 2:
+            x = coords[0] + 0.5 * bGrid.DX;
+            y = coords[1] + 0.5 * bGrid.DY;
+            z = coords[2];
+            break;
+         default:
+            cerr << "Unknown component " << component << "\n";
+            MPI_Abort(MPI_COMM_WORLD, 1);
       }
+      amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
+      dB = B0[component] + B1[component] * amp;
    }
 
    return dB;
