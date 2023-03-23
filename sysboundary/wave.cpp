@@ -340,7 +340,7 @@ void Wave::vlasovBoundaryCondition(const dccrg::Dccrg<SpatialCell, dccrg::Cartes
    bool isCellOnFace[6];
    determineFace(isCellOnFace, x, y, z, dx, dy, dz, true);
 
-   creal amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
+   creal amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z - omega * t);
 
    if (wavetype == "sin") {
       for (uint iface = 0; iface < 6; iface++) {
@@ -534,7 +534,7 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
             cerr << "Unknown component " << component << "\n";
             MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
+      amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z - omega * t);
       // E = B0 x v
       E[0] = (B0[1] * V1[2] - B0[2] * V1[1]) * amp;
       E[1] = -(B0[0] * V1[2] - B0[2] * V1[0]) * amp;
@@ -565,7 +565,7 @@ Real Wave::fieldSolverBoundaryCondMagneticField(
             cerr << "Unknown component " << component << "\n";
             MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z + omega * t);
+      amp = std::sin(kwave[0] * x + kwave[1] * y + kwave[2] * z - omega * t);
       dB = B0[component] + B1[component] * amp;
    }
 
