@@ -69,7 +69,7 @@ void Harris::getParameters() {
    RP::get("Harris.Bz0", Bz0);
    RP::get("Harris.Psi0", Psi0);
 
-   if (currentSheetType != 1 || currentSheetType != 2) {
+   if (currentSheetType != 1 && currentSheetType != 2) {
       int myRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
       if (myRank == MASTER_RANK) {
