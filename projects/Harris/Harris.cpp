@@ -42,7 +42,7 @@ bool Harris::initialize(void) { return Project::initialize(); }
 void Harris::addParameters() {
    typedef Readparameters RP;
    RP::add("Harris.currentSheetType", "Type of the current sheet initialization: 1. single layer, 2. double layer", 1);
-   RP::add("Harris.Scale_size", "Harris sheet scale size (m)", 150000.0);
+   RP::add("Harris.scale", "Harris sheet scale size (m)", 150000.0);
    RP::add("Harris.Bx0", "Reference Magnetic field (T)", 8.33061003094e-8);
    RP::add("Harris.By0", "Reference Magnetic field (T)", 8.33061003094e-8);
    RP::add("Harris.Bz0", "Reference Magnetic field (T)", 8.33061003094e-8);
@@ -63,7 +63,7 @@ void Harris::getParameters() {
    Project::getParameters();
    typedef Readparameters RP;
    RP::get("Harris.currentSheetType", currentSheetType);
-   RP::get("Harris.Scale_size", lambda);
+   RP::get("Harris.scale", lambda);
    RP::get("Harris.Bx0", Bx0);
    RP::get("Harris.By0", By0);
    RP::get("Harris.Bz0", Bz0);
