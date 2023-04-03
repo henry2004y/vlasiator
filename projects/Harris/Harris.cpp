@@ -41,7 +41,7 @@ bool Harris::initialize(void) { return Project::initialize(); }
 
 void Harris::addParameters() {
    typedef Readparameters RP;
-   RP::add("Harris.type", "Type of the initialization: 1. single layer, 2. double layer", 1);
+   RP::add("Harris.currentSheetType", "Type of the current sheet initialization: 1. single layer, 2. double layer", 1);
    RP::add("Harris.Scale_size", "Harris sheet scale size (m)", 150000.0);
    RP::add("Harris.Bx0", "Reference Magnetic field (T)", 8.33061003094e-8);
    RP::add("Harris.By0", "Reference Magnetic field (T)", 8.33061003094e-8);
@@ -62,18 +62,18 @@ void Harris::addParameters() {
 void Harris::getParameters() {
    Project::getParameters();
    typedef Readparameters RP;
-   RP::get("Harris.type", type);
+   RP::get("Harris.currentSheetType", currentSheetType);
    RP::get("Harris.Scale_size", lambda);
    RP::get("Harris.Bx0", Bx0);
    RP::get("Harris.By0", By0);
    RP::get("Harris.Bz0", Bz0);
    RP::get("Harris.Psi0", Psi0);
 
-   if (type != 1 || type != 2) {
+   if (currentSheetType != 1 || currentSheetType != 2) {
       int myRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
       if (myRank == MASTER_RANK) {
-         std::cerr << "unknown initialization type: " << type << std::endl;
+         std::cerr << "unknown initialization type: " << currentSheetType << std::endl;
          MPI_Abort(MPI_COMM_WORLD, 1);
       }
    }
@@ -100,10 +100,10 @@ Real Harris::getMaxwellian(creal& x, creal& y, creal& z, creal& vx, creal& vy, c
 
    Real f, n;
 
-   if (type == 1) {
+   if (currentSheetType == 1) {
       Real sech2 = sqr(1.0 / std::cosh(z / lambda));
       n = sP.n * sech2 + 0.2 * sP.n;
-   } else if (type == 2) {
+   } else if (currentSheetType == 2) {
       const Real Lx = P::xmax - P::xmin;
       const Real Lz = P::zmax - P::zmin;
 
@@ -176,7 +176,7 @@ void Harris::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>
    if (!P::isRestart) {
       auto localSize = perBGrid.getLocalSize().data();
 
-      if (type == 1) {
+      if (currentSheetType == 1) {
 #pragma omp parallel for collapse(3)
          for (int i = 0; i < localSize[0]; ++i) {
             for (int j = 0; j < localSize[1]; ++j) {
@@ -195,7 +195,7 @@ void Harris::setProjectBField(FsGrid<std::array<Real, fsgrids::bfield::N_BFIELD>
                }
             }
          }
-      } else if (type == 2) {
+      } else if (currentSheetType == 2) {
 #pragma omp parallel for collapse(3)
          for (int i = 0; i < localSize[0]; ++i) {
             for (int j = 0; j < localSize[1]; ++j) {

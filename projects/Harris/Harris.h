@@ -51,7 +51,7 @@ public:
                                       creal& vy, creal& vz, creal& dvx, creal& dvy, creal& dvz, const uint popID) const;
 
 protected:
-   int type;
+   int currentSheetType;
    Real lambda;
    Real Bx0, By0, Bz0, Psi0;
    std::vector<HarrisSpeciesParameters> speciesParams;
